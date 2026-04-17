@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="th">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Bubbles — ห้องแชทชั่วคราว</title>
+<title>taithai temporary chat</title>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
@@ -25,6 +25,25 @@
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; background: var(--cream); font-family: var(--font); color: var(--dark); overflow: hidden; }
   .app { width: 100%; max-width: 430px; height: 100dvh; margin: 0 auto; display: flex; flex-direction: column; position: relative; background: var(--cream); overflow: hidden; }
+
+  .lang-global {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 120;
+    border: 2px solid var(--peach2);
+    background: var(--white);
+    color: var(--brown);
+    border-radius: 999px;
+    padding: 10px 14px;
+    font-family: var(--font);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(61,43,38,0.08);
+  }
+  .lang-global:active { transform: scale(0.96); }
+
 
   .screen { display: none; flex-direction: column; height: 100dvh; }
   .screen.active { display: flex; }
@@ -157,14 +176,16 @@
 </head>
 <body>
 <div class="app" id="app">
+  <button class="lang-global" id="lang-toggle" onclick="toggleLanguage()"><span id="lang-label">ไทย</span></button>
+
 
   <!-- HOME -->
   <div id="home" class="screen active">
     <div class="home-deco"><span class="icon">💬</span></div>
-    <div class="home-title">Bubbles</div>
-    <p class="home-sub">ห้องแชทชั่วคราว<br>ไม่เก็บข้อมูล ไม่ต้องสมัคร</p>
-    <button class="btn-main btn-primary" onclick="openSheet('sheet-create')">✦ สร้างห้องใหม่</button>
-    <button class="btn-main btn-secondary" onclick="openSheet('sheet-join')">↗ เข้าร่วมห้อง</button>
+    <div class="home-title" id="home-title">taithai temporary chat</div>
+    <p class="home-sub" id="home-sub">Temporary chat room<br>No data stored, no signup required</p>
+    <button class="btn-main btn-primary" onclick="openSheet('sheet-create')" id="btn-create">✦ Create New Room</button>
+    <button class="btn-main btn-secondary" onclick="openSheet('sheet-join')" id="btn-join">↗ Join Room</button>
     <div class="dots-deco"><span></span><span></span><span></span></div>
   </div>
 
@@ -172,13 +193,13 @@
   <div id="sheet-create" class="overlay" onclick="closeSheetOutside(event,'sheet-create')">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <div class="sheet-title">สร้างห้องแชท 🌸</div>
-      <div class="sheet-sub">ตั้งชื่อแล้วแชร์รหัสให้เพื่อน</div>
+      <div class="sheet-title" id="create-sheet-title">Create Chat Room 🌸</div>
+      <div class="sheet-sub" id="create-sheet-sub">Set your name and share the room code</div>
       <div class="field">
-        <label>ชื่อของคุณ</label>
-        <input id="create-name" placeholder="เช่น มินตรา" maxlength="20" onkeydown="if(event.key==='Enter')doCreate()"/>
+        <label id="create-name-label">Your Name</label>
+        <input id="create-name" placeholder="e.g. Mint" maxlength="20" onkeydown="if(event.key==='Enter')doCreate()"/>
       </div>
-      <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doCreate()">สร้างห้องเลย ✦</button>
+      <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doCreate()" id="create-room-btn">Create Room ✦</button>
     </div>
   </div>
 
@@ -186,20 +207,20 @@
   <div id="sheet-join" class="overlay" onclick="closeSheetOutside(event,'sheet-join')">
     <div class="sheet">
       <div class="sheet-handle"></div>
-      <div class="sheet-title">เข้าร่วมห้อง 🔑</div>
-      <div class="sheet-sub">กรอกรหัสจากเพื่อนที่สร้างห้อง</div>
+      <div class="sheet-title" id="join-sheet-title">Join Room 🔑</div>
+      <div class="sheet-sub" id="join-sheet-sub">Enter the code shared by your friend</div>
       <div class="field">
-        <label>รหัสห้อง</label>
+        <label id="join-code-label">Room Code</label>
         <input id="join-code" class="code-field" placeholder="ABC123" maxlength="6"
           oninput="this.value=this.value.toUpperCase()"
           onkeydown="if(event.key==='Enter')document.getElementById('join-name').focus()"/>
       </div>
       <div class="field">
-        <label>ชื่อของคุณ</label>
-        <input id="join-name" placeholder="เช่น พีท" maxlength="20" onkeydown="if(event.key==='Enter')doJoin()"/>
+        <label id="join-name-label">Your Name</label>
+        <input id="join-name" placeholder="e.g. Pete" maxlength="20" onkeydown="if(event.key==='Enter')doJoin()"/>
       </div>
       <div id="join-err" class="err-msg"></div>
-      <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doJoin()">เข้าร่วมเลย ↗</button>
+      <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doJoin()" id="join-room-btn">Join Now ↗</button>
     </div>
   </div>
 
@@ -209,13 +230,13 @@
       <button class="back-btn" onclick="cancelHost()">←</button>
     </div>
     <div class="waiting-card">
-      <div class="waiting-label">รหัสห้องของคุณ</div>
+      <div class="waiting-label" id="waiting-label">Your Room Code</div>
       <div class="code-big" id="room-code-display" onclick="copyCode()"></div>
-      <div class="copy-tip">👆 แตะเพื่อคัดลอก</div>
-      <div class="status-pill"><span class="pulse-dot"></span><span id="wait-status">รอเพื่อนเข้าร่วม...</span></div>
-      <p class="share-hint">แชร์รหัสนี้ให้เพื่อน<br>แล้วให้เขากด "เข้าร่วมห้อง"</p>
+      <div class="copy-tip" id="copy-tip">👆 Tap to copy</div>
+      <div class="status-pill"><span class="pulse-dot"></span><span id="wait-status">Waiting for someone to join...</span></div>
+      <p class="share-hint" id="share-hint">Share this code with your friend<br>and ask them to tap "Join Room"</p>
     </div>
-    <button class="btn-main btn-primary" style="margin-top:1.5rem" onclick="hostEnterChat()">เริ่มแชทได้เลย</button>
+    <button class="btn-main btn-primary" style="margin-top:1.5rem" onclick="hostEnterChat()" id="start-chat-btn">Start Chatting ✦</button>
   </div>
 
   <!-- CHAT -->
@@ -223,21 +244,21 @@
     <div class="chat-header">
       <div class="chat-avatar">💬</div>
       <div class="chat-info">
-        <div class="chat-name" id="chat-room-name">ห้อง</div>
-        <div class="chat-meta" id="chat-meta">กำลังเชื่อมต่อ...</div>
+        <div class="chat-name" id="chat-room-name">Room</div>
+        <div class="chat-meta" id="chat-meta">Connecting...</div>
       </div>
-      <button class="leave-btn" onclick="leaveChat()">ออก</button>
+      <button class="leave-btn" onclick="leaveChat()" id="leave-btn">Leave</button>
     </div>
     <div class="messages-wrap" id="messages"></div>
 
     <div class="attach-menu" id="attach-menu">
-      <button class="attach-item" onclick="triggerImg()"><span>🖼️</span><span>รูปภาพ</span></button>
-      <button class="attach-item" onclick="triggerFile()"><span>📎</span><span>ไฟล์</span></button>
+      <button class="attach-item" onclick="triggerImg()"><span>🖼️</span><span id="attach-image-label">Image</span></button>
+      <button class="attach-item" onclick="triggerFile()"><span>📎</span><span id="attach-file-label">File</span></button>
     </div>
 
     <div class="chat-input-bar">
       <button class="attach-btn" id="attach-btn" onclick="toggleAttachMenu(event)">＋</button>
-      <textarea class="chat-input" id="chat-input" placeholder="พิมพ์ข้อความ..." rows="1"
+      <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"
         onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
       <button class="send-btn" onclick="sendMsg()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -270,13 +291,181 @@ let isHost = false, memberCount = 1;
 let connections = {};
 let joinTimeout = null;
 
+let currentLang = 'en';
+
+const translations = {
+  en: {
+    pageTitle: 'taithai temporary chat',
+    homeTitle: 'taithai temporary chat',
+    homeSub: 'Temporary chat room<br>No data stored, no signup required',
+    createBtn: '✦ Create New Room',
+    joinBtn: '↗ Join Room',
+    createSheetTitle: 'Create Chat Room 🌸',
+    createSheetSub: 'Set your name and share the room code',
+    createNameLabel: 'Your Name',
+    createNamePlaceholder: 'e.g. Mint',
+    createRoomBtn: 'Create Room ✦',
+    joinSheetTitle: 'Join Room 🔑',
+    joinSheetSub: 'Enter the code shared by your friend',
+    joinCodeLabel: 'Room Code',
+    joinNameLabel: 'Your Name',
+    joinNamePlaceholder: 'e.g. Pete',
+    joinRoomBtn: 'Join Now ↗',
+    waitingLabel: 'Your Room Code',
+    copyTip: '👆 Tap to copy',
+    waitingDefault: 'Waiting for someone to join...',
+    waitingPeople: '{count} people are in the room',
+    shareHint: 'Share this code with your friend<br>and ask them to tap "Join Room"',
+    startChatBtn: 'Start Chatting ✦',
+    leaveBtn: 'Leave',
+    attachImage: 'Image',
+    attachFile: 'File',
+    chatPlaceholder: 'Type a message...',
+    roomPrefix: 'Room ',
+    roomCodePrefix: 'Code ',
+    peopleSuffix: ' people',
+    connecting: 'Connecting...',
+    connected: 'Connected 🎉',
+    disconnected: 'Connection lost',
+    joinedRoom: '{name} joined the room',
+    leftRoom: '{name} left the room',
+    roomNotFound: 'Room not found. Please check the code and try again.',
+    errCode: 'Please enter all 6 characters of the room code.',
+    errName: 'Please enter your name.',
+    codeCopied: 'Room code copied ✓',
+    genericError: 'Something went wrong. Please try again.',
+    imageTooLarge: 'Image is too large (max 5 MB)',
+    fileTooLarge: 'File is too large (max 10 MB)',
+    connectingInline: 'Connecting...',
+    languageButton: 'ไทย'
+  },
+  th: {
+    pageTitle: 'taithai temporary chat',
+    homeTitle: 'taithai temporary chat',
+    homeSub: 'ห้องแชทชั่วคราว<br>ไม่เก็บข้อมูล ไม่ต้องสมัคร',
+    createBtn: '✦ สร้างห้องใหม่',
+    joinBtn: '↗ เข้าร่วมห้อง',
+    createSheetTitle: 'สร้างห้องแชท 🌸',
+    createSheetSub: 'ตั้งชื่อแล้วแชร์รหัสให้เพื่อน',
+    createNameLabel: 'ชื่อของคุณ',
+    createNamePlaceholder: 'เช่น มินตรา',
+    createRoomBtn: 'สร้างห้องเลย ✦',
+    joinSheetTitle: 'เข้าร่วมห้อง 🔑',
+    joinSheetSub: 'กรอกรหัสจากเพื่อนที่สร้างห้อง',
+    joinCodeLabel: 'รหัสห้อง',
+    joinNameLabel: 'ชื่อของคุณ',
+    joinNamePlaceholder: 'เช่น พีท',
+    joinRoomBtn: 'เข้าร่วมเลย ↗',
+    waitingLabel: 'รหัสห้องของคุณ',
+    copyTip: '👆 แตะเพื่อคัดลอก',
+    waitingDefault: 'รอเพื่อนเข้าร่วม...',
+    waitingPeople: 'มี {count} คนอยู่ในห้องแล้ว',
+    shareHint: 'แชร์รหัสนี้ให้เพื่อน<br>แล้วให้เขากด "เข้าร่วมห้อง"',
+    startChatBtn: 'เริ่มแชทได้เลย ✦',
+    leaveBtn: 'ออก',
+    attachImage: 'รูปภาพ',
+    attachFile: 'ไฟล์',
+    chatPlaceholder: 'พิมพ์ข้อความ...',
+    roomPrefix: 'ห้อง ',
+    roomCodePrefix: 'รหัส ',
+    peopleSuffix: ' คน',
+    connecting: 'กำลังเชื่อมต่อ...',
+    connected: 'เชื่อมต่อสำเร็จ 🎉',
+    disconnected: 'การเชื่อมต่อถูกตัด',
+    joinedRoom: '{name} เข้าร่วมห้อง',
+    leftRoom: '{name} ออกจากห้อง',
+    roomNotFound: 'ไม่พบห้องนี้ ตรวจสอบรหัสแล้วลองใหม่',
+    errCode: 'กรุณากรอกรหัส 6 หลักให้ครบ',
+    errName: 'กรุณากรอกชื่อของคุณ',
+    codeCopied: 'คัดลอกรหัสแล้ว ✓',
+    genericError: 'เกิดข้อผิดพลาด ลองใหม่อีกครั้ง',
+    imageTooLarge: 'รูปใหญ่เกินไป (สูงสุด 5 MB)',
+    fileTooLarge: 'ไฟล์ใหญ่เกินไป (สูงสุด 10 MB)',
+    connectingInline: 'กำลังเชื่อมต่อ...',
+    languageButton: 'EN'
+  }
+};
+
+function t(key, vars = {}) {
+  const dict = translations[currentLang] || translations.en;
+  let text = dict[key] ?? translations.en[key] ?? '';
+  Object.keys(vars).forEach(k => {
+    text = text.replaceAll('{' + k + '}', vars[k]);
+  });
+  return text;
+}
+
+function currentTimeLocale() {
+  return currentLang === 'th' ? 'th-TH' : 'en-US';
+}
+
+function ts() {
+  return new Date().toLocaleTimeString(currentTimeLocale(), {hour:'2-digit', minute:'2-digit'});
+}
+
+function getRoomLabel(code) {
+  return t('roomPrefix') + code;
+}
+
+function applyLanguage(lang) {
+  currentLang = lang;
+  document.documentElement.lang = lang;
+  document.title = t('pageTitle');
+  document.getElementById('lang-label').textContent = translations[lang].languageButton;
+
+  document.getElementById('home-title').innerHTML = t('homeTitle');
+  document.getElementById('home-sub').innerHTML = t('homeSub');
+  document.getElementById('btn-create').innerHTML = t('createBtn');
+  document.getElementById('btn-join').innerHTML = t('joinBtn');
+
+  document.getElementById('create-sheet-title').innerHTML = t('createSheetTitle');
+  document.getElementById('create-sheet-sub').innerHTML = t('createSheetSub');
+  document.getElementById('create-name-label').innerHTML = t('createNameLabel');
+  document.getElementById('create-name').placeholder = t('createNamePlaceholder');
+  document.getElementById('create-room-btn').innerHTML = t('createRoomBtn');
+
+  document.getElementById('join-sheet-title').innerHTML = t('joinSheetTitle');
+  document.getElementById('join-sheet-sub').innerHTML = t('joinSheetSub');
+  document.getElementById('join-code-label').innerHTML = t('joinCodeLabel');
+  document.getElementById('join-name-label').innerHTML = t('joinNameLabel');
+  document.getElementById('join-name').placeholder = t('joinNamePlaceholder');
+  document.getElementById('join-room-btn').innerHTML = t('joinRoomBtn');
+
+  document.getElementById('waiting-label').innerHTML = t('waitingLabel');
+  document.getElementById('copy-tip').innerHTML = t('copyTip');
+  document.getElementById('share-hint').innerHTML = t('shareHint');
+  document.getElementById('start-chat-btn').innerHTML = t('startChatBtn');
+
+  document.getElementById('leave-btn').innerHTML = t('leaveBtn');
+  document.getElementById('attach-image-label').innerHTML = t('attachImage');
+  document.getElementById('attach-file-label').innerHTML = t('attachFile');
+  document.getElementById('chat-input').placeholder = t('chatPlaceholder');
+
+  if (myRoom) {
+    document.getElementById('chat-room-name').textContent = getRoomLabel(myRoom);
+  } else {
+    document.getElementById('chat-room-name').textContent = t('roomPrefix').trim();
+  }
+
+  if (document.getElementById('waiting').classList.contains('active')) {
+    const waitStatus = document.getElementById('wait-status');
+    waitStatus.textContent = memberCount > 1 ? t('waitingPeople', {count: memberCount}) : t('waitingDefault');
+  }
+
+  updateMeta();
+}
+
+function toggleLanguage() {
+  applyLanguage(currentLang === 'en' ? 'th' : 'en');
+}
+
+
 /* ── UTILS ── */
 function genCode() {
   let c = '';
   for (let i = 0; i < 6; i++) c += CHARS[Math.floor(Math.random() * CHARS.length)];
   return c;
 }
-function ts() { return new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'}); }
 function fmtSize(b) { return b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB'; }
 function esc(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -377,7 +566,18 @@ function broadcast(data, skipPeerId) {
 }
 
 function updateMeta() {
-  document.getElementById('chat-meta').textContent = 'รหัส ' + myRoom + ' · ' + memberCount + ' คน';
+  const meta = document.getElementById('chat-meta');
+  if (!meta) return;
+  if (!myRoom) {
+    meta.textContent = t('connecting');
+    return;
+  }
+  if (isHost) {
+    meta.textContent = t('roomCodePrefix') + myRoom + ' · ' + memberCount + t('peopleSuffix');
+  } else {
+    if (conn && conn.open) meta.textContent = t('roomCodePrefix') + myRoom;
+    else meta.textContent = t('connecting');
+  }
 }
 
 /* ── CREATE (HOST) ── */
@@ -387,7 +587,7 @@ function doCreate() {
   myName = name; myRoom = genCode(); isHost = true;
   closeSheet('sheet-create');
   document.getElementById('room-code-display').textContent = myRoom;
-  document.getElementById('wait-status').textContent = 'รอเพื่อนเข้าร่วม...';
+  document.getElementById('wait-status').textContent = t('waitingDefault');
   setScreen('waiting');
   initHostPeer();
 }
@@ -399,8 +599,8 @@ function initHostPeer() {
     c.on('data', (data) => {
       if (data.type === 'join') {
         memberCount++;
-        document.getElementById('wait-status').textContent = memberCount + ' คนอยู่ในห้องแล้ว';
-        const m = {type:'sys', text: data.name+' เข้าร่วมห้อง', time: ts()};
+        document.getElementById('wait-status').textContent = t('waitingPeople', {count: memberCount});
+        const m = {type:'sys', text: t('joinedRoom', {name: data.name}), time: ts()};
         addMsg('sys', m);
         broadcast(m, c.peer);
         updateMeta();
@@ -410,7 +610,7 @@ function initHostPeer() {
         broadcast(data, c.peer);
       } else if (data.type === 'leave') {
         memberCount = Math.max(1, memberCount-1);
-        const m = {type:'sys', text: data.name+' ออกจากห้อง', time: ts()};
+        const m = {type:'sys', text: t('leftRoom', {name: data.name}), time: ts()};
         addMsg('sys', m);
         broadcast(m, c.peer);
         delete connections[c.peer];
@@ -419,18 +619,18 @@ function initHostPeer() {
     });
     c.on('close', () => { delete connections[c.peer]; });
   });
-  peer.on('error', () => showToast('เกิดข้อผิดพลาด ลองใหม่อีกครั้ง'));
+  peer.on('error', () => showToast(t('genericError')));
 }
 
 function hostEnterChat() {
-  document.getElementById('chat-room-name').textContent = 'ห้อง ' + myRoom;
+  document.getElementById('chat-room-name').textContent = getRoomLabel(myRoom);
   updateMeta();
   setScreen('chat');
   setTimeout(() => document.getElementById('chat-input').focus(), 100);
 }
 
 function copyCode() {
-  if (navigator.clipboard) navigator.clipboard.writeText(myRoom).then(() => showToast('คัดลอกรหัสแล้ว ✓'));
+  if (navigator.clipboard) navigator.clipboard.writeText(myRoom).then(() => showToast(t('codeCopied')));
 }
 function cancelHost() {
   if(peer){peer.destroy();peer=null;}
@@ -444,8 +644,8 @@ function doJoin() {
   const name = document.getElementById('join-name').value.trim();
   const err = document.getElementById('join-err');
   err.style.display='none';
-  if (code.length < 6) { err.textContent='กรุณากรอกรหัส 6 หลักให้ครบ'; err.style.display='block'; return; }
-  if (!name) { err.textContent='กรุณากรอกชื่อของคุณ'; err.style.display='block'; return; }
+  if (code.length < 6) { err.textContent=t('errCode'); err.style.display='block'; return; }
+  if (!name) { err.textContent=t('errName'); err.style.display='block'; return; }
   myName=name; myRoom=code; isHost=false;
   closeSheet('sheet-join');
   connectToHost(code, name);
@@ -453,9 +653,9 @@ function doJoin() {
 
 function connectToHost(code, name) {
   const msgs = document.getElementById('messages');
-  msgs.innerHTML = '<div class="connecting"><div class="spinner"></div><div style="font-size:14px;color:var(--gray)">กำลังเชื่อมต่อ...</div></div>';
-  document.getElementById('chat-room-name').textContent = 'ห้อง ' + code;
-  document.getElementById('chat-meta').textContent = 'กำลังเชื่อมต่อ...';
+  msgs.innerHTML = '<div class="connecting"><div class="spinner"></div><div style="font-size:14px;color:var(--gray)">' + t('connectingInline') + '</div></div>';
+  document.getElementById('chat-room-name').textContent = getRoomLabel(code);
+  document.getElementById('chat-meta').textContent = t('connecting');
   setScreen('chat');
 
   peer = new Peer(undefined, {debug:0});
@@ -469,8 +669,8 @@ function connectToHost(code, name) {
     conn.on('open', () => {
       clearTimeout(joinTimeout);
       msgs.innerHTML = '';
-      addMsg('sys', {text:'เชื่อมต่อสำเร็จ 🎉', time:ts()});
-      document.getElementById('chat-meta').textContent = 'รหัส ' + code;
+      addMsg('sys', {text:t('connected'), time:ts()});
+      document.getElementById('chat-meta').textContent = t('roomCodePrefix') + code;
       conn.send({type:'join', name});
       setTimeout(() => document.getElementById('chat-input').focus(), 100);
     });
@@ -480,8 +680,8 @@ function connectToHost(code, name) {
       else if (data.type==='msg') addMsg('msg', data);
     });
     conn.on('close', () => {
-      addMsg('sys', {text:'การเชื่อมต่อถูกตัด', time:ts()});
-      document.getElementById('chat-meta').textContent = 'ออฟไลน์';
+      addMsg('sys', {text:t('disconnected'), time:ts()});
+      document.getElementById('chat-meta').textContent = t('disconnected');
     });
     conn.on('error', showJoinError);
   });
@@ -495,7 +695,7 @@ function showJoinError() {
   setScreen('home');
   openSheet('sheet-join');
   const err=document.getElementById('join-err');
-  err.textContent='ไม่พบห้องนี้ ตรวจสอบรหัสแล้วลองใหม่';
+  err.textContent=t('roomNotFound');
   err.style.display='block';
 }
 
@@ -529,7 +729,7 @@ function sendData(data) {
 
 function handleImg(input) {
   const file = input.files[0]; if(!file) return;
-  if (file.size > 5*1024*1024) { showToast('รูปใหญ่เกินไป (สูงสุด 5 MB)'); input.value=''; return; }
+  if (file.size > 5*1024*1024) { showToast(t('imageTooLarge')); input.value=''; return; }
   const reader = new FileReader();
   reader.onload = e => sendData({type:'msg', kind:'image', name:myName, dataUrl:e.target.result, time:ts()});
   reader.readAsDataURL(file); input.value='';
@@ -537,7 +737,7 @@ function handleImg(input) {
 
 function handleFile(input) {
   const file = input.files[0]; if(!file) return;
-  if (file.size > 10*1024*1024) { showToast('ไฟล์ใหญ่เกินไป (สูงสุด 10 MB)'); input.value=''; return; }
+  if (file.size > 10*1024*1024) { showToast(t('fileTooLarge')); input.value=''; return; }
   const reader = new FileReader();
   reader.onload = e => sendData({type:'msg', kind:'file', name:myName, dataUrl:e.target.result, fileName:file.name, fileSize:fmtSize(file.size), time:ts()});
   reader.readAsDataURL(file); input.value='';
@@ -561,6 +761,8 @@ function leaveChat() {
   document.getElementById('join-err').style.display='none';
   setScreen('home');
 }
+
+applyLanguage('en');
 </script>
 </body>
 </html>
