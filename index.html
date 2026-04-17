@@ -8,20 +8,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:          #FDF6F0;
-      --surface:     #FFFCF9;
-      --peach:       #F5C4A8;
-      --peach-mid:   #EDA882;
-      --peach-dark:  #C97A52;
-      --text:        #4A3728;
-      --text-mid:    #7A5C48;
-      --text-muted:  #A88B78;
-      --text-faint:  #CEBCB0;
-      --border:      #EDD8C8;
+      --bg: #FDF6F0;
+      --surface: #FFFCF9;
+      --peach: #F5C4A8;
+      --peach-dark: #C97A52;
+      --text: #4A3728;
+      --text-mid: #7A5C48;
+      --text-muted: #A88B78;
+      --text-faint: #CEBCB0;
+      --border: #EDD8C8;
       --border-soft: #F5E8DC;
-      --accent:      #E8896A;
-      --accent-light:#FDEEE8;
-      --radius:      18px;
+      --accent: #E8896A;
+      --accent-light: #FDEEE8;
+      --radius: 18px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -35,6 +34,7 @@
       font-size: 15px;
       line-height: 1.6;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
 
     .bg-blob {
@@ -48,6 +48,23 @@
     .blob1 { width: 480px; height: 480px; background: #F5C4A8; top: -140px; right: -100px; }
     .blob2 { width: 340px; height: 340px; background: #F2B8B8; bottom: 40px; left: -100px; }
     .blob3 { width: 220px; height: 220px; background: #E8D090; top: 45%; left: 32%; }
+
+    .float-deco {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.1;
+      font-size: 30px;
+      animation: floatY 7s ease-in-out infinite;
+    }
+    .float-deco:nth-of-type(4) { top: 14%; left: 3%; animation-delay: 0s; }
+    .float-deco:nth-of-type(5) { top: 58%; right: 2%; animation-delay: 2.5s; }
+    .float-deco:nth-of-type(6) { bottom: 18%; left: 6%; animation-delay: 5s; }
+
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
 
     header, main, footer { position: relative; z-index: 1; }
 
@@ -82,10 +99,13 @@
     }
 
     .brand-logo {
-      width: 38px; height: 38px;
+      width: 38px;
+      height: 38px;
       background: linear-gradient(135deg, #F5C4A8 0%, #F2B8B8 100%);
       border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 19px;
       box-shadow: 0 4px 14px rgba(232,137,106,0.28);
     }
@@ -99,7 +119,8 @@
 
     .brand-dot {
       display: inline-block;
-      width: 5px; height: 5px;
+      width: 5px;
+      height: 5px;
       background: var(--accent);
       border-radius: 50%;
       margin-left: 1px;
@@ -144,7 +165,11 @@
       box-shadow: 0 4px 12px rgba(232,137,106,0.28);
     }
 
-    .wrapper { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+    .wrapper {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
 
     .hero {
       padding: 52px 0 36px;
@@ -184,7 +209,9 @@
     .hero h1 .hi::after {
       content: '';
       position: absolute;
-      bottom: 4px; left: 0; right: 0;
+      bottom: 4px;
+      left: 0;
+      right: 0;
       height: 8px;
       background: var(--peach);
       opacity: 0.4;
@@ -228,7 +255,8 @@
     }
 
     .stat-dot {
-      width: 7px; height: 7px;
+      width: 7px;
+      height: 7px;
       border-radius: 50%;
       background: var(--accent);
     }
@@ -281,8 +309,10 @@
     .app-card::before {
       content: '';
       position: absolute;
-      top: -28px; right: -28px;
-      width: 72px; height: 72px;
+      top: -28px;
+      right: -28px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: #FDE8E8;
       opacity: 0.55;
@@ -295,7 +325,9 @@
       border-color: var(--peach);
     }
 
-    .app-card:hover::before { transform: scale(1.7); }
+    .app-card:hover::before {
+      transform: scale(1.7);
+    }
 
     .app-icon {
       width: 56px;
@@ -361,7 +393,8 @@
 
     .toast {
       position: fixed;
-      bottom: 28px; left: 50%;
+      bottom: 28px;
+      left: 50%;
       transform: translateX(-50%) translateY(80px);
       background: var(--text);
       color: #FDF6F0;
@@ -380,23 +413,6 @@
       opacity: 1;
     }
 
-    .float-deco {
-      position: fixed;
-      pointer-events: none;
-      z-index: 0;
-      opacity: 0.1;
-      font-size: 30px;
-      animation: floatY 7s ease-in-out infinite;
-    }
-    .float-deco:nth-child(1) { top: 14%; left: 3%; animation-delay: 0s; }
-    .float-deco:nth-child(2) { top: 58%; right: 2%; animation-delay: 2.5s; }
-    .float-deco:nth-child(3) { bottom: 18%; left: 6%; animation-delay: 5s; }
-
-    @keyframes floatY {
-      0%, 100% { transform: translateY(0); }
-      50% { transform: translateY(-18px); }
-    }
-
     @media (max-width: 720px) {
       .header-inner {
         padding: 12px 16px;
@@ -413,9 +429,7 @@
     @media (max-width: 640px) {
       .wrapper { padding: 0 16px; }
       .hero { padding: 36px 0 28px; }
-      .apps-grid {
-        grid-template-columns: 1fr;
-      }
+      .apps-grid { grid-template-columns: 1fr; }
       .app-card { padding: 16px 14px 14px; }
       .app-icon { width: 48px; height: 48px; font-size: 22px; }
       .app-name { font-size: 14px; }
@@ -427,7 +441,6 @@
   </style>
 </head>
 <body>
-
   <div class="bg-blob blob1"></div>
   <div class="bg-blob blob2"></div>
   <div class="bg-blob blob3"></div>
@@ -484,7 +497,7 @@
            href="https://taithai.app/temporary%20chat/"
            target="_blank"
            rel="noopener noreferrer"
-           onclick="openApp(event, 'taithai.app')">
+           onclick="openApp(event)">
           <div class="app-icon">💬</div>
           <div>
             <div class="app-name" id="appName"></div>
@@ -508,34 +521,34 @@
       en: {
         htmlLang: "en",
         pageTitle: "Taithai Apps 🌸",
-        heroBadge: "🎀 My app collection",
+        heroBadge: "🎀 Real app directory",
         heroTitle: `Welcome to<br><span class="hi">Taithai Apps</span>`,
-        heroDesc: "A clean landing page with one real app: Taithai Temporary Chat. Open taithai.app, create or join a room, and start chatting instantly.",
+        heroDesc: "This page features one real app: Taithai Temporary Chat. Open the app, create or join a room, and start chatting instantly through the direct link.",
         totalAppsLabel: "app",
         updatedTodayLabel: "Updated today",
         gridLabel: "Available app",
         appName: "Taithai Temporary Chat",
-        appDesc: "A real temporary chat app for quickly creating chat rooms, sharing room links, and chatting instantly without complicated setup. Just go to taithai.app, create a room or join one, and start chatting right away.",
+        appDesc: "A real temporary chat app for quickly creating chat rooms, sharing room links, and chatting instantly without complicated setup. Open the direct Temporary Chat page, enter a room or create one, and start chatting right away.",
         appTag: "💬 Real App",
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
-        openingApp: name => `Opening ${name}… 🌸`
+        openingApp: "Opening Taithai Temporary Chat… 🌸"
       },
       th: {
         htmlLang: "th",
         pageTitle: "Taithai Apps 🌸",
-        heroBadge: "🎀 แอปของฉัน",
+        heroBadge: "🎀 รวมแอปจริง",
         heroTitle: `ยินดีต้อนรับสู่<br><span class="hi">Taithai Apps</span>`,
-        heroDesc: "หน้าเว็บแบบเรียบง่ายที่มีเพียงแอปจริง 1 ตัว คือ Taithai Temporary Chat เข้า taithai.app แล้วสร้างห้องหรือเข้าห้อง เพื่อเริ่มแชตได้ทันที",
+        heroDesc: "หน้านี้แสดงแอปจริงเพียง 1 ตัว คือ Taithai Temporary Chat สามารถกดเข้าใช้งานผ่านลิงก์ตรง เพื่อเข้าห้องหรือสร้างห้องและเริ่มแชตได้ทันที",
         totalAppsLabel: "แอป",
         updatedTodayLabel: "อัปเดตล่าสุดวันนี้",
         gridLabel: "แอปที่ใช้งานได้",
         appName: "Taithai Temporary Chat",
-        appDesc: "แอปแชตชั่วคราวที่มีอยู่จริง ใช้สำหรับสร้างห้องแชตแบบรวดเร็ว แชร์ลิงก์ห้อง และคุยกันได้ทันทีโดยไม่ต้องตั้งค่าอะไรซับซ้อน เข้า taithai.app แล้วสร้างห้องหรือเข้าห้อง จากนั้นเริ่มแชตได้เลย",
+        appDesc: "แอปแชตชั่วคราวที่มีอยู่จริง ใช้สำหรับสร้างห้องแชตแบบรวดเร็ว แชร์ลิงก์ห้อง และคุยกันได้ทันทีโดยไม่ต้องตั้งค่าอะไรซับซ้อน เปิดหน้าลิงก์ Temporary Chat โดยตรง แล้วเข้าห้องหรือสร้างห้องเพื่อเริ่มแชตได้เลย",
         appTag: "💬 แอปจริง",
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
-        openingApp: name => `กำลังเปิด ${name}… 🌸`
+        openingApp: "กำลังเปิด Taithai Temporary Chat… 🌸"
       }
     };
 
@@ -568,11 +581,11 @@
       document.getElementById("yearInline").textContent = new Date().getFullYear();
     }
 
-    function openApp(e, name) {
-      const t = document.getElementById('toast');
-      t.textContent = i18n[currentLang].openingApp(name);
-      t.classList.add('show');
-      setTimeout(() => t.classList.remove('show'), 2200);
+    function openApp() {
+      const toast = document.getElementById("toast");
+      toast.textContent = i18n[currentLang].openingApp;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 2200);
     }
 
     renderLanguage();
