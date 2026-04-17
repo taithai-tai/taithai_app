@@ -23,8 +23,15 @@
       --radius: 18px;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
 
     body {
       font-family: 'Noto Sans Thai', 'Mitr', sans-serif;
@@ -45,9 +52,30 @@
       pointer-events: none;
       z-index: 0;
     }
-    .blob1 { width: 480px; height: 480px; background: #F5C4A8; top: -140px; right: -100px; }
-    .blob2 { width: 340px; height: 340px; background: #F2B8B8; bottom: 40px; left: -100px; }
-    .blob3 { width: 220px; height: 220px; background: #E8D090; top: 45%; left: 32%; }
+
+    .blob1 {
+      width: 480px;
+      height: 480px;
+      background: #F5C4A8;
+      top: -140px;
+      right: -100px;
+    }
+
+    .blob2 {
+      width: 340px;
+      height: 340px;
+      background: #F2B8B8;
+      bottom: 40px;
+      left: -100px;
+    }
+
+    .blob3 {
+      width: 220px;
+      height: 220px;
+      background: #E8D090;
+      top: 45%;
+      left: 32%;
+    }
 
     .float-deco {
       position: fixed;
@@ -57,19 +85,37 @@
       font-size: 30px;
       animation: floatY 7s ease-in-out infinite;
     }
-    .float-deco:nth-of-type(4) { top: 14%; left: 3%; animation-delay: 0s; }
-    .float-deco:nth-of-type(5) { top: 58%; right: 2%; animation-delay: 2.5s; }
-    .float-deco:nth-of-type(6) { bottom: 18%; left: 6%; animation-delay: 5s; }
+
+    .float-deco:nth-of-type(1) {
+      top: 14%;
+      left: 3%;
+      animation-delay: 0s;
+    }
+
+    .float-deco:nth-of-type(2) {
+      top: 58%;
+      right: 2%;
+      animation-delay: 2.5s;
+    }
+
+    .float-deco:nth-of-type(3) {
+      bottom: 18%;
+      left: 6%;
+      animation-delay: 5s;
+    }
 
     @keyframes floatY {
       0%, 100% { transform: translateY(0); }
       50% { transform: translateY(-18px); }
     }
 
-    header, main, footer { position: relative; z-index: 1; }
+    header, main, footer {
+      position: relative;
+      z-index: 1;
+    }
 
     header {
-      background: rgba(253,246,240,0.82);
+      background: rgba(253, 246, 240, 0.82);
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
       border-bottom: 1.5px solid var(--border-soft);
@@ -82,11 +128,11 @@
       max-width: 980px;
       margin: 0 auto;
       padding: 0 24px;
+      min-height: 64px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      min-height: 64px;
       flex-wrap: wrap;
     }
 
@@ -107,7 +153,7 @@
       align-items: center;
       justify-content: center;
       font-size: 19px;
-      box-shadow: 0 4px 14px rgba(232,137,106,0.28);
+      box-shadow: 0 4px 14px rgba(232, 137, 106, 0.28);
     }
 
     .brand-name {
@@ -162,7 +208,7 @@
     .lang-btn.active {
       background: var(--accent);
       color: white;
-      box-shadow: 0 4px 12px rgba(232,137,106,0.28);
+      box-shadow: 0 4px 12px rgba(232, 137, 106, 0.28);
     }
 
     .wrapper {
@@ -304,6 +350,7 @@
       transition: transform 0.22s cubic-bezier(.34,1.4,.64,1), box-shadow 0.22s, border-color 0.2s;
       position: relative;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .app-card::before {
@@ -386,7 +433,8 @@
       gap: 10px;
     }
 
-    .footer-left, .footer-right {
+    .footer-left,
+    .footer-right {
       font-size: 13px;
       color: var(--text-faint);
     }
@@ -427,16 +475,37 @@
     }
 
     @media (max-width: 640px) {
-      .wrapper { padding: 0 16px; }
-      .hero { padding: 36px 0 28px; }
-      .apps-grid { grid-template-columns: 1fr; }
-      .app-card { padding: 16px 14px 14px; }
-      .app-icon { width: 48px; height: 48px; font-size: 22px; }
-      .app-name { font-size: 14px; }
+      .wrapper {
+        padding: 0 16px;
+      }
+
+      .hero {
+        padding: 36px 0 28px;
+      }
+
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .app-card {
+        padding: 16px 14px 14px;
+      }
+
+      .app-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 22px;
+      }
+
+      .app-name {
+        font-size: 14px;
+      }
     }
 
     @media (max-width: 380px) {
-      .brand-name { display: none; }
+      .brand-name {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -453,7 +522,7 @@
 
   <header>
     <div class="header-inner">
-      <a class="brand" href="#">
+      <a class="brand" href="javascript:void(0)">
         <div class="brand-logo">🌸</div>
         <span class="brand-name">Taithai<span class="brand-dot"></span></span>
       </a>
@@ -493,11 +562,11 @@
       </div>
 
       <div class="apps-grid">
-        <a class="app-card"
-           href="https://taithai.app/temporary%20chat/"
-           target="_blank"
-           rel="noopener noreferrer"
-           onclick="openApp(event)">
+        <a
+          class="app-card"
+          href="javascript:void(0)"
+          onclick="goToTemporaryChat()"
+        >
           <div class="app-icon">💬</div>
           <div>
             <div class="app-name" id="appName"></div>
@@ -517,38 +586,40 @@
   </footer>
 
   <script>
+    const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
+
     const i18n = {
       en: {
         htmlLang: "en",
         pageTitle: "Taithai Apps 🌸",
-        heroBadge: "🎀 Real app directory",
+        heroBadge: "🎀 My app",
         heroTitle: `Welcome to<br><span class="hi">Taithai Apps</span>`,
-        heroDesc: "This page features one real app: Taithai Temporary Chat. Open the app, create or join a room, and start chatting instantly through the direct link.",
+        heroDesc: "A clean page featuring one real app: Taithai Temporary Chat. Open the app, create or join a room, and start chatting instantly.",
         totalAppsLabel: "app",
         updatedTodayLabel: "Updated today",
         gridLabel: "Available app",
         appName: "Taithai Temporary Chat",
-        appDesc: "A real temporary chat app for quickly creating chat rooms, sharing room links, and chatting instantly without complicated setup. Open the direct Temporary Chat page, enter a room or create one, and start chatting right away.",
+        appDesc: "A real temporary chat app for quickly creating chat rooms, sharing a room link, and chatting instantly without a complicated setup. Just open the app, create a room or join one, and start chatting right away.",
         appTag: "💬 Real App",
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
-        openingApp: "Opening Taithai Temporary Chat… 🌸"
+        openingText: "Opening Taithai Temporary Chat… 🌸"
       },
       th: {
         htmlLang: "th",
         pageTitle: "Taithai Apps 🌸",
-        heroBadge: "🎀 รวมแอปจริง",
+        heroBadge: "🎀 แอปของฉัน",
         heroTitle: `ยินดีต้อนรับสู่<br><span class="hi">Taithai Apps</span>`,
-        heroDesc: "หน้านี้แสดงแอปจริงเพียง 1 ตัว คือ Taithai Temporary Chat สามารถกดเข้าใช้งานผ่านลิงก์ตรง เพื่อเข้าห้องหรือสร้างห้องและเริ่มแชตได้ทันที",
+        heroDesc: "หน้าเว็บแบบเรียบง่ายที่มีเพียงแอปจริง 1 ตัว คือ Taithai Temporary Chat เปิดแอปแล้วสร้างห้องหรือเข้าห้อง เพื่อเริ่มแชตได้ทันที",
         totalAppsLabel: "แอป",
         updatedTodayLabel: "อัปเดตล่าสุดวันนี้",
         gridLabel: "แอปที่ใช้งานได้",
         appName: "Taithai Temporary Chat",
-        appDesc: "แอปแชตชั่วคราวที่มีอยู่จริง ใช้สำหรับสร้างห้องแชตแบบรวดเร็ว แชร์ลิงก์ห้อง และคุยกันได้ทันทีโดยไม่ต้องตั้งค่าอะไรซับซ้อน เปิดหน้าลิงก์ Temporary Chat โดยตรง แล้วเข้าห้องหรือสร้างห้องเพื่อเริ่มแชตได้เลย",
+        appDesc: "แอปแชตชั่วคราวที่มีอยู่จริง ใช้สำหรับสร้างห้องแชตแบบรวดเร็ว แชร์ลิงก์ห้อง และคุยกันได้ทันทีโดยไม่ต้องตั้งค่าอะไรซับซ้อน เพียงเปิดแอป สร้างห้องหรือเข้าห้อง แล้วเริ่มแชตได้เลย",
         appTag: "💬 แอปจริง",
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
-        openingApp: "กำลังเปิด Taithai Temporary Chat… 🌸"
+        openingText: "กำลังเปิด Taithai Temporary Chat… 🌸"
       }
     };
 
@@ -562,6 +633,7 @@
 
     function renderLanguage() {
       const t = i18n[currentLang];
+
       document.documentElement.lang = t.htmlLang;
       document.title = t.pageTitle;
 
@@ -581,11 +653,14 @@
       document.getElementById("yearInline").textContent = new Date().getFullYear();
     }
 
-    function openApp() {
+    function goToTemporaryChat() {
       const toast = document.getElementById("toast");
-      toast.textContent = i18n[currentLang].openingApp;
+      toast.textContent = i18n[currentLang].openingText;
       toast.classList.add("show");
-      setTimeout(() => toast.classList.remove("show"), 2200);
+
+      setTimeout(() => {
+        window.location.href = TEMP_CHAT_URL;
+      }, 250);
     }
 
     renderLanguage();
