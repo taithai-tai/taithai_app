@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taithai Apps 🌸</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:          #FDF6F0;
+      --surface:     #FFFCF9;
+      --peach:       #F5C4A8;
+      --peach-mid:   #EDA882;
+      --peach-dark:  #C97A52;
+      --text:        #4A3728;
+      --text-mid:    #7A5C48;
+      --text-muted:  #A88B78;
+      --text-faint:  #CEBCB0;
+      --border:      #EDD8C8;
+      --border-soft: #F5E8DC;
+      --accent:      #E8896A;
+      --accent-light:#FDEEE8;
+      --radius:      18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Noto Sans Thai', 'Mitr', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .bg-blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob1 { width: 480px; height: 480px; background: #F5C4A8; top: -140px; right: -100px; }
+    .blob2 { width: 340px; height: 340px; background: #F2B8B8; bottom: 40px; left: -100px; }
+    .blob3 { width: 220px; height: 220px; background: #E8D090; top: 45%; left: 32%; }
+
+    header, main, footer { position: relative; z-index: 1; }
+
+    header {
+      background: rgba(253,246,240,0.82);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border-bottom: 1.5px solid var(--border-soft);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 64px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      flex-shrink: 0;
+    }
+
+    .brand-logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, #F5C4A8 0%, #F2B8B8 100%);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 19px;
+      box-shadow: 0 4px 14px rgba(232,137,106,0.28);
+    }
+
+    .brand-name {
+      font-family: 'Mitr', sans-serif;
+      font-size: 17px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .brand-dot {
+      display: inline-block;
+      width: 5px; height: 5px;
+      background: var(--accent);
+      border-radius: 50%;
+      margin-left: 1px;
+      vertical-align: middle;
+      margin-bottom: 2px;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: auto;
+      flex-wrap: wrap;
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 999px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .lang-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-mid);
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .lang-btn.active {
+      background: var(--accent);
+      color: white;
+      box-shadow: 0 4px 12px rgba(232,137,106,0.28);
+    }
+
+    .wrapper { max-width: 980px; margin: 0 auto; padding: 0 24px; }
+
+    .hero {
+      padding: 52px 0 36px;
+      text-align: center;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-light);
+      border: 1.5px solid var(--peach);
+      border-radius: 40px;
+      padding: 5px 16px;
+      font-size: 12px;
+      color: var(--peach-dark);
+      font-weight: 500;
+      margin-bottom: 18px;
+    }
+
+    .hero h1 {
+      font-family: 'Mitr', sans-serif;
+      font-size: clamp(28px, 5.5vw, 44px);
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+
+    .hero h1 .hi {
+      color: var(--accent);
+      position: relative;
+      display: inline-block;
+    }
+
+    .hero h1 .hi::after {
+      content: '';
+      position: absolute;
+      bottom: 4px; left: 0; right: 0;
+      height: 8px;
+      background: var(--peach);
+      opacity: 0.4;
+      border-radius: 4px;
+      z-index: -1;
+    }
+
+    .hero p {
+      font-size: 15px;
+      color: var(--text-muted);
+      max-width: 620px;
+      margin: 0 auto 28px;
+      font-weight: 300;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1.5px solid var(--border-soft);
+      border-radius: 40px;
+      padding: 7px 16px;
+      font-size: 13px;
+      color: var(--text-mid);
+    }
+
+    .stat-num {
+      font-family: 'Mitr', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .stat-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .section-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--text-faint);
+      white-space: nowrap;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-soft);
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: minmax(260px, 420px);
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 56px;
+    }
+
+    .app-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border-soft);
+      border-radius: var(--radius);
+      padding: 22px 20px 18px;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      transition: transform 0.22s cubic-bezier(.34,1.4,.64,1), box-shadow 0.22s, border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .app-card::before {
+      content: '';
+      position: absolute;
+      top: -28px; right: -28px;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      background: #FDE8E8;
+      opacity: 0.55;
+      transition: transform 0.3s ease;
+    }
+
+    .app-card:hover {
+      transform: translateY(-5px) scale(1.01);
+      box-shadow: 0 10px 32px rgba(185,110,80,0.13);
+      border-color: var(--peach);
+    }
+
+    .app-card:hover::before { transform: scale(1.7); }
+
+    .app-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 26px;
+      background: #FDE8E8;
+      position: relative;
+      z-index: 1;
+    }
+
+    .app-name {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .app-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    .app-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 40px;
+      font-weight: 500;
+      margin-top: auto;
+      width: fit-content;
+      background: #FDE8E8;
+      color: #B85050;
+    }
+
+    footer {
+      border-top: 1.5px solid var(--border-soft);
+      padding: 22px 0;
+    }
+
+    .footer-inner {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 0 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .footer-left, .footer-right {
+      font-size: 13px;
+      color: var(--text-faint);
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 28px; left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text);
+      color: #FDF6F0;
+      padding: 10px 22px;
+      border-radius: 40px;
+      font-size: 13px;
+      z-index: 999;
+      transition: transform 0.3s cubic-bezier(.34,1.3,.64,1), opacity 0.3s;
+      opacity: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+
+    .toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .float-deco {
+      position: fixed;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.1;
+      font-size: 30px;
+      animation: floatY 7s ease-in-out infinite;
+    }
+    .float-deco:nth-child(1) { top: 14%; left: 3%; animation-delay: 0s; }
+    .float-deco:nth-child(2) { top: 58%; right: 2%; animation-delay: 2.5s; }
+    .float-deco:nth-child(3) { bottom: 18%; left: 6%; animation-delay: 5s; }
+
+    @keyframes floatY {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-18px); }
+    }
+
+    @media (max-width: 720px) {
+      .header-inner {
+        padding: 12px 16px;
+        align-items: flex-start;
+      }
+
+      .header-actions {
+        width: 100%;
+        justify-content: flex-end;
+        margin-left: 0;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .wrapper { padding: 0 16px; }
+      .hero { padding: 36px 0 28px; }
+      .apps-grid {
+        grid-template-columns: 1fr;
+      }
+      .app-card { padding: 16px 14px 14px; }
+      .app-icon { width: 48px; height: 48px; font-size: 22px; }
+      .app-name { font-size: 14px; }
+    }
+
+    @media (max-width: 380px) {
+      .brand-name { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="bg-blob blob1"></div>
+  <div class="bg-blob blob2"></div>
+  <div class="bg-blob blob3"></div>
+
+  <div class="float-deco">🌸</div>
+  <div class="float-deco">🌷</div>
+  <div class="float-deco">✿</div>
+
+  <div class="toast" id="toast"></div>
+
+  <header>
+    <div class="header-inner">
+      <a class="brand" href="#">
+        <div class="brand-logo">🌸</div>
+        <span class="brand-name">Taithai<span class="brand-dot"></span></span>
+      </a>
+
+      <div class="header-actions">
+        <div class="lang-switch">
+          <button class="lang-btn active" id="langEnBtn" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" id="langThBtn" onclick="setLanguage('th')">ไทย</button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrapper">
+      <section class="hero">
+        <div class="hero-badge" id="heroBadge"></div>
+        <h1 id="heroTitle"></h1>
+        <p id="heroDesc"></p>
+      </section>
+
+      <div class="stats-bar">
+        <div class="stat-pill">
+          <div class="stat-dot"></div>
+          <span class="stat-num">1</span>
+          <span id="totalAppsLabel"></span>
+        </div>
+        <div class="stat-pill">
+          <span>🕐</span>
+          <span id="updatedTodayLabel"></span>
+        </div>
+      </div>
+
+      <div class="section-head">
+        <span class="section-label" id="gridLabel"></span>
+        <div class="section-line"></div>
+      </div>
+
+      <div class="apps-grid">
+        <a class="app-card"
+           href="https://taithai.app"
+           target="_blank"
+           rel="noopener noreferrer"
+           onclick="openApp(event, 'taithai.app')">
+          <div class="app-icon">💬</div>
+          <div>
+            <div class="app-name" id="appName"></div>
+            <div class="app-desc" id="appDesc"></div>
+          </div>
+          <span class="app-tag" id="appTag"></span>
+        </a>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left" id="footerLeft"></div>
+      <div class="footer-right" id="footerRight"></div>
+    </div>
+  </footer>
+
+  <script>
+    const i18n = {
+      en: {
+        htmlLang: "en",
+        pageTitle: "Taithai Apps 🌸",
+        heroBadge: "🎀 My app collection",
+        heroTitle: `Welcome to<br><span class="hi">Taithai Apps</span>`,
+        heroDesc: "A clean landing page with one real app: Taithai Temporary Chat. Open taithai.app, create or join a room, and start chatting instantly.",
+        totalAppsLabel: "app",
+        updatedTodayLabel: "Updated today",
+        gridLabel: "Available app",
+        appName: "Taithai Temporary Chat",
+        appDesc: "A real temporary chat app for quickly creating chat rooms, sharing room links, and chatting instantly without complicated setup. Just go to taithai.app, create a room or join one, and start chatting right away.",
+        appTag: "💬 Real App",
+        footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
+        footerRight: "Made with love ♡",
+        openingApp: name => `Opening ${name}… 🌸`
+      },
+      th: {
+        htmlLang: "th",
+        pageTitle: "Taithai Apps 🌸",
+        heroBadge: "🎀 แอปของฉัน",
+        heroTitle: `ยินดีต้อนรับสู่<br><span class="hi">Taithai Apps</span>`,
+        heroDesc: "หน้าเว็บแบบเรียบง่ายที่มีเพียงแอปจริง 1 ตัว คือ Taithai Temporary Chat เข้า taithai.app แล้วสร้างห้องหรือเข้าห้อง เพื่อเริ่มแชตได้ทันที",
+        totalAppsLabel: "แอป",
+        updatedTodayLabel: "อัปเดตล่าสุดวันนี้",
+        gridLabel: "แอปที่ใช้งานได้",
+        appName: "Taithai Temporary Chat",
+        appDesc: "แอปแชตชั่วคราวที่มีอยู่จริง ใช้สำหรับสร้างห้องแชตแบบรวดเร็ว แชร์ลิงก์ห้อง และคุยกันได้ทันทีโดยไม่ต้องตั้งค่าอะไรซับซ้อน เข้า taithai.app แล้วสร้างห้องหรือเข้าห้อง จากนั้นเริ่มแชตได้เลย",
+        appTag: "💬 แอปจริง",
+        footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
+        footerRight: "สร้างด้วยความรัก ♡",
+        openingApp: name => `กำลังเปิด ${name}… 🌸`
+      }
+    };
+
+    let currentLang = localStorage.getItem("taithaiLang") || "en";
+
+    function setLanguage(lang) {
+      currentLang = lang;
+      localStorage.setItem("taithaiLang", lang);
+      renderLanguage();
+    }
+
+    function renderLanguage() {
+      const t = i18n[currentLang];
+      document.documentElement.lang = t.htmlLang;
+      document.title = t.pageTitle;
+
+      document.getElementById("heroBadge").textContent = t.heroBadge;
+      document.getElementById("heroTitle").innerHTML = t.heroTitle;
+      document.getElementById("heroDesc").textContent = t.heroDesc;
+      document.getElementById("totalAppsLabel").textContent = t.totalAppsLabel;
+      document.getElementById("updatedTodayLabel").textContent = t.updatedTodayLabel;
+      document.getElementById("gridLabel").textContent = t.gridLabel;
+      document.getElementById("appName").textContent = t.appName;
+      document.getElementById("appDesc").textContent = t.appDesc;
+      document.getElementById("appTag").textContent = t.appTag;
+      document.getElementById("footerLeft").innerHTML = t.footerLeft;
+      document.getElementById("footerRight").textContent = t.footerRight;
+      document.getElementById("langEnBtn").classList.toggle("active", currentLang === "en");
+      document.getElementById("langThBtn").classList.toggle("active", currentLang === "th");
+      document.getElementById("yearInline").textContent = new Date().getFullYear();
+    }
+
+    function openApp(e, name) {
+      const t = document.getElementById('toast');
+      t.textContent = i18n[currentLang].openingApp(name);
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    renderLanguage();
+  </script>
+</body>
+</html>
