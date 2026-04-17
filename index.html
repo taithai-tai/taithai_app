@@ -1,293 +1,297 @@
 
 <style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { font-family: var(--font-sans); color: var(--color-text-primary); }
-.page { display: none; padding: 2rem 1rem; min-height: 500px; }
-.page.active { display: flex; flex-direction: column; align-items: center; justify-content: center; }
-.chat-page { display: none; flex-direction: column; height: 560px; }
-.chat-page.active { display: flex; }
+*{box-sizing:border-box;margin:0;padding:0}
+.app{font-family:var(--font-sans);color:var(--color-text-primary);min-height:560px}
+.screen{display:none}
+.screen.active{display:flex;flex-direction:column}
 
-h1 { font-size: 22px; font-weight: 500; margin-bottom: 0.5rem; text-align: center; }
-.subtitle { font-size: 14px; color: var(--color-text-secondary); margin-bottom: 2rem; text-align: center; }
+.home-screen{align-items:center;justify-content:center;min-height:560px;padding:2rem}
+.chat-screen{height:580px}
 
-.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 20px; border-radius: var(--border-radius-md); border: 0.5px solid var(--color-border-secondary); background: var(--color-background-primary); color: var(--color-text-primary); font-size: 15px; cursor: pointer; font-family: var(--font-sans); width: 100%; max-width: 280px; transition: background 0.15s; }
-.btn:hover { background: var(--color-background-secondary); }
-.btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border-color: var(--color-text-primary); }
-.btn-primary:hover { opacity: 0.85; }
-.btn-sm { padding: 7px 14px; font-size: 13px; max-width: none; width: auto; }
+.logo-mark{width:52px;height:52px;border-radius:16px;background:#534AB7;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem}
+.logo-mark svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app-name{font-size:22px;font-weight:500;text-align:center;margin-bottom:6px}
+.app-tagline{font-size:14px;color:var(--color-text-secondary);text-align:center;margin-bottom:2.5rem}
 
-.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1.5rem; width: 100%; max-width: 320px; }
+.btn-group{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;border-radius:10px;border:0.5px solid var(--color-border-secondary);background:var(--color-background-primary);color:var(--color-text-primary);font-size:15px;cursor:pointer;font-family:var(--font-sans);width:100%;transition:background 0.12s,opacity 0.12s}
+.btn:hover{background:var(--color-background-secondary)}
+.btn:active{opacity:0.75}
+.btn-purple{background:#534AB7;color:#fff;border-color:#534AB7}
+.btn-purple:hover{background:#3C3489;border-color:#3C3489}
+.btn-sm{padding:7px 14px;font-size:13px;width:auto;border-radius:8px}
 
-.room-code { font-size: 32px; font-weight: 500; letter-spacing: 6px; text-align: center; padding: 1rem; background: var(--color-background-secondary); border-radius: var(--border-radius-md); margin: 1rem 0; font-family: var(--font-mono); }
+.modal-wrap{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.3);z-index:10;padding:1rem}
+.modal{background:var(--color-background-primary);border-radius:16px;border:0.5px solid var(--color-border-tertiary);padding:1.5rem;width:100%;max-width:320px}
+.modal-title{font-size:17px;font-weight:500;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--color-text-secondary);margin-bottom:1.25rem}
 
-.input { width: 100%; padding: 9px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); font-size: 15px; font-family: var(--font-sans); background: var(--color-background-primary); color: var(--color-text-primary); outline: none; }
-.input:focus { border-color: var(--color-border-primary); }
-.input-code { letter-spacing: 4px; font-family: var(--font-mono); font-size: 20px; text-align: center; text-transform: uppercase; }
+.field{margin-bottom:12px}
+.field label{font-size:12px;font-weight:500;color:var(--color-text-secondary);letter-spacing:0.4px;margin-bottom:5px;display:block;text-transform:uppercase}
+.field input{width:100%;padding:10px 12px;border:0.5px solid var(--color-border-secondary);border-radius:8px;font-size:15px;font-family:var(--font-sans);background:var(--color-background-primary);color:var(--color-text-primary);outline:none;transition:border-color 0.15s}
+.field input:focus{border-color:#534AB7;box-shadow:0 0 0 3px #EEEDFE}
+.code-input{letter-spacing:6px;font-family:var(--font-mono);font-size:20px;text-align:center;text-transform:uppercase}
+.err{font-size:12px;color:#A32D2D;margin-top:6px}
 
-label { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 6px; display: block; }
+.modal-actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
 
-.chat-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
-.chat-header-left { display: flex; flex-direction: column; }
-.chat-title { font-size: 15px; font-weight: 500; }
-.chat-code-badge { font-size: 11px; color: var(--color-text-secondary); font-family: var(--font-mono); letter-spacing: 2px; margin-top: 2px; }
-.online-badge { font-size: 12px; color: var(--color-text-secondary); }
+.room-code-display{font-size:34px;font-weight:500;letter-spacing:8px;text-align:center;font-family:var(--font-mono);color:#534AB7;padding:1rem;background:#EEEDFE;border-radius:10px;margin:12px 0;cursor:pointer;transition:background 0.12s}
+.room-code-display:hover{background:#CECBF6}
+.copy-hint{font-size:12px;color:var(--color-text-secondary);text-align:center;margin-bottom:4px}
+.waiting-pill{display:inline-flex;align-items:center;gap:6px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:20px;padding:6px 14px;font-size:13px;color:var(--color-text-secondary);margin:12px auto 0;width:fit-content}
+.dot{width:7px;height:7px;border-radius:50%;background:#1D9E75}
 
-.messages { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; background: var(--color-background-secondary); }
-.msg-row { display: flex; flex-direction: column; }
-.msg-row.me { align-items: flex-end; }
-.msg-row.other { align-items: flex-start; }
-.msg-name { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 3px; padding: 0 6px; }
-.msg-bubble { max-width: 72%; padding: 8px 12px; border-radius: 16px; font-size: 14px; line-height: 1.5; word-break: break-word; }
-.msg-row.me .msg-bubble { background: var(--color-text-primary); color: var(--color-background-primary); border-bottom-right-radius: 4px; }
-.msg-row.other .msg-bubble { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-bottom-left-radius: 4px; }
-.msg-time { font-size: 10px; color: var(--color-text-secondary); margin-top: 3px; padding: 0 6px; }
-.system-msg { text-align: center; font-size: 12px; color: var(--color-text-tertiary); padding: 4px 0; }
+.chat-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.chat-header-info{display:flex;flex-direction:column}
+.room-label{font-size:12px;color:var(--color-text-secondary);letter-spacing:0.5px;margin-bottom:1px}
+.room-code-badge{font-family:var(--font-mono);font-size:16px;font-weight:500;letter-spacing:3px;color:#534AB7}
+.members-pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--color-text-secondary);background:var(--color-background-secondary);border-radius:20px;padding:4px 10px;border:0.5px solid var(--color-border-tertiary)}
+.online-dot{width:6px;height:6px;border-radius:50%;background:#1D9E75}
 
-.chat-input-area { display: flex; gap: 8px; padding: 10px 16px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); }
-.chat-input { flex: 1; padding: 8px 12px; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; font-size: 14px; font-family: var(--font-sans); background: var(--color-background-primary); color: var(--color-text-primary); outline: none; }
-.chat-input:focus { border-color: var(--color-border-primary); }
-.send-btn { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--color-text-primary); color: var(--color-background-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-.send-btn:hover { opacity: 0.8; }
-.send-btn svg { width: 16px; height: 16px; }
+.messages{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--color-background-tertiary)}
+.msg-row{display:flex;flex-direction:column}
+.msg-row.me{align-items:flex-end}
+.msg-row.other{align-items:flex-start}
+.msg-name{font-size:11px;font-weight:500;color:var(--color-text-secondary);margin-bottom:3px;padding:0 4px}
+.bubble-wrap{display:flex;align-items:flex-end;gap:6px}
+.msg-row.other .bubble-wrap{flex-direction:row}
+.msg-row.me .bubble-wrap{flex-direction:row-reverse}
+.avatar-sm{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:#EEEDFE;color:#534AB7}
+.msg-bubble{max-width:68%;padding:9px 13px;border-radius:16px;font-size:14px;line-height:1.55;word-break:break-word}
+.msg-row.me .msg-bubble{background:#534AB7;color:#fff;border-bottom-right-radius:4px}
+.msg-row.other .msg-bubble{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-bottom-left-radius:4px}
+.msg-time{font-size:10px;color:var(--color-text-tertiary,var(--color-text-secondary));margin-top:3px;padding:0 4px}
+.sys-msg{text-align:center;font-size:12px;color:var(--color-text-secondary);padding:2px 0;display:flex;align-items:center;justify-content:center;gap:8px}
+.sys-msg::before,.sys-msg::after{content:'';flex:1;height:0.5px;background:var(--color-border-tertiary)}
 
-.divider { width: 100%; max-width: 280px; height: 0.5px; background: var(--color-border-tertiary); margin: 1rem 0; }
-.error { font-size: 13px; color: var(--color-text-danger, #c0392b); margin-top: 8px; text-align: center; }
-.gap { margin-bottom: 12px; }
-.copy-tip { font-size: 12px; color: var(--color-text-secondary); text-align: center; cursor: pointer; padding: 4px; }
-.copy-tip:hover { color: var(--color-text-primary); }
-.waiting-msg { font-size: 13px; color: var(--color-text-secondary); text-align: center; margin-top: 4px; }
-.avatar { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 500; background: var(--color-background-info, #E6F1FB); color: var(--color-text-info, #185FA5); flex-shrink: 0; }
+.input-bar{display:flex;align-items:center;gap:8px;padding:10px 14px;border-top:0.5px solid var(--color-border-tertiary);background:var(--color-background-primary)}
+.msg-input{flex:1;padding:9px 14px;border:0.5px solid var(--color-border-secondary);border-radius:22px;font-size:14px;font-family:var(--font-sans);background:var(--color-background-secondary);color:var(--color-text-primary);outline:none;transition:border-color 0.15s}
+.msg-input:focus{border-color:#534AB7;background:var(--color-background-primary)}
+.send-btn{width:38px;height:38px;border-radius:50%;border:none;background:#534AB7;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.12s}
+.send-btn:hover{background:#3C3489}
+.send-btn:active{transform:scale(0.95)}
+.send-btn svg{width:16px;height:16px}
+
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}
+.relative{position:relative}
 </style>
 
-<h2 class="sr-only">ระบบห้องแชทชั่วคราว — สร้างหรือเข้าร่วมห้องด้วยรหัส 6 หลัก</h2>
+<h2 class="sr-only">Temp Chat — ระบบห้องแชทชั่วคราว สร้างหรือเข้าร่วมห้องด้วยรหัส 6 หลัก</h2>
 
-<div id="home-page" class="page active">
-  <h1>Temp Chat</h1>
-  <p class="subtitle">ห้องแชทชั่วคราว ไม่เก็บข้อมูล</p>
-  <button class="btn btn-primary gap" onclick="showCreate()">+ สร้างห้องใหม่</button>
-  <div class="divider"></div>
-  <button class="btn" onclick="showJoin()">เข้าร่วมห้อง</button>
-</div>
+<div class="app relative" id="app">
 
-<div id="create-page" class="page">
-  <div class="card">
-    <h1 style="font-size:18px;margin-bottom:4px;">สร้างห้องแชท</h1>
-    <p class="subtitle" style="margin-bottom:1.2rem;">ตั้งชื่อของคุณก่อนเข้าห้อง</p>
-    <label>ชื่อของคุณ</label>
-    <input id="create-name" class="input gap" placeholder="เช่น มินตรา" maxlength="20" />
-    <div style="margin-top:4px;"></div>
-    <button class="btn btn-primary" onclick="createRoom()" style="max-width:none;">สร้างห้อง</button>
-    <button class="btn" onclick="showHome()" style="max-width:none;margin-top:8px;">ย้อนกลับ</button>
+<div id="home" class="screen active home-screen">
+  <div class="logo-mark">
+    <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
   </div>
-</div>
-
-<div id="join-page" class="page">
-  <div class="card">
-    <h1 style="font-size:18px;margin-bottom:4px;">เข้าร่วมห้อง</h1>
-    <p class="subtitle" style="margin-bottom:1.2rem;">กรอกรหัสห้องและชื่อของคุณ</p>
-    <label>รหัสห้อง (6 หลัก)</label>
-    <input id="join-code" class="input input-code gap" placeholder="ABC123" maxlength="6" />
-    <div style="margin-top:12px;"></div>
-    <label>ชื่อของคุณ</label>
-    <input id="join-name" class="input gap" placeholder="เช่น พีท" maxlength="20" />
-    <div id="join-error" class="error" style="display:none;"></div>
-    <div style="margin-top:4px;"></div>
-    <button class="btn btn-primary" onclick="joinRoom()" style="max-width:none;">เข้าร่วม</button>
-    <button class="btn" onclick="showHome()" style="max-width:none;margin-top:8px;">ย้อนกลับ</button>
-  </div>
-</div>
-
-<div id="waiting-page" class="page">
-  <div class="card" style="text-align:center;">
-    <p style="font-size:13px;color:var(--color-text-secondary);margin-bottom:4px;">รหัสห้อง</p>
-    <div class="room-code" id="display-code"></div>
-    <p class="copy-tip" onclick="copyCode()" id="copy-tip">แตะเพื่อคัดลอกรหัส</p>
-    <p style="font-size:13px;color:var(--color-text-secondary);margin:12px 0 4px;">แชร์รหัสนี้ให้เพื่อนเข้าร่วม</p>
-    <div id="waiting-status" class="waiting-msg">รอผู้เข้าร่วม...</div>
-    <button class="btn btn-primary" onclick="enterChat()" style="max-width:none;margin-top:16px;" id="start-chat-btn">เริ่มแชทได้เลย</button>
-    <button class="btn" onclick="leaveRoom()" style="max-width:none;margin-top:8px;">ยกเลิกห้อง</button>
-  </div>
-</div>
-
-<div id="chat-page" class="chat-page">
-  <div class="chat-header">
-    <div class="chat-header-left">
-      <span class="chat-title" id="chat-room-title">ห้อง</span>
-      <span class="chat-code-badge" id="chat-code-display"></span>
-    </div>
-    <div style="display:flex;align-items:center;gap:10px;">
-      <span class="online-badge" id="online-count"></span>
-      <button class="btn btn-sm" onclick="leaveRoom()">ออก</button>
-    </div>
-  </div>
-  <div class="messages" id="messages"></div>
-  <div class="chat-input-area">
-    <input class="chat-input" id="chat-input" placeholder="พิมพ์ข้อความ..." maxlength="500" onkeydown="if(event.key==='Enter')sendMessage()" />
-    <button class="send-btn" onclick="sendMessage()">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <line x1="22" y1="2" x2="11" y2="13"></line>
-        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-      </svg>
+  <div class="app-name">Temp Chat</div>
+  <div class="app-tagline">ห้องแชทชั่วคราว ไม่เก็บประวัติ</div>
+  <div class="btn-group">
+    <button class="btn btn-purple" onclick="openModal('modal-create')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      สร้างห้องใหม่
+    </button>
+    <button class="btn" onclick="openModal('modal-join')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+      เข้าร่วมห้อง
     </button>
   </div>
 </div>
 
+<div id="modal-create" class="modal-wrap" style="display:none">
+  <div class="modal">
+    <div class="modal-title">สร้างห้องแชท</div>
+    <div class="modal-sub">ตั้งชื่อของคุณก่อนเข้าห้อง</div>
+    <div class="field">
+      <label>ชื่อของคุณ</label>
+      <input id="create-name" placeholder="เช่น มินตรา" maxlength="20" onkeydown="if(event.key==='Enter')createRoom()" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-purple" onclick="createRoom()">สร้างห้อง</button>
+      <button class="btn" onclick="closeModal('modal-create')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-join" class="modal-wrap" style="display:none">
+  <div class="modal">
+    <div class="modal-title">เข้าร่วมห้อง</div>
+    <div class="modal-sub">กรอกรหัสห้องที่ได้รับจากเพื่อน</div>
+    <div class="field">
+      <label>รหัสห้อง</label>
+      <input id="join-code" class="code-input" placeholder="ABC123" maxlength="6" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')joinRoom()" />
+    </div>
+    <div class="field">
+      <label>ชื่อของคุณ</label>
+      <input id="join-name" placeholder="เช่น พีท" maxlength="20" onkeydown="if(event.key==='Enter')joinRoom()" />
+    </div>
+    <div id="join-err" class="err" style="display:none"></div>
+    <div class="modal-actions">
+      <button class="btn btn-purple" onclick="joinRoom()">เข้าร่วม</button>
+      <button class="btn" onclick="closeModal('modal-join')">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-waiting" class="modal-wrap" style="display:none">
+  <div class="modal" style="text-align:center">
+    <div class="modal-title" style="text-align:center">ห้องพร้อมแล้ว</div>
+    <div class="modal-sub" style="text-align:center">แชร์รหัสนี้ให้เพื่อนเข้าร่วม</div>
+    <div class="room-code-display" id="code-display" onclick="copyCode()"></div>
+    <div class="copy-hint" id="copy-hint">แตะรหัสเพื่อคัดลอก</div>
+    <div class="waiting-pill"><span class="dot"></span><span id="waiting-label">รอผู้เข้าร่วม...</span></div>
+    <div class="modal-actions" style="margin-top:1.25rem">
+      <button class="btn btn-purple" onclick="enterChat()">เริ่มแชท</button>
+      <button class="btn" onclick="leaveRoom()" style="color:#A32D2D;border-color:#F7C1C1">ยกเลิกห้อง</button>
+    </div>
+  </div>
+</div>
+
+<div id="chat" class="screen chat-screen">
+  <div class="chat-header">
+    <div class="chat-header-info">
+      <span class="room-label">ห้องแชท</span>
+      <span class="room-code-badge" id="chat-code"></span>
+    </div>
+    <div style="display:flex;align-items:center;gap:8px">
+      <div class="members-pill"><span class="online-dot"></span><span id="member-count">1 คน</span></div>
+      <button class="btn btn-sm" onclick="leaveRoom()">ออก</button>
+    </div>
+  </div>
+  <div class="messages" id="messages"></div>
+  <div class="input-bar">
+    <input class="msg-input" id="chat-input" placeholder="พิมพ์ข้อความ..." maxlength="500" onkeydown="if(event.key==='Enter')sendMsg()" />
+    <button class="send-btn" onclick="sendMsg()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+    </button>
+  </div>
+</div>
+
+</div>
+
 <script>
-const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-const rooms = {};
-let myRoom = null;
-let myName = null;
-let myId = null;
-let pollInterval = null;
+const CHARS='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const COLORS=['#534AB7','#0F6E56','#993C1D','#185FA5','#3B6D11','#854F0B'];
+const BGTONES=['#EEEDFE','#E1F5EE','#FAECE7','#E6F1FB','#EAF3DE','#FAEEDA'];
+const rooms={};
+let myRoom=null,myName=null,myId=null,poll=null,myColor=null,myBg=null;
 
-function genCode() {
-  let c = '';
-  for (let i = 0; i < 6; i++) c += CHARS[Math.floor(Math.random() * CHARS.length)];
-  return c;
-}
+function genCode(){let c='';for(let i=0;i<6;i++)c+=CHARS[Math.floor(Math.random()*CHARS.length)];return c;}
+function genId(){return Math.random().toString(36).slice(2,9);}
+function ts(){return new Date().toLocaleTimeString('th-TH',{hour:'2-digit',minute:'2-digit'});}
+function initials(n){return n.slice(0,2).toUpperCase();}
+function assignColor(idx){const i=idx%COLORS.length;return{c:COLORS[i],bg:BGTONES[i]};}
 
-function genId() {
-  return Math.random().toString(36).slice(2, 9);
-}
+function openModal(id){document.getElementById(id).style.display='flex';const inp=document.querySelector('#'+id+' input');if(inp)setTimeout(()=>inp.focus(),80);}
+function closeModal(id){document.getElementById(id).style.display='none';}
 
-function now() {
-  return new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
-}
-
-function showHome() { setPage('home-page'); stopPoll(); }
-function showCreate() { setPage('create-page'); setTimeout(() => document.getElementById('create-name').focus(), 100); }
-function showJoin() {
-  setPage('join-page');
-  document.getElementById('join-error').style.display = 'none';
-  setTimeout(() => document.getElementById('join-code').focus(), 100);
-}
-
-function setPage(id) {
-  document.querySelectorAll('.page, .chat-page').forEach(p => { p.classList.remove('active'); });
-  document.getElementById(id).classList.add('active');
-}
-
-function createRoom() {
-  const name = document.getElementById('create-name').value.trim();
-  if (!name) { document.getElementById('create-name').focus(); return; }
-  let code;
-  do { code = genCode(); } while (rooms[code]);
-  myId = genId();
-  myName = name;
-  myRoom = code;
-  rooms[code] = {
-    members: [{ id: myId, name }],
-    messages: [{ type: 'system', text: `${name} สร้างห้องนี้`, time: now() }]
-  };
-  document.getElementById('display-code').textContent = code;
-  document.getElementById('chat-code-display').textContent = 'รหัส: ' + code;
-  document.getElementById('chat-room-title').textContent = 'ห้อง ' + code;
-  setPage('waiting-page');
+function createRoom(){
+  const name=document.getElementById('create-name').value.trim();
+  if(!name){document.getElementById('create-name').focus();return;}
+  let code;do{code=genCode();}while(rooms[code]);
+  myId=genId();myName=name;myRoom=code;
+  const col=assignColor(0);myColor=col.c;myBg=col.bg;
+  rooms[code]={members:[{id:myId,name,color:myColor,bg:myBg}],messages:[{type:'sys',text:`${name} สร้างห้องนี้`,time:ts()}]};
+  closeModal('modal-create');
+  document.getElementById('code-display').textContent=code;
+  document.getElementById('chat-code').textContent=code;
+  document.getElementById('copy-hint').textContent='แตะรหัสเพื่อคัดลอก';
+  openModal('modal-waiting');
   startPoll();
 }
 
-function enterChat() {
-  setPage('chat-page');
-  renderMessages();
-  updateOnline();
+function copyCode(){
+  if(navigator.clipboard)navigator.clipboard.writeText(myRoom).then(()=>{
+    const el=document.getElementById('copy-hint');
+    el.textContent='คัดลอกแล้ว!';
+    setTimeout(()=>el.textContent='แตะรหัสเพื่อคัดลอก',1500);
+  });
 }
 
-function copyCode() {
-  if (navigator.clipboard) {
-    navigator.clipboard.writeText(myRoom).then(() => {
-      const el = document.getElementById('copy-tip');
-      el.textContent = 'คัดลอกแล้ว!';
-      setTimeout(() => el.textContent = 'แตะเพื่อคัดลอกรหัส', 1500);
-    });
-  }
+function enterChat(){
+  closeModal('modal-waiting');
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('chat').classList.add('active');
+  renderMsgs();updateCount();
+  setTimeout(()=>document.getElementById('chat-input').focus(),100);
 }
 
-function joinRoom() {
-  const code = document.getElementById('join-code').value.trim().toUpperCase();
-  const name = document.getElementById('join-name').value.trim();
-  const errEl = document.getElementById('join-error');
-  errEl.style.display = 'none';
-  if (!code || code.length < 6) { errEl.textContent = 'กรุณากรอกรหัสห้อง 6 หลักให้ครบ'; errEl.style.display = 'block'; return; }
-  if (!name) { errEl.textContent = 'กรุณากรอกชื่อของคุณ'; errEl.style.display = 'block'; return; }
-  if (!rooms[code]) { errEl.textContent = 'ไม่พบห้องที่มีรหัสนี้ กรุณาตรวจสอบอีกครั้ง'; errEl.style.display = 'block'; return; }
-  myId = genId();
-  myName = name;
-  myRoom = code;
-  rooms[code].members.push({ id: myId, name });
-  rooms[code].messages.push({ type: 'system', text: `${name} เข้าร่วมห้อง`, time: now() });
-  document.getElementById('chat-code-display').textContent = 'รหัส: ' + code;
-  document.getElementById('chat-room-title').textContent = 'ห้อง ' + code;
-  setPage('chat-page');
-  renderMessages();
-  updateOnline();
+function joinRoom(){
+  const code=document.getElementById('join-code').value.trim().toUpperCase();
+  const name=document.getElementById('join-name').value.trim();
+  const err=document.getElementById('join-err');
+  err.style.display='none';
+  if(!code||code.length<6){err.textContent='กรุณากรอกรหัส 6 หลักให้ครบ';err.style.display='block';return;}
+  if(!name){err.textContent='กรุณากรอกชื่อของคุณ';err.style.display='block';return;}
+  if(!rooms[code]){err.textContent='ไม่พบห้องรหัสนี้ กรุณาตรวจสอบอีกครั้ง';err.style.display='block';return;}
+  myId=genId();myName=name;myRoom=code;
+  const col=assignColor(rooms[code].members.length);myColor=col.c;myBg=col.bg;
+  rooms[code].members.push({id:myId,name,color:myColor,bg:myBg});
+  rooms[code].messages.push({type:'sys',text:`${name} เข้าร่วมห้อง`,time:ts()});
+  closeModal('modal-join');
+  document.getElementById('chat-code').textContent=code;
+  document.getElementById('home').classList.remove('active');
+  document.getElementById('chat').classList.add('active');
+  renderMsgs();updateCount();
   startPoll();
+  setTimeout(()=>document.getElementById('chat-input').focus(),100);
 }
 
-function sendMessage() {
-  const input = document.getElementById('chat-input');
-  const text = input.value.trim();
-  if (!text || !myRoom || !rooms[myRoom]) return;
-  rooms[myRoom].messages.push({ type: 'msg', senderId: myId, senderName: myName, text, time: now() });
-  input.value = '';
-  renderMessages();
+function sendMsg(){
+  const inp=document.getElementById('chat-input');
+  const txt=inp.value.trim();
+  if(!txt||!myRoom||!rooms[myRoom])return;
+  rooms[myRoom].messages.push({type:'msg',sid:myId,sname:myName,color:myColor,bg:myBg,text:txt,time:ts()});
+  inp.value='';
+  renderMsgs();
 }
 
-function renderMessages() {
-  if (!myRoom || !rooms[myRoom]) return;
-  const el = document.getElementById('messages');
-  const msgs = rooms[myRoom].messages;
-  el.innerHTML = msgs.map(m => {
-    if (m.type === 'system') return `<div class="system-msg">${m.text} · ${m.time}</div>`;
-    const isMe = m.senderId === myId;
-    return `<div class="msg-row ${isMe ? 'me' : 'other'}">
-      ${!isMe ? `<span class="msg-name">${esc(m.senderName)}</span>` : ''}
-      <div class="msg-bubble">${esc(m.text)}</div>
+function renderMsgs(){
+  if(!myRoom||!rooms[myRoom])return;
+  const el=document.getElementById('messages');
+  const prev=el.scrollTop+el.clientHeight>=el.scrollHeight-10;
+  el.innerHTML=rooms[myRoom].messages.map(m=>{
+    if(m.type==='sys')return`<div class="sys-msg">${esc(m.text)}</div>`;
+    const me=m.sid===myId;
+    const av=`<div class="avatar-sm" style="background:${m.bg};color:${m.color}">${initials(m.sname)}</div>`;
+    return`<div class="msg-row ${me?'me':'other'}">
+      ${!me?`<span class="msg-name">${esc(m.sname)}</span>`:''}
+      <div class="bubble-wrap">${!me?av:''}<div class="msg-bubble">${esc(m.text)}</div>${me?av:''}</div>
       <span class="msg-time">${m.time}</span>
     </div>`;
   }).join('');
-  el.scrollTop = el.scrollHeight;
+  if(prev)el.scrollTop=el.scrollHeight;
 }
 
-function updateOnline() {
-  if (!myRoom || !rooms[myRoom]) return;
-  const count = rooms[myRoom].members.length;
-  document.getElementById('online-count').textContent = count + ' คนในห้อง';
-  const ws = document.getElementById('waiting-status');
-  if (ws) ws.textContent = count > 1 ? `${count} คนอยู่ในห้องแล้ว` : 'รอผู้เข้าร่วม...';
+function updateCount(){
+  if(!myRoom||!rooms[myRoom])return;
+  const n=rooms[myRoom].members.length;
+  document.getElementById('member-count').textContent=n+' คน';
+  const wl=document.getElementById('waiting-label');
+  if(wl)wl.textContent=n>1?`${n} คนอยู่ในห้องแล้ว`:'รอผู้เข้าร่วม...';
 }
 
-function startPoll() {
-  stopPoll();
-  pollInterval = setInterval(() => {
-    if (!myRoom || !rooms[myRoom]) return;
-    renderMessages();
-    updateOnline();
-  }, 500);
+function startPoll(){
+  if(poll)clearInterval(poll);
+  poll=setInterval(()=>{renderMsgs();updateCount();},500);
 }
 
-function stopPoll() {
-  if (pollInterval) { clearInterval(pollInterval); pollInterval = null; }
-}
-
-function leaveRoom() {
-  if (myRoom && rooms[myRoom]) {
-    rooms[myRoom].members = rooms[myRoom].members.filter(m => m.id !== myId);
-    rooms[myRoom].messages.push({ type: 'system', text: `${myName} ออกจากห้อง`, time: now() });
-    if (rooms[myRoom].members.length === 0) delete rooms[myRoom];
+function leaveRoom(){
+  if(myRoom&&rooms[myRoom]){
+    rooms[myRoom].members=rooms[myRoom].members.filter(m=>m.id!==myId);
+    rooms[myRoom].messages.push({type:'sys',text:`${myName} ออกจากห้อง`,time:ts()});
+    if(rooms[myRoom].members.length===0)delete rooms[myRoom];
   }
-  myRoom = null; myName = null; myId = null;
-  stopPoll();
-  setPage('home-page');
-  document.getElementById('create-name').value = '';
-  document.getElementById('join-code').value = '';
-  document.getElementById('join-name').value = '';
+  myRoom=null;myName=null;myId=null;myColor=null;myBg=null;
+  if(poll){clearInterval(poll);poll=null;}
+  ['modal-create','modal-join','modal-waiting'].forEach(closeModal);
+  document.getElementById('chat').classList.remove('active');
+  document.getElementById('home').classList.add('active');
+  document.getElementById('create-name').value='';
+  document.getElementById('join-code').value='';
+  document.getElementById('join-name').value='';
+  document.getElementById('join-err').style.display='none';
 }
 
-function esc(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-document.getElementById('join-code').addEventListener('input', function() {
-  this.value = this.value.toUpperCase();
-});
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 </script>
