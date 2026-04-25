@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">3</span>
+          <span class="stat-num">4</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -588,6 +588,15 @@
           </div>
           <span class="app-tag" id="appTag3"></span>
         </a>
+
+        <a class="app-card" href="javascript:void(0)" onclick="goToMediaDownloader()">
+          <div class="app-icon">⬇️</div>
+          <div>
+            <div class="app-name" id="appName4"></div>
+            <div class="app-desc" id="appDesc4"></div>
+          </div>
+          <span class="app-tag" id="appTag4"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -603,6 +612,7 @@
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
     const QR_GENERATOR_URL = "https://taithai.app/QR%20Code%20Generator%20/";
     const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
+    const MEDIA_DOWNLOADER_URL = "https://taithai.app/Media%20Downloader/";
 
     const i18n = {
       en: {
@@ -627,13 +637,19 @@
         appDesc3: "Scan QR codes instantly with your camera or image uploads and open link results in one tap.",
         appTag3: "📷 QR Scan",
 
+        appName4: "Video / Audio Downloader",
+        appDesc4: "Download video or audio files directly from file links you own or are allowed to save.",
+        appTag4: "⬇️ Downloader",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
         openingText1: "Opening Taithai Temporary Chat… 🌸",
         openingText2: "Opening QR Code Generator… 🌸",
         openingText3: "Opening QR Code Reader… 🌸",
         noLinkYet2: "No link added yet for QR Code Generator",
-        noLinkYet3: "No link added yet for QR Code Reader"
+        noLinkYet3: "No link added yet for QR Code Reader",
+        openingText4: "Opening Video / Audio Downloader… 🌸",
+        noLinkYet4: "No link added yet for Video / Audio Downloader"
       },
       th: {
         htmlLang: "th",
@@ -657,13 +673,19 @@
         appDesc3: "สแกน QR Code ได้ทันทีผ่านกล้องหรือรูปภาพ พร้อมเปิดลิงก์จากผลลัพธ์ได้ในคลิกเดียว",
         appTag3: "📷 สแกน QR",
 
+        appName4: "แอปดาวน์โหลดวิดีโอ/เสียง",
+        appDesc4: "ดาวน์โหลดไฟล์วิดีโอหรือเสียงจากลิงก์ไฟล์ตรงที่คุณมีสิทธิ์ดาวน์โหลด",
+        appTag4: "⬇️ ดาวน์โหลด",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
         openingText1: "กำลังเปิด Taithai Temporary Chat… 🌸",
         openingText2: "กำลังเปิด ตัวสร้างคิวอาร์โค้ด… 🌸",
         openingText3: "กำลังเปิด ตัวอ่านคิวอาร์โค้ด… 🌸",
         noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด",
-        noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด"
+        noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด",
+        openingText4: "กำลังเปิด แอปดาวน์โหลดวิดีโอ/เสียง… 🌸",
+        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ แอปดาวน์โหลดวิดีโอ/เสียง"
       }
     };
 
@@ -699,6 +721,10 @@
       document.getElementById("appName3").textContent = t.appName3;
       document.getElementById("appDesc3").textContent = t.appDesc3;
       document.getElementById("appTag3").textContent = t.appTag3;
+
+      document.getElementById("appName4").textContent = t.appName4;
+      document.getElementById("appDesc4").textContent = t.appDesc4;
+      document.getElementById("appTag4").textContent = t.appTag4;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -746,6 +772,20 @@
       showToast(i18n[currentLang].openingText3);
       setTimeout(() => {
         window.location.href = QR_READER_URL;
+      }, 250);
+    }
+
+
+
+    function goToMediaDownloader() {
+      if (!MEDIA_DOWNLOADER_URL || MEDIA_DOWNLOADER_URL === "javascript:void(0)") {
+        showToast(i18n[currentLang].noLinkYet4);
+        return;
+      }
+
+      showToast(i18n[currentLang].openingText4);
+      setTimeout(() => {
+        window.location.href = MEDIA_DOWNLOADER_URL;
       }, 250);
     }
 
