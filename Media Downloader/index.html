@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Video/Audio Downloader</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg-1: #f5ede3;
+      --bg-2: #efe3d4;
+      --bg-3: #e8d7c3;
+      --text: #4e3b2f;
+      --muted: #7a6353;
+      --border: rgba(117, 88, 66, 0.14);
+      --surface: rgba(255,250,245,0.84);
+      --accent: #7f5f48;
+      --accent-soft: #d8c0ab;
+      --success: #5f8a63;
+      --danger: #ba6b61;
+      --warning: #b7863c;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.65), transparent 30%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: min(860px, 100%);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      box-shadow: 0 24px 70px rgba(122, 99, 83, 0.12);
+      padding: 28px;
+    }
+    h1 { margin: 0 0 10px; font-size: 2rem; color: #5a4334; }
+    .desc { margin: 0 0 20px; color: var(--muted); line-height: 1.65; }
+    .notice {
+      margin: 0 0 16px;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(183, 134, 60, 0.3);
+      background: rgba(255, 245, 225, 0.6);
+      color: #8a6328;
+      font-size: 0.9rem;
+    }
+    .form { display: grid; gap: 14px; }
+    label { font-weight: 600; color: #6a5343; font-size: 0.92rem; }
+    input, select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 12px;
+      border: 1px solid var(--accent-soft);
+      background: #fffaf6;
+      color: var(--text);
+      font-size: 0.94rem;
+    }
+    .row { display: grid; grid-template-columns: 1fr 220px; gap: 12px; }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 11px 14px;
+      font-size: 0.93rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(180deg, #8f6f57, #7c5f4b);
+    }
+    .btn-secondary {
+      color: #6b5444;
+      background: #f7ede3;
+      border: 1px solid var(--accent-soft);
+    }
+    button:disabled { opacity: .6; cursor: not-allowed; }
+    .status {
+      margin-top: 6px;
+      font-size: .9rem;
+      min-height: 1.3em;
+      color: var(--muted);
+    }
+    .status.ok { color: var(--success); }
+    .status.err { color: var(--danger); }
+    .status.warn { color: var(--warning); }
+    @media (max-width: 760px) {
+      .row { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>⬇️ Video / Audio Downloader</h1>
+    <p class="desc">ดาวน์โหลดไฟล์วิดีโอหรือเสียงจากลิงก์ไฟล์ตรง (Direct file URL) เช่น `.mp4`, `.webm`, `.mp3`, `.wav`</p>
+    <p class="notice">ใช้กับไฟล์ที่คุณมีสิทธิ์ดาวน์โหลดเท่านั้น และลิงก์ต้องอนุญาต CORS เพื่อให้เบราว์เซอร์ดึงไฟล์ได้</p>
+
+    <form class="form" id="downloadForm">
+      <div>
+        <label for="urlInput">ลิงก์ไฟล์</label>
+        <input id="urlInput" type="url" placeholder="https://example.com/media/file.mp4" required />
+      </div>
+
+      <div class="row">
+        <div>
+          <label for="mode">ประเภทไฟล์</label>
+          <select id="mode">
+            <option value="video">วิดีโอ (Video)</option>
+            <option value="audio">เสียง (Audio)</option>
+          </select>
+        </div>
+        <div>
+          <label for="filename">ชื่อไฟล์ (ไม่บังคับ)</label>
+          <input id="filename" type="text" placeholder="my-download" />
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="btn-primary" id="downloadBtn" type="submit">ดาวน์โหลดตอนนี้</button>
+        <button class="btn-secondary" id="openBtn" type="button">เปิดลิงก์ในแท็บใหม่</button>
+      </div>
+      <p class="status" id="status">พร้อมดาวน์โหลด</p>
+    </form>
+  </main>
+
+  <script>
+    const form = document.getElementById('downloadForm');
+    const urlInput = document.getElementById('urlInput');
+    const modeInput = document.getElementById('mode');
+    const fileNameInput = document.getElementById('filename');
+    const statusEl = document.getElementById('status');
+    const downloadBtn = document.getElementById('downloadBtn');
+    const openBtn = document.getElementById('openBtn');
+
+    const extensionByMode = {
+      video: '.mp4',
+      audio: '.mp3'
+    };
+
+    function setStatus(text, tone = '') {
+      statusEl.textContent = text;
+      statusEl.className = `status ${tone}`.trim();
+    }
+
+    function guessNameFromUrl(url) {
+      try {
+        const pathname = new URL(url).pathname;
+        const raw = pathname.split('/').pop() || 'download';
+        return decodeURIComponent(raw) || 'download';
+      } catch {
+        return 'download';
+      }
+    }
+
+    function buildFileName() {
+      const provided = fileNameInput.value.trim();
+      if (provided) {
+        return provided;
+      }
+      return guessNameFromUrl(urlInput.value.trim());
+    }
+
+    function triggerDirectDownload(url) {
+      const a = document.createElement('a');
+      let fileName = buildFileName();
+      if (!/\.[a-z0-9]+$/i.test(fileName)) {
+        fileName += extensionByMode[modeInput.value] || '';
+      }
+      a.href = url;
+      a.download = fileName;
+      a.rel = 'noopener noreferrer';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
+    async function downloadFile(url) {
+      downloadBtn.disabled = true;
+      setStatus('กำลังดาวน์โหลดไฟล์...', 'warn');
+
+      try {
+        const response = await fetch(url, { method: 'GET', mode: 'cors' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+
+        let fileName = buildFileName();
+        if (!/\.[a-z0-9]+$/i.test(fileName)) {
+          fileName += extensionByMode[modeInput.value] || '';
+        }
+
+        a.href = objectUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(objectUrl);
+
+        setStatus('ดาวน์โหลดเสร็จแล้ว ✅', 'ok');
+      } catch (error) {
+        triggerDirectDownload(url);
+        setStatus('ดาวน์โหลดผ่าน fetch ไม่สำเร็จ (CORS) จึงเปิดลิงก์ดาวน์โหลดตรงให้แล้ว', 'warn');
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const url = urlInput.value.trim();
+
+      if (!url) {
+        setStatus('กรุณาใส่ลิงก์ไฟล์ก่อน', 'err');
+        return;
+      }
+
+      if (!/^https?:\/\//i.test(url)) {
+        setStatus('ลิงก์ต้องขึ้นต้นด้วย http:// หรือ https://', 'err');
+        return;
+      }
+
+      await downloadFile(url);
+    });
+
+    openBtn.addEventListener('click', () => {
+      const url = urlInput.value.trim();
+      if (!/^https?:\/\//i.test(url)) {
+        setStatus('กรุณาใส่ลิงก์ที่ถูกต้องก่อนเปิดแท็บใหม่', 'err');
+        return;
+      }
+      window.open(url, '_blank', 'noopener,noreferrer');
+    });
+  </script>
+</body>
+</html>
