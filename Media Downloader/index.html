@@ -168,12 +168,27 @@
       return guessNameFromUrl(urlInput.value.trim());
     }
 
+    function triggerDirectDownload(url) {
+      const a = document.createElement('a');
+      let fileName = buildFileName();
+      if (!/\.[a-z0-9]+$/i.test(fileName)) {
+        fileName += extensionByMode[modeInput.value] || '';
+      }
+      a.href = url;
+      a.download = fileName;
+      a.rel = 'noopener noreferrer';
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+
     async function downloadFile(url) {
       downloadBtn.disabled = true;
       setStatus('กำลังดาวน์โหลดไฟล์...', 'warn');
 
       try {
-        const response = await fetch(url, { method: 'GET' });
+        const response = await fetch(url, { method: 'GET', mode: 'cors' });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}`);
         }
@@ -196,7 +211,8 @@
 
         setStatus('ดาวน์โหลดเสร็จแล้ว ✅', 'ok');
       } catch (error) {
-        setStatus(`ดาวน์โหลดไม่สำเร็จ: ${error.message}`, 'err');
+        triggerDirectDownload(url);
+        setStatus('ดาวน์โหลดผ่าน fetch ไม่สำเร็จ (CORS) จึงเปิดลิงก์ดาวน์โหลดตรงให้แล้ว', 'warn');
       } finally {
         downloadBtn.disabled = false;
       }
