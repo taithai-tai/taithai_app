@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">2</span>
+          <span class="stat-num">3</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -579,6 +579,15 @@
           </div>
           <span class="app-tag" id="appTag2"></span>
         </a>
+
+        <a class="app-card" href="javascript:void(0)" onclick="goToQrReader()">
+          <div class="app-icon">📷</div>
+          <div>
+            <div class="app-name" id="appName3"></div>
+            <div class="app-desc" id="appDesc3"></div>
+          </div>
+          <span class="app-tag" id="appTag3"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -593,6 +602,7 @@
   <script>
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
     const QR_GENERATOR_URL = "https://taithai.app/QR%20Code%20Generator%20/";
+    const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
 
     const i18n = {
       en: {
@@ -613,11 +623,17 @@
         appDesc2: "Create QR codes easily for links, text, or shared content with a simple and fast generator interface.",
         appTag2: "🔳 QR Tool",
 
+        appName3: "QR Code Reader",
+        appDesc3: "Scan QR codes instantly with your camera or image uploads and open link results in one tap.",
+        appTag3: "📷 QR Scan",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
         openingText1: "Opening Taithai Temporary Chat… 🌸",
         openingText2: "Opening QR Code Generator… 🌸",
-        noLinkYet2: "No link added yet for QR Code Generator"
+        openingText3: "Opening QR Code Reader… 🌸",
+        noLinkYet2: "No link added yet for QR Code Generator",
+        noLinkYet3: "No link added yet for QR Code Reader"
       },
       th: {
         htmlLang: "th",
@@ -637,11 +653,17 @@
         appDesc2: "สร้างคิวอาร์โค้ดได้อย่างง่ายดายสำหรับลิงก์ ข้อความ หรือคอนเทนต์ที่ต้องการแชร์ ด้วยหน้าใช้งานที่เรียบง่ายและรวดเร็ว",
         appTag2: "🔳 เครื่องมือ QR",
 
+        appName3: "ตัวอ่านคิวอาร์โค้ด",
+        appDesc3: "สแกน QR Code ได้ทันทีผ่านกล้องหรือรูปภาพ พร้อมเปิดลิงก์จากผลลัพธ์ได้ในคลิกเดียว",
+        appTag3: "📷 สแกน QR",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
         openingText1: "กำลังเปิด Taithai Temporary Chat… 🌸",
         openingText2: "กำลังเปิด ตัวสร้างคิวอาร์โค้ด… 🌸",
-        noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด"
+        openingText3: "กำลังเปิด ตัวอ่านคิวอาร์โค้ด… 🌸",
+        noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด",
+        noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด"
       }
     };
 
@@ -673,6 +695,10 @@
       document.getElementById("appName2").textContent = t.appName2;
       document.getElementById("appDesc2").textContent = t.appDesc2;
       document.getElementById("appTag2").textContent = t.appTag2;
+
+      document.getElementById("appName3").textContent = t.appName3;
+      document.getElementById("appDesc3").textContent = t.appDesc3;
+      document.getElementById("appTag3").textContent = t.appTag3;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -706,6 +732,20 @@
       showToast(i18n[currentLang].openingText2);
       setTimeout(() => {
         window.location.href = QR_GENERATOR_URL;
+      }, 250);
+    }
+
+
+
+    function goToQrReader() {
+      if (!QR_READER_URL || QR_READER_URL === "javascript:void(0)") {
+        showToast(i18n[currentLang].noLinkYet3);
+        return;
+      }
+
+      showToast(i18n[currentLang].openingText3);
+      setTimeout(() => {
+        window.location.href = QR_READER_URL;
       }, 250);
     }
 

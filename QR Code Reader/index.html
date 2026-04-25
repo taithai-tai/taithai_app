@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QR Code Reader</title>
+  <style>
+    * { box-sizing: border-box; }
+    :root {
+      --bg-1: #f5ede3;
+      --bg-2: #efe3d4;
+      --bg-3: #e8d7c3;
+      --text: #4e3b2f;
+      --muted: #7a6353;
+      --border: rgba(117, 88, 66, 0.15);
+      --surface: rgba(255, 250, 245, 0.82);
+      --accent: #8a6a52;
+      --accent-soft: #d8c0ab;
+      --success: #5f8a63;
+      --danger: #ba6b61;
+      --white-soft: #fffaf5;
+    }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(255,255,255,0.65), transparent 30%),
+        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .card {
+      width: 100%;
+      max-width: 960px;
+      background: var(--surface);
+      backdrop-filter: blur(18px);
+      border: 1px solid var(--border);
+      border-radius: 32px;
+      box-shadow: 0 24px 70px rgba(122, 99, 83, 0.12);
+      padding: 28px;
+    }
+    h1 { margin: 0 0 8px; font-size: 2rem; color: #5a4334; }
+    .sub { margin: 0 0 18px; color: var(--muted); line-height: 1.6; }
+    .layout { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 18px; }
+    .panel {
+      background: rgba(255,255,255,0.55);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 16px;
+    }
+    .preview-wrap {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      background: #ead7c3;
+    }
+    video, canvas, img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .scanner-line {
+      position: absolute;
+      left: 10%;
+      right: 10%;
+      height: 2px;
+      background: rgba(95, 138, 99, 0.9);
+      box-shadow: 0 0 12px rgba(95, 138, 99, 0.75);
+      animation: scan 2.4s ease-in-out infinite;
+      display: none;
+    }
+    .scanner-line.active { display: block; }
+    @keyframes scan {
+      0% { top: 12%; }
+      50% { top: 84%; }
+      100% { top: 12%; }
+    }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+    button, .file-label {
+      border: none;
+      background: linear-gradient(180deg, #8f6f57, #7c5f4b);
+      color: #fff;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.93rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.secondary, .file-label {
+      background: #f7ede3;
+      border: 1px solid var(--accent-soft);
+      color: #6b5444;
+    }
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+    input[type="file"] { display: none; }
+    .status {
+      margin-top: 12px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      min-height: 1.4em;
+    }
+    .status.ok { color: var(--success); }
+    .status.err { color: var(--danger); }
+    .result-box {
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px dashed var(--accent-soft);
+      background: var(--white-soft);
+      word-break: break-word;
+      min-height: 62px;
+      font-size: 0.95rem;
+    }
+    .result-actions { margin-top: 10px; display: flex; gap: 10px; flex-wrap: wrap; }
+    .hidden-canvas { display: none; }
+    @media (max-width: 860px) {
+      .layout { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>📷 QR Code Reader</h1>
+    <p class="sub">สแกน QR Code ได้จากกล้องหรืออัปโหลดรูปภาพ รองรับทั้งลิงก์และข้อความทั่วไป</p>
+
+    <section class="layout">
+      <div class="panel">
+        <div class="preview-wrap">
+          <video id="video" autoplay playsinline muted></video>
+          <img id="imagePreview" alt="Uploaded QR image preview" hidden />
+          <div class="scanner-line" id="scannerLine"></div>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn">▶ เริ่มสแกนกล้อง</button>
+          <button id="stopBtn" class="secondary" disabled>⏹ หยุดกล้อง</button>
+          <label for="fileInput" class="file-label">🖼 สแกนจากรูป</label>
+          <input id="fileInput" type="file" accept="image/*" />
+        </div>
+
+        <p class="status" id="status">ระบบพร้อมใช้งาน</p>
+      </div>
+
+      <aside class="panel">
+        <h2 style="margin:0 0 10px; font-size:1.15rem;">ผลการอ่าน QR</h2>
+        <div class="result-box" id="resultText">ยังไม่มีผลลัพธ์</div>
+        <div class="result-actions">
+          <button id="copyBtn" class="secondary" disabled>📋 คัดลอกข้อความ</button>
+          <button id="openBtn" disabled>🔗 เปิดลิงก์</button>
+        </div>
+        <p style="margin:12px 0 0; font-size:0.85rem; color:var(--muted);">
+          หมายเหตุ: หากเบราว์เซอร์ไม่รองรับการอ่าน QR โดยตรง แนะนำใช้ Chrome/Edge เวอร์ชันใหม่
+        </p>
+      </aside>
+    </section>
+
+    <canvas id="canvas" class="hidden-canvas"></canvas>
+  </main>
+
+  <script>
+    const video = document.getElementById('video');
+    const imagePreview = document.getElementById('imagePreview');
+    const canvas = document.getElementById('canvas');
+    const statusEl = document.getElementById('status');
+    const resultText = document.getElementById('resultText');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const fileInput = document.getElementById('fileInput');
+    const copyBtn = document.getElementById('copyBtn');
+    const openBtn = document.getElementById('openBtn');
+    const scannerLine = document.getElementById('scannerLine');
+
+    const detector = ('BarcodeDetector' in window)
+      ? new BarcodeDetector({ formats: ['qr_code'] })
+      : null;
+
+    let stream = null;
+    let scanTimer = null;
+    let latestValue = '';
+
+    function setStatus(text, tone = '') {
+      statusEl.textContent = text;
+      statusEl.className = `status ${tone}`.trim();
+    }
+
+    function setResult(value) {
+      latestValue = value || '';
+      resultText.textContent = latestValue || 'ยังไม่มีผลลัพธ์';
+      copyBtn.disabled = !latestValue;
+      openBtn.disabled = !/^https?:\/\//i.test(latestValue);
+    }
+
+    async function detectFromSource(source) {
+      if (!detector) {
+        setStatus('เบราว์เซอร์นี้ยังไม่รองรับ BarcodeDetector', 'err');
+        return;
+      }
+
+      try {
+        const codes = await detector.detect(source);
+        if (codes.length > 0 && codes[0].rawValue) {
+          const text = codes[0].rawValue.trim();
+          setResult(text);
+          setStatus('อ่าน QR สำเร็จแล้ว ✅', 'ok');
+          return text;
+        }
+      } catch (error) {
+        setStatus(`อ่าน QR ไม่สำเร็จ: ${error.message}`, 'err');
+      }
+      return '';
+    }
+
+    async function startCamera() {
+      if (!detector) {
+        setStatus('เบราว์เซอร์นี้ไม่รองรับการอ่าน QR โดยตรง', 'err');
+        return;
+      }
+
+      try {
+        stopCamera();
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+
+        video.srcObject = stream;
+        imagePreview.hidden = true;
+        video.hidden = false;
+        scannerLine.classList.add('active');
+        startBtn.disabled = true;
+        stopBtn.disabled = false;
+
+        setStatus('กำลังสแกนจากกล้อง...');
+
+        scanTimer = setInterval(async () => {
+          if (video.readyState < 2) return;
+          const found = await detectFromSource(video);
+          if (found) {
+            stopCamera(false);
+          }
+        }, 450);
+      } catch (error) {
+        setStatus(`ไม่สามารถเปิดกล้องได้: ${error.message}`, 'err');
+      }
+    }
+
+    function stopCamera(updateText = true) {
+      if (scanTimer) {
+        clearInterval(scanTimer);
+        scanTimer = null;
+      }
+
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+        stream = null;
+      }
+
+      video.srcObject = null;
+      scannerLine.classList.remove('active');
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+
+      if (updateText) {
+        setStatus('หยุดการสแกนกล้องแล้ว');
+      }
+    }
+
+    async function scanFromFile(file) {
+      if (!file) return;
+      stopCamera(false);
+
+      const image = new Image();
+      image.onload = async () => {
+        const ctx = canvas.getContext('2d');
+        canvas.width = image.width;
+        canvas.height = image.height;
+        ctx.drawImage(image, 0, 0);
+
+        imagePreview.src = image.src;
+        imagePreview.hidden = false;
+        video.hidden = true;
+
+        setStatus('กำลังสแกนรูปภาพ...');
+        const found = await detectFromSource(canvas);
+        if (!found) {
+          setStatus('ไม่พบ QR ในรูปภาพนี้', 'err');
+          setResult('');
+        }
+      };
+
+      image.onerror = () => {
+        setStatus('ไฟล์รูปภาพไม่ถูกต้อง', 'err');
+      };
+
+      image.src = URL.createObjectURL(file);
+    }
+
+    startBtn.addEventListener('click', startCamera);
+    stopBtn.addEventListener('click', () => stopCamera(true));
+    fileInput.addEventListener('change', (event) => scanFromFile(event.target.files[0]));
+
+    copyBtn.addEventListener('click', async () => {
+      if (!latestValue) return;
+      try {
+        await navigator.clipboard.writeText(latestValue);
+        setStatus('คัดลอกข้อความแล้ว 📋', 'ok');
+      } catch (error) {
+        setStatus(`คัดลอกไม่สำเร็จ: ${error.message}`, 'err');
+      }
+    });
+
+    openBtn.addEventListener('click', () => {
+      if (/^https?:\/\//i.test(latestValue)) {
+        window.open(latestValue, '_blank', 'noopener,noreferrer');
+      }
+    });
+
+    window.addEventListener('beforeunload', () => stopCamera(false));
+  </script>
+</body>
+</html>
