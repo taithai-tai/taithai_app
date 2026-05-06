@@ -19,7 +19,7 @@
 <body>
   <div class="box">
     <h1>🔗 Taithai URL Shortener</h1>
-    <p class="muted">สร้างลิงก์สั้นรูปแบบ <b>go.taithai.app/รหัส</b> และเก็บรายการลิงก์ไว้ใช้งานได้จริง</p>
+    <p class="muted">สร้างลิงก์สั้นที่ใช้งานได้จริงเมื่อวางในเบราว์เซอร์: <b>go.taithai.app/?c=รหัส</b> (รองรับรูปแบบสวยงาม <b>/รหัส</b> หากเซิร์ฟเวอร์ตั้ง rewrite)</p>
     <label>Long URL</label>
     <input id="longUrl" placeholder="https://example.com/page" />
     <div class="row">
@@ -37,6 +37,7 @@
   </div>
 <script>
 const BASE_DOMAIN='https://go.taithai.app';
+const SHORT_MODE='query';
 const STORE_KEY='taithai_short_links_v1';
 const params=new URLSearchParams(location.search);
 const pathCode=location.pathname.split('/').filter(Boolean).pop();
@@ -64,11 +65,13 @@ function render(){
   for(const code of keys){
     const x=db[code];
     const el=document.createElement('div'); el.className='item';
-    const short=`${BASE_DOMAIN}/${code}`;
+    const short=`${BASE_DOMAIN}/?c=${code}`;
+    const pretty=`${BASE_DOMAIN}/${code}`;
     const fallback=`${location.origin}${location.pathname}?c=${code}`;
     el.innerHTML=`<div><b>${code}</b> · ${x.visits||0} visits</div>
-    <div>Short URL: <a href="${fallback}" target="_blank">${short}</a></div>
-    <div>Fallback test: <a href="${fallback}" target="_blank">${fallback}</a></div>
+    <div>Short URL (works when pasted): <a href="${short}" target="_blank">${short}</a></div>
+    <div>Pretty URL (needs server rewrite): <a href="${pretty}" target="_blank">${pretty}</a></div>
+    <div>Local test URL: <a href="${fallback}" target="_blank">${fallback}</a></div>
     <div>Destination: <a href="${x.url}" target="_blank">${x.url}</a></div>`;
     list.appendChild(el);
   }
@@ -83,9 +86,10 @@ document.getElementById('createBtn').onclick=()=>{
   if(!alias){ do{alias=randCode()}while(db[alias]); }
   if(db[alias]) return alert('โค้ดนี้ถูกใช้แล้ว');
   db[alias]={url:longUrl,createdAt:Date.now(),visits:0}; save(db);
-  const short=`${BASE_DOMAIN}/${alias}`;
+  const short=`${BASE_DOMAIN}/?c=${alias}`;
+  const pretty=`${BASE_DOMAIN}/${alias}`;
   const fallback=`${location.origin}${location.pathname}?c=${alias}`;
-  document.getElementById('result').innerHTML=`<div class="item"><b>Created!</b><br>Short URL: <a href="${fallback}" target="_blank">${short}</a><br><button id="copyBtn">Copy ${short}</button></div>`;
+  document.getElementById('result').innerHTML=`<div class="item"><b>Created!</b><br>Short URL (works when pasted): <a href="${short}" target="_blank">${short}</a><br>Pretty URL (requires rewrite): ${pretty}<br><button id="copyBtn">Copy ${short}</button></div>`;
   document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(short);
   render();
 };
