@@ -1,0 +1,10 @@
+<!DOCTYPE html><html><head><meta charset="utf-8"><script>
+(function(){
+  var p=location.pathname.replace(/^\/+|\/+$/g,'');
+  if(/^[a-zA-Z0-9_-]{4,32}$/.test(p)){
+    location.replace('/?c='+encodeURIComponent(p));
+  }else{
+    location.replace('/');
+  }
+})();
+</script></head><body></body></html>

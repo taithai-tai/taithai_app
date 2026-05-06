@@ -32,8 +32,7 @@ const BASE_DOMAIN='https://taithai.app';
 const STORE_KEY='taithai_short_links_v2';
 const params=new URLSearchParams(location.search);
 const pathCode=location.pathname.split('/').filter(Boolean).pop();
-const queryCode=params.get('c');
-const maybeCode=(queryCode||(/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode||'')?pathCode:null));
+const maybeCode=(/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode||'')?pathCode:null);
 
 function load(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}
 function save(db){localStorage.setItem(STORE_KEY,JSON.stringify(db))}
@@ -56,7 +55,7 @@ document.getElementById('createBtn').onclick=()=>{
   db[code]={url:longUrl,createdAt:Date.now()};
   save(db);
 
-  const shortUrl=`${BASE_DOMAIN}/?c=${code}`;
+  const shortUrl=`${BASE_DOMAIN}/${code}`;
   const result=document.getElementById('result');
   result.style.display='block';
   result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank">${shortUrl}</a><br><br><button id="copyBtn" style="margin-top:0">คัดลอกลิงก์</button>`;
