@@ -613,6 +613,22 @@
     const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
     const URL_SHORTENER_URL = "https://taithai.app/URL%20Shortener/";
 
+    const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
+
+    (function resolveRootShortLink() {
+      const code = new URLSearchParams(window.location.search).get("c");
+      if (!code) return;
+
+      try {
+        const db = JSON.parse(localStorage.getItem(SHORTLINK_STORE_KEY) || "{}");
+        if (db[code]?.url) {
+          window.location.replace(db[code].url);
+        }
+      } catch (e) {
+        console.warn("Shortlink lookup failed", e);
+      }
+    })();
+
     const i18n = {
       en: {
         htmlLang: "en",
@@ -637,7 +653,7 @@
         appTag3: "📷 QR Scan",
 
         appName4: "URL Shortener",
-        appDesc4: "Create working short links on www.taithai.app in a clean minimal experience.",
+        appDesc4: "Create shorter links like www.taithai.app/?c=code in a clean minimal experience.",
         appTag4: "🔗 Short URL",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
@@ -673,7 +689,7 @@
         appTag3: "📷 สแกน QR",
 
         appName4: "URL Shortener",
-        appDesc4: "สร้างลิงก์สั้นแบบใช้งานจริงบน www.taithai.app ด้วยหน้าจอเรียบง่าย",
+        appDesc4: "สร้างลิงก์สั้นให้เหลือรูปแบบ www.taithai.app/?c=code ด้วยหน้าจอเรียบง่าย",
         appTag4: "🔗 ลิงก์สั้น",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,

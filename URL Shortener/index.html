@@ -56,7 +56,7 @@ document.getElementById('createBtn').onclick=()=>{
   db[code]={url:longUrl,createdAt:Date.now()};
   save(db);
 
-  const shortUrl=`${BASE_DOMAIN}/URL%20Shortener/?c=${code}`;
+  const shortUrl=`${BASE_DOMAIN}/?c=${code}`;
   const result=document.getElementById('result');
   result.style.display='block';
   result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank">${shortUrl}</a><br><br><button id="copyBtn" style="margin-top:0">คัดลอกลิงก์</button>`;
