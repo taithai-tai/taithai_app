@@ -28,7 +28,7 @@
   </main>
 
 <script>
-const BASE_DOMAIN='https://www.taithai.app';
+const BASE_DOMAIN='https://taithai.app';
 const STORE_KEY='taithai_short_links_v2';
 const params=new URLSearchParams(location.search);
 const pathCode=location.pathname.split('/').filter(Boolean).pop();
@@ -38,7 +38,7 @@ const maybeCode=(queryCode||(/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode||'')?pathCode
 function load(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}
 function save(db){localStorage.setItem(STORE_KEY,JSON.stringify(db))}
 function validUrl(s){try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)}catch{return false}}
-function randCode(){const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let out='';for(let i=0;i<7;i++) out+=chars[Math.floor(Math.random()*chars.length)];return out}
+function randCode(){const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let out='';for(let i=0;i<4;i++) out+=chars[Math.floor(Math.random()*chars.length)];return out}
 
 (function tryRedirect(){
   if(!maybeCode) return;
