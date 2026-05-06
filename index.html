@@ -616,9 +616,10 @@
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
     (function resolveRootShortLink() {
-      const pathCode = window.location.pathname.replace(/^\/+|\/+$/g, "");
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const pathCode = parts.length === 1 ? parts[0] : (parts[0] === "S" ? parts[1] : "");
       const queryCode = new URLSearchParams(window.location.search).get("c");
-      const code = (/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode) ? pathCode : queryCode);
+      const code = (/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode || "") ? pathCode : queryCode);
       if (!code) return;
 
       try {
@@ -655,7 +656,7 @@
         appTag3: "📷 QR Scan",
 
         appName4: "URL Shortener",
-        appDesc4: "Create the shortest links possible like taithai.app/abcd in a clean minimal experience.",
+        appDesc4: "Create the shortest links possible like taithai.app/S/abcd in a clean minimal experience.",
         appTag4: "🔗 Short URL",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
@@ -691,7 +692,7 @@
         appTag3: "📷 สแกน QR",
 
         appName4: "URL Shortener",
-        appDesc4: "สร้างลิงก์ให้สั้นที่สุดเป็นรูปแบบ taithai.app/abcd ด้วยหน้าจอเรียบง่าย",
+        appDesc4: "สร้างลิงก์ให้สั้นที่สุดเป็นรูปแบบ taithai.app/S/abcd ด้วยหน้าจอเรียบง่าย",
         appTag4: "🔗 ลิงก์สั้น",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
