@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">5</span>
+          <span class="stat-num">4</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -588,23 +588,13 @@
           </div>
           <span class="app-tag" id="appTag3"></span>
         </a>
-
-        <a class="app-card" href="javascript:void(0)" onclick="goToMediaDownloader()">
-          <div class="app-icon">⬇️</div>
+        <a class="app-card" href="javascript:void(0)" onclick="goToUrlShortener()">
+          <div class="app-icon">🔗</div>
           <div>
             <div class="app-name" id="appName4"></div>
             <div class="app-desc" id="appDesc4"></div>
           </div>
           <span class="app-tag" id="appTag4"></span>
-        </a>
-
-        <a class="app-card" href="javascript:void(0)" onclick="goToUrlShortener()">
-          <div class="app-icon">🔗</div>
-          <div>
-            <div class="app-name" id="appName5"></div>
-            <div class="app-desc" id="appDesc5"></div>
-          </div>
-          <span class="app-tag" id="appTag5"></span>
         </a>
       </div>
     </div>
@@ -621,8 +611,7 @@
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
     const QR_GENERATOR_URL = "https://taithai.app/QR%20Code%20Generator%20/";
     const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
-    const MEDIA_DOWNLOADER_URL = "https://taithai.app/Media%20Downloader/";
-    const URL_SHORTENER_URL = "https://go.taithai.app";
+    const URL_SHORTENER_URL = "https://taithai.app/URL%20Shortener/";
 
     const i18n = {
       en: {
@@ -647,13 +636,9 @@
         appDesc3: "Scan QR codes instantly with your camera or image uploads and open link results in one tap.",
         appTag3: "📷 QR Scan",
 
-        appName4: "Video / Audio Downloader",
-        appDesc4: "Download video or audio files directly from file links you own or are allowed to save.",
-        appTag4: "⬇️ Downloader",
-
-        appName5: "URL Shortener",
-        appDesc5: "Create short links instantly via go.taithai.app for clean, easy-to-share URLs.",
-        appTag5: "🔗 Short URL",
+        appName4: "URL Shortener",
+        appDesc4: "Create real short links that become go.taithai.app/code and manage them in one place.",
+        appTag4: "🔗 Short URL",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -662,10 +647,8 @@
         openingText3: "Opening QR Code Reader… 🌸",
         noLinkYet2: "No link added yet for QR Code Generator",
         noLinkYet3: "No link added yet for QR Code Reader",
-        openingText4: "Opening Video / Audio Downloader… 🌸",
-        noLinkYet4: "No link added yet for Video / Audio Downloader",
-        openingText5: "Opening URL Shortener… 🌸",
-        noLinkYet5: "No link added yet for URL Shortener"
+        openingText4: "Opening URL Shortener… 🌸",
+        noLinkYet4: "No link added yet for URL Shortener"
       },
       th: {
         htmlLang: "th",
@@ -689,13 +672,9 @@
         appDesc3: "สแกน QR Code ได้ทันทีผ่านกล้องหรือรูปภาพ พร้อมเปิดลิงก์จากผลลัพธ์ได้ในคลิกเดียว",
         appTag3: "📷 สแกน QR",
 
-        appName4: "แอปดาวน์โหลดวิดีโอ/เสียง",
-        appDesc4: "ดาวน์โหลดไฟล์วิดีโอหรือเสียงจากลิงก์ไฟล์ตรงที่คุณมีสิทธิ์ดาวน์โหลด",
-        appTag4: "⬇️ ดาวน์โหลด",
-
-        appName5: "URL Shortener",
-        appDesc5: "ย่อลิงก์ได้ทันทีผ่าน go.taithai.app เพื่อให้ URL ดูสะอาดและแชร์ง่ายขึ้น",
-        appTag5: "🔗 ลิงก์สั้น",
+        appName4: "URL Shortener",
+        appDesc4: "สร้างลิงก์สั้นแบบใช้งานจริงให้เป็นรูปแบบ go.taithai.app/รหัส และจัดการได้ในที่เดียว",
+        appTag4: "🔗 ลิงก์สั้น",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -704,10 +683,8 @@
         openingText3: "กำลังเปิด ตัวอ่านคิวอาร์โค้ด… 🌸",
         noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด",
         noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด",
-        openingText4: "กำลังเปิด แอปดาวน์โหลดวิดีโอ/เสียง… 🌸",
-        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ แอปดาวน์โหลดวิดีโอ/เสียง",
-        openingText5: "กำลังเปิด URL Shortener… 🌸",
-        noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ URL Shortener"
+        openingText4: "กำลังเปิด URL Shortener… 🌸",
+        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ URL Shortener"
       }
     };
 
@@ -747,10 +724,6 @@
       document.getElementById("appName4").textContent = t.appName4;
       document.getElementById("appDesc4").textContent = t.appDesc4;
       document.getElementById("appTag4").textContent = t.appTag4;
-
-      document.getElementById("appName5").textContent = t.appName5;
-      document.getElementById("appDesc5").textContent = t.appDesc5;
-      document.getElementById("appTag5").textContent = t.appTag5;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -800,28 +773,13 @@
         window.location.href = QR_READER_URL;
       }, 250);
     }
-
-
-
-    function goToMediaDownloader() {
-      if (!MEDIA_DOWNLOADER_URL || MEDIA_DOWNLOADER_URL === "javascript:void(0)") {
+    function goToUrlShortener() {
+      if (!URL_SHORTENER_URL || URL_SHORTENER_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet4);
         return;
       }
 
       showToast(i18n[currentLang].openingText4);
-      setTimeout(() => {
-        window.location.href = MEDIA_DOWNLOADER_URL;
-      }, 250);
-    }
-
-    function goToUrlShortener() {
-      if (!URL_SHORTENER_URL || URL_SHORTENER_URL === "javascript:void(0)") {
-        showToast(i18n[currentLang].noLinkYet5);
-        return;
-      }
-
-      showToast(i18n[currentLang].openingText5);
       setTimeout(() => {
         window.location.href = URL_SHORTENER_URL;
       }, 250);
