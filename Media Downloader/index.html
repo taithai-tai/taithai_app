@@ -3,215 +3,156 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube Download Helper (Client-side)</title>
+  <title>YouTube Downloader (API)</title>
   <style>
     * { box-sizing: border-box; }
-    :root {
-      --bg-1: #f5ede3;
-      --bg-2: #efe3d4;
-      --bg-3: #e8d7c3;
-      --text: #4e3b2f;
-      --muted: #7a6353;
-      --border: rgba(117, 88, 66, 0.14);
-      --surface: rgba(255,250,245,0.88);
-      --accent: #7f5f48;
-      --accent-soft: #d8c0ab;
-      --success: #5f8a63;
-      --danger: #ba6b61;
-      --warning: #b7863c;
-    }
-    body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left, rgba(255,255,255,0.65), transparent 30%),
-        linear-gradient(135deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 24px;
-    }
-    .card {
-      width: min(860px, 100%);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 28px;
-      box-shadow: 0 24px 70px rgba(122, 99, 83, 0.12);
-      padding: 28px;
-    }
-    h1 { margin: 0 0 10px; font-size: 1.9rem; color: #5a4334; }
-    .desc { margin: 0 0 16px; color: var(--muted); line-height: 1.65; }
-    .notice {
-      margin: 0 0 16px;
-      padding: 12px;
-      border-radius: 12px;
-      border: 1px solid rgba(183, 134, 60, 0.3);
-      background: rgba(255, 245, 225, 0.6);
-      color: #8a6328;
-      font-size: 0.92rem;
-      line-height: 1.6;
-    }
-    .form { display: grid; gap: 14px; }
-    label { font-weight: 600; color: #6a5343; font-size: 0.92rem; }
-    input, textarea {
-      width: 100%;
-      padding: 11px 12px;
-      border-radius: 12px;
-      border: 1px solid var(--accent-soft);
-      background: #fffaf6;
-      color: var(--text);
-      font-size: 0.94rem;
-    }
-    textarea { min-height: 90px; resize: vertical; }
-    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 11px 14px;
-      font-size: 0.93rem;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    .btn-primary { color: #fff; background: linear-gradient(180deg, #8f6f57, #7c5f4b); }
-    .btn-secondary { color: #6b5444; background: #f7ede3; border: 1px solid var(--accent-soft); }
-    .result {
-      margin-top: 8px;
-      padding: 12px;
-      border-radius: 12px;
-      background: #fffdf8;
-      border: 1px solid var(--accent-soft);
-      display: none;
-    }
-    .result.show { display: block; }
-    .status { margin-top: 6px; font-size: .9rem; min-height: 1.3em; color: var(--muted); }
-    .status.ok { color: var(--success); }
-    .status.err { color: var(--danger); }
-    .status.warn { color: var(--warning); }
-    code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem; }
+    body { margin:0; font-family: Inter,system-ui,sans-serif; background:#f6efe7; color:#4d3a2d; padding:20px; }
+    .card { max-width:900px; margin:0 auto; background:#fffaf6; border:1px solid #e7d6c6; border-radius:18px; padding:22px; }
+    h1 { margin:0 0 8px; }
+    .muted { color:#7f6858; }
+    .grid { display:grid; gap:12px; }
+    input, select, button { width:100%; padding:10px 12px; border-radius:10px; border:1px solid #d9c3af; font-size:14px; }
+    button { cursor:pointer; border:none; background:#7e5f49; color:white; font-weight:700; }
+    button.secondary { background:#f1e4d7; color:#6f5340; border:1px solid #d9c3af; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .row { display:grid; grid-template-columns: 1fr 160px 160px; gap:10px; }
+    .status { min-height:22px; font-size:14px; margin-top:6px; }
+    .ok{color:#2f7f43}.err{color:#a63f35}.warn{color:#9a6a1d}
+    .preview { display:none; margin-top:14px; padding:12px; border:1px solid #e7d6c6; border-radius:12px; background:#fff; }
+    .preview.show { display:block; }
+    .thumb { width:100%; max-width:420px; border-radius:10px; border:1px solid #e8dccf; }
+    code { background:#f5ede5; padding:2px 6px; border-radius:6px; }
+    @media (max-width:700px){ .row{ grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
   <main class="card">
-    <h1>🎬 YouTube Download Helper</h1>
-    <p class="desc">สำหรับจัดการลิงก์ YouTube ฝั่งเบราว์เซอร์: ดึง Video ID, เปิดวิดีโอ, และสร้างคำสั่งดาวน์โหลดสำหรับวิดีโอที่คุณมีสิทธิ์เท่านั้น</p>
-    <p class="notice">
-      ข้อจำกัดสำคัญ: แอปที่มีแค่ HTML/CSS/JavaScript บนเบราว์เซอร์ <strong>ไม่สามารถดาวน์โหลดจาก YouTube โดยตรง</strong> ได้อย่างเสถียร
-      เพราะข้อจำกัด CORS/การยืนยันลายเซ็นของสตรีมวิดีโอ
-    </p>
+    <h1>⬇️ YouTube Downloader (ผ่าน API)</h1>
+    <p class="muted">เวอร์ชันนี้ใช้ API ภายนอก/เซิร์ฟเวอร์กลางเพื่อดึงข้อมูลและลิงก์ดาวน์โหลด แก้ปัญหาโหลดตรงจากเบราว์เซอร์อย่างเดียวไม่ได้</p>
 
-    <form class="form" id="ytForm">
-      <div>
-        <label for="urlInput">ลิงก์ YouTube</label>
-        <input id="urlInput" type="url" placeholder="https://www.youtube.com/watch?v=..." required />
+    <div class="grid">
+      <label>API Base URL
+        <input id="apiBase" value="http://localhost:5000" placeholder="https://your-api-domain.com" />
+      </label>
+      <label>ลิงก์ YouTube
+        <input id="ytUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
+      </label>
+      <div class="row">
+        <select id="format">
+          <option value="mp4">Video (mp4)</option>
+          <option value="mp3">Audio (mp3)</option>
+        </select>
+        <button id="infoBtn" class="secondary">ดึงข้อมูลวิดีโอ</button>
+        <button id="downloadBtn">ดาวน์โหลด</button>
       </div>
+      <p id="status" class="status">พร้อมใช้งาน</p>
+    </div>
 
-      <div class="actions">
-        <button class="btn-primary" type="submit">วิเคราะห์ลิงก์</button>
-        <button class="btn-secondary" id="openBtn" type="button">เปิดวิดีโอ</button>
-        <button class="btn-secondary" id="copyBtn" type="button">คัดลอกคำสั่ง yt-dlp</button>
-      </div>
+    <section id="preview" class="preview">
+      <img id="thumb" class="thumb" alt="thumbnail" />
+      <h3 id="title">-</h3>
+      <p class="muted">ช่อง: <span id="channel">-</span> • ความยาว: <span id="duration">-</span></p>
+      <p class="muted">ถ้า API ส่งลิงก์ดาวน์โหลดตรงมา ระบบจะเปิดลิงก์ให้ทันที</p>
+    </section>
 
-      <div id="result" class="result">
-        <p><strong>Video ID:</strong> <span id="videoId">-</span></p>
-        <p><strong>ลิงก์ embed:</strong> <a id="embedLink" target="_blank" rel="noopener noreferrer">-</a></p>
-        <label for="commandOutput">คำสั่งแนะนำ (ดาวน์โหลดเฉพาะคอนเทนต์ที่คุณมีสิทธิ์)</label>
-        <textarea id="commandOutput" readonly></textarea>
-      </div>
-
-      <p class="status" id="status">พร้อมใช้งาน</p>
-    </form>
+    <p class="muted" style="margin-top:12px;">หมายเหตุ: endpoint ที่ใช้คือ <code>/info?url=...</code> และ <code>/download?url=...&format=...</code> หาก API ของคุณใช้ path ต่างออกไป ให้แก้ใน JavaScript ด้านล่าง</p>
   </main>
 
   <script>
-    const form = document.getElementById('ytForm');
-    const urlInput = document.getElementById('urlInput');
+    const apiBaseEl = document.getElementById('apiBase');
+    const ytUrlEl = document.getElementById('ytUrl');
+    const formatEl = document.getElementById('format');
     const statusEl = document.getElementById('status');
-    const openBtn = document.getElementById('openBtn');
-    const copyBtn = document.getElementById('copyBtn');
-    const resultEl = document.getElementById('result');
-    const videoIdEl = document.getElementById('videoId');
-    const embedLinkEl = document.getElementById('embedLink');
-    const commandOutputEl = document.getElementById('commandOutput');
+    const previewEl = document.getElementById('preview');
+    const thumbEl = document.getElementById('thumb');
+    const titleEl = document.getElementById('title');
+    const channelEl = document.getElementById('channel');
+    const durationEl = document.getElementById('duration');
+    const infoBtn = document.getElementById('infoBtn');
+    const downloadBtn = document.getElementById('downloadBtn');
 
-    function setStatus(text, tone = '') {
-      statusEl.textContent = text;
+    function setStatus(msg, tone = '') {
+      statusEl.textContent = msg;
       statusEl.className = `status ${tone}`.trim();
     }
 
-    function parseYouTubeId(rawUrl) {
+    function normalizeBase(base) {
+      return base.trim().replace(/\/$/, '');
+    }
+
+    function validateYoutubeUrl(url) {
       try {
-        const url = new URL(rawUrl.trim());
-        if (!/(youtube\.com|youtu\.be)$/i.test(url.hostname.replace(/^www\./, ''))) {
-          return null;
-        }
-        if (url.hostname.includes('youtu.be')) {
-          return url.pathname.slice(1) || null;
-        }
-        if (url.searchParams.get('v')) {
-          return url.searchParams.get('v');
-        }
-        const parts = url.pathname.split('/').filter(Boolean);
-        const embedIndex = parts.indexOf('embed');
-        if (embedIndex >= 0 && parts[embedIndex + 1]) {
-          return parts[embedIndex + 1];
-        }
-        return null;
+        const u = new URL(url);
+        return /(youtube\.com|youtu\.be)$/i.test(u.hostname.replace(/^www\./, ''));
       } catch {
-        return null;
+        return false;
       }
     }
 
-    function buildCommand(url) {
-      return `yt-dlp -f bestvideo+bestaudio --merge-output-format mp4 "${url}"`;
+    async function fetchJson(url) {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return await res.json();
     }
 
-    form.addEventListener('submit', (event) => {
-      event.preventDefault();
-      const url = urlInput.value.trim();
-      const id = parseYouTubeId(url);
-
-      if (!id) {
-        resultEl.classList.remove('show');
-        setStatus('ลิงก์ YouTube ไม่ถูกต้อง หรือไม่พบ Video ID', 'err');
-        return;
+    async function loadInfo() {
+      const url = ytUrlEl.value.trim();
+      const base = normalizeBase(apiBaseEl.value);
+      if (!validateYoutubeUrl(url)) {
+        setStatus('กรุณาใส่ลิงก์ YouTube ให้ถูกต้อง', 'err');
+        return null;
       }
 
-      const embedUrl = `https://www.youtube.com/embed/${id}`;
-      videoIdEl.textContent = id;
-      embedLinkEl.href = embedUrl;
-      embedLinkEl.textContent = embedUrl;
-      commandOutputEl.value = buildCommand(url);
-      resultEl.classList.add('show');
-      setStatus('วิเคราะห์ลิงก์เรียบร้อยแล้ว', 'ok');
-    });
-
-    openBtn.addEventListener('click', () => {
-      const url = urlInput.value.trim();
-      const id = parseYouTubeId(url);
-      if (!id) {
-        setStatus('กรุณาใส่ลิงก์ YouTube ที่ถูกต้องก่อน', 'err');
-        return;
-      }
-      window.open(`https://www.youtube.com/watch?v=${id}`, '_blank', 'noopener,noreferrer');
-      setStatus('เปิดวิดีโอในแท็บใหม่แล้ว', 'ok');
-    });
-
-    copyBtn.addEventListener('click', async () => {
-      const url = urlInput.value.trim();
-      const id = parseYouTubeId(url);
-      if (!id) {
-        setStatus('กรุณาวิเคราะห์ลิงก์ก่อนคัดลอกคำสั่ง', 'err');
-        return;
-      }
-      const command = buildCommand(url);
+      infoBtn.disabled = true;
+      setStatus('กำลังดึงข้อมูลวิดีโอ...', 'warn');
       try {
-        await navigator.clipboard.writeText(command);
-        setStatus('คัดลอกคำสั่งแล้ว ✅', 'ok');
-      } catch {
-        setStatus('คัดลอกไม่สำเร็จ กรุณาคัดลอกจากกล่องข้อความแทน', 'warn');
+        const data = await fetchJson(`${base}/info?url=${encodeURIComponent(url)}`);
+        titleEl.textContent = data.title || 'ไม่พบชื่อวิดีโอ';
+        channelEl.textContent = data.channel || data.uploader || '-';
+        durationEl.textContent = data.duration || data.length || '-';
+        if (data.thumbnail) {
+          thumbEl.src = data.thumbnail;
+          thumbEl.style.display = 'block';
+        } else {
+          thumbEl.style.display = 'none';
+        }
+        previewEl.classList.add('show');
+        setStatus('ดึงข้อมูลสำเร็จ', 'ok');
+        return data;
+      } catch (e) {
+        setStatus(`ดึงข้อมูลไม่สำเร็จ: ${e.message}`, 'err');
+        return null;
+      } finally {
+        infoBtn.disabled = false;
       }
-    });
+    }
+
+    async function download() {
+      const url = ytUrlEl.value.trim();
+      const base = normalizeBase(apiBaseEl.value);
+      const format = formatEl.value;
+      if (!validateYoutubeUrl(url)) {
+        setStatus('กรุณาใส่ลิงก์ YouTube ให้ถูกต้อง', 'err');
+        return;
+      }
+
+      downloadBtn.disabled = true;
+      setStatus('กำลังขอลิงก์ดาวน์โหลดจาก API...', 'warn');
+      try {
+        const data = await fetchJson(`${base}/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(format)}`);
+        const direct = data.download_url || data.url || data.link;
+        if (!direct) throw new Error('API ไม่ส่งลิงก์ดาวน์โหลดกลับมา');
+        window.open(direct, '_blank', 'noopener,noreferrer');
+        setStatus('เปิดลิงก์ดาวน์โหลดแล้ว', 'ok');
+      } catch (e) {
+        setStatus(`ดาวน์โหลดไม่สำเร็จ: ${e.message}`, 'err');
+      } finally {
+        downloadBtn.disabled = false;
+      }
+    }
+
+    infoBtn.addEventListener('click', loadInfo);
+    downloadBtn.addEventListener('click', download);
   </script>
 </body>
 </html>
