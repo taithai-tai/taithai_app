@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>YouTube Downloader (API)</title>
+  <title>YouTube Downloader via Downhub</title>
   <style>
     * { box-sizing: border-box; }
     body { margin:0; font-family: Inter,system-ui,sans-serif; background:#f6efe7; color:#4d3a2d; padding:20px; }
@@ -28,13 +28,10 @@
 <body>
   <main class="card">
     <h1>⬇️ YouTube Downloader (ผ่าน API)</h1>
-    <p class="muted">เวอร์ชันนี้ใช้ API ภายนอก/เซิร์ฟเวอร์กลางเพื่อดึงข้อมูลและลิงก์ดาวน์โหลด แก้ปัญหาโหลดตรงจากเบราว์เซอร์อย่างเดียวไม่ได้</p>
+    <p class="muted">เวอร์ชันนี้เชื่อมต่อกับ Downhub โดยตรง เพื่อหลีกเลี่ยงข้อจำกัด CORS ฝั่งเบราว์เซอร์ และให้ใช้งานได้ทันทีโดยไม่ต้องรัน API เอง</p>
 
     <div class="grid">
-      <label>API Base URL
-        <input id="apiBase" value="http://localhost:5000" placeholder="https://your-api-domain.com" />
-      </label>
-      <label>ลิงก์ YouTube
+            <label>ลิงก์ YouTube
         <input id="ytUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
       </label>
       <div class="row">
@@ -42,8 +39,8 @@
           <option value="mp4">Video (mp4)</option>
           <option value="mp3">Audio (mp3)</option>
         </select>
-        <button id="infoBtn" class="secondary">ดึงข้อมูลวิดีโอ</button>
-        <button id="downloadBtn">ดาวน์โหลด</button>
+        <button id="openDownhubBtn" class="secondary">เปิดใน Downhub</button>
+        <button id="downloadBtn">ไปหน้าดาวน์โหลด</button>
       </div>
       <p id="status" class="status">พร้อมใช้งาน</p>
     </div>
@@ -55,11 +52,10 @@
       <p class="muted">ถ้า API ส่งลิงก์ดาวน์โหลดตรงมา ระบบจะเปิดลิงก์ให้ทันที</p>
     </section>
 
-    <p class="muted" style="margin-top:12px;">หมายเหตุ: endpoint ที่ใช้คือ <code>/info?url=...</code> และ <code>/download?url=...&format=...</code> หาก API ของคุณใช้ path ต่างออกไป ให้แก้ใน JavaScript ด้านล่าง</p>
+    <p class="muted" style="margin-top:12px;">หมายเหตุ: หน้าเว็บนี้จะพาคุณไปที่ <code>https://downhub.com/</code> พร้อมส่ง URL วิดีโอไปให้โดยอัตโนมัติ</p>
   </main>
 
   <script>
-    const apiBaseEl = document.getElementById('apiBase');
     const ytUrlEl = document.getElementById('ytUrl');
     const formatEl = document.getElementById('format');
     const statusEl = document.getElementById('status');
@@ -68,16 +64,12 @@
     const titleEl = document.getElementById('title');
     const channelEl = document.getElementById('channel');
     const durationEl = document.getElementById('duration');
-    const infoBtn = document.getElementById('infoBtn');
+    const openDownhubBtn = document.getElementById('openDownhubBtn');
     const downloadBtn = document.getElementById('downloadBtn');
 
     function setStatus(msg, tone = '') {
       statusEl.textContent = msg;
       statusEl.className = `status ${tone}`.trim();
-    }
-
-    function normalizeBase(base) {
-      return base.trim().replace(/\/$/, '');
     }
 
     function validateYoutubeUrl(url) {
@@ -89,70 +81,55 @@
       }
     }
 
-    async function fetchJson(url) {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
+    function buildDownhubUrl(youtubeUrl, format) {
+      const target = new URL('https://downhub.com/');
+      target.searchParams.set('url', youtubeUrl);
+      target.searchParams.set('format', format);
+      return target.toString();
     }
 
-    async function loadInfo() {
+    function openDownhub() {
       const url = ytUrlEl.value.trim();
-      const base = normalizeBase(apiBaseEl.value);
       if (!validateYoutubeUrl(url)) {
         setStatus('กรุณาใส่ลิงก์ YouTube ให้ถูกต้อง', 'err');
-        return null;
+        return;
       }
-
-      infoBtn.disabled = true;
-      setStatus('กำลังดึงข้อมูลวิดีโอ...', 'warn');
-      try {
-        const data = await fetchJson(`${base}/info?url=${encodeURIComponent(url)}`);
-        titleEl.textContent = data.title || 'ไม่พบชื่อวิดีโอ';
-        channelEl.textContent = data.channel || data.uploader || '-';
-        durationEl.textContent = data.duration || data.length || '-';
-        if (data.thumbnail) {
-          thumbEl.src = data.thumbnail;
-          thumbEl.style.display = 'block';
-        } else {
-          thumbEl.style.display = 'none';
-        }
-        previewEl.classList.add('show');
-        setStatus('ดึงข้อมูลสำเร็จ', 'ok');
-        return data;
-      } catch (e) {
-        setStatus(`ดึงข้อมูลไม่สำเร็จ: ${e.message}`, 'err');
-        return null;
-      } finally {
-        infoBtn.disabled = false;
-      }
+      const target = buildDownhubUrl(url, formatEl.value);
+      window.open(target, '_blank', 'noopener,noreferrer');
+      setStatus('เปิด Downhub พร้อมลิงก์วิดีโอแล้ว', 'ok');
     }
 
-    async function download() {
+    async function loadOembedPreview() {
       const url = ytUrlEl.value.trim();
-      const base = normalizeBase(apiBaseEl.value);
-      const format = formatEl.value;
       if (!validateYoutubeUrl(url)) {
         setStatus('กรุณาใส่ลิงก์ YouTube ให้ถูกต้อง', 'err');
         return;
       }
 
-      downloadBtn.disabled = true;
-      setStatus('กำลังขอลิงก์ดาวน์โหลดจาก API...', 'warn');
+      setStatus('กำลังดึงข้อมูลตัวอย่างวิดีโอ...', 'warn');
       try {
-        const data = await fetchJson(`${base}/download?url=${encodeURIComponent(url)}&format=${encodeURIComponent(format)}`);
-        const direct = data.download_url || data.url || data.link;
-        if (!direct) throw new Error('API ไม่ส่งลิงก์ดาวน์โหลดกลับมา');
-        window.open(direct, '_blank', 'noopener,noreferrer');
-        setStatus('เปิดลิงก์ดาวน์โหลดแล้ว', 'ok');
+        const endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+        const res = await fetch(endpoint);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+
+        titleEl.textContent = data.title || '-';
+        channelEl.textContent = data.author_name || '-';
+        durationEl.textContent = 'ไม่ระบุจาก oEmbed';
+        thumbEl.src = data.thumbnail_url || '';
+        thumbEl.style.display = data.thumbnail_url ? 'block' : 'none';
+        previewEl.classList.add('show');
+        setStatus('พร้อมดาวน์โหลดผ่าน Downhub', 'ok');
       } catch (e) {
-        setStatus(`ดาวน์โหลดไม่สำเร็จ: ${e.message}`, 'err');
-      } finally {
-        downloadBtn.disabled = false;
+        setStatus(`แสดงข้อมูลตัวอย่างไม่สำเร็จ: ${e.message}`, 'warn');
       }
     }
 
-    infoBtn.addEventListener('click', loadInfo);
-    downloadBtn.addEventListener('click', download);
+    openDownhubBtn.addEventListener('click', () => {
+      loadOembedPreview();
+      openDownhub();
+    });
+    downloadBtn.addEventListener('click', openDownhub);
   </script>
 </body>
 </html>
