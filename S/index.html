@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taithai Shortlink</title>
+  <style>
+    :root{--bg:#f8f1ea;--card:#fffdfa;--text:#3f2f24;--muted:#876c59;--accent:#de7f5f;--border:#ecd9ca}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;display:grid;place-items:center;background:linear-gradient(180deg,#fdf6f0,#f8f1ea);font-family:"Noto Sans Thai",system-ui,sans-serif;color:var(--text);padding:20px}
+    .card{width:min(640px,100%);background:var(--card);border:1px solid var(--border);border-radius:18px;padding:26px;box-shadow:0 10px 30px rgba(106,65,42,.08)}
+    h1{margin:0 0 8px;font-size:24px}
+    p{margin:0 0 18px;color:var(--muted);font-size:14px}
+    input{width:100%;padding:13px 14px;border:1px solid var(--border);border-radius:12px;font-size:15px;outline:none}
+    input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(222,127,95,.15)}
+    button{margin-top:12px;width:100%;padding:12px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
+    #result{margin-top:16px;padding:12px;border:1px dashed var(--border);border-radius:12px;display:none;background:#fff}
+    #result a{color:#b6573a;word-break:break-all}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>🔗 URL Shortener</h1>
+    <p>วางลิงก์ยาว แล้วกดสร้าง Shortlink ได้ทันที</p>
+    <input id="longUrl" placeholder="https://example.com/page" />
+    <button id="createBtn">สร้าง Shortlink</button>
+    <div id="result"></div>
+  </main>
+
+<script>
+const BASE_DOMAIN='https://taithai.app';
+const STORE_KEY='taithai_short_links_v2';
+const params=new URLSearchParams(location.search);
+const pathCode=location.pathname.split('/').filter(Boolean).pop();
+const parts=location.pathname.split('/').filter(Boolean);
+const scopedCode=(parts[0]==='S'&&parts[1])?parts[1]:pathCode;
+const maybeCode=(/^[a-zA-Z0-9_-]{4,32}$/.test(scopedCode||'')?scopedCode:null);
+
+function load(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}
+function save(db){localStorage.setItem(STORE_KEY,JSON.stringify(db))}
+function validUrl(s){try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)}catch{return false}}
+function randCode(){const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let out='';for(let i=0;i<4;i++) out+=chars[Math.floor(Math.random()*chars.length)];return out}
+
+(function tryRedirect(){
+  if(!maybeCode) return;
+  const db=load();
+  if(db[maybeCode]?.url) location.replace(db[maybeCode].url);
+})();
+
+document.getElementById('createBtn').onclick=()=>{
+  const longUrl=document.getElementById('longUrl').value.trim();
+  if(!validUrl(longUrl)){alert('กรุณาใส่ URL ที่ถูกต้อง (http/https)');return;}
+
+  const db=load();
+  let code='';
+  do{code=randCode()}while(db[code]);
+  db[code]={url:longUrl,createdAt:Date.now()};
+  save(db);
+
+  const shortUrl=`${BASE_DOMAIN}/S/${code}`;
+  const result=document.getElementById('result');
+  result.style.display='block';
+  result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank">${shortUrl}</a><br><br><button id="copyBtn" style="margin-top:0">คัดลอกลิงก์</button>`;
+  document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shortUrl);
+};
+</script>
+</body>
+</html>

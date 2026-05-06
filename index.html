@@ -588,9 +588,8 @@
           </div>
           <span class="app-tag" id="appTag3"></span>
         </a>
-
-        <a class="app-card" href="javascript:void(0)" onclick="goToMediaDownloader()">
-          <div class="app-icon">⬇️</div>
+        <a class="app-card" href="javascript:void(0)" onclick="goToUrlShortener()">
+          <div class="app-icon">🔗</div>
           <div>
             <div class="app-name" id="appName4"></div>
             <div class="app-desc" id="appDesc4"></div>
@@ -612,7 +611,26 @@
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
     const QR_GENERATOR_URL = "https://taithai.app/QR%20Code%20Generator%20/";
     const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
-    const MEDIA_DOWNLOADER_URL = "https://taithai.app/Media%20Downloader/";
+    const URL_SHORTENER_URL = "https://taithai.app/S/";
+
+    const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
+
+    (function resolveRootShortLink() {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const pathCode = parts.length === 1 ? parts[0] : (parts[0] === "S" ? parts[1] : "");
+      const queryCode = new URLSearchParams(window.location.search).get("c");
+      const code = (/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode || "") ? pathCode : queryCode);
+      if (!code) return;
+
+      try {
+        const db = JSON.parse(localStorage.getItem(SHORTLINK_STORE_KEY) || "{}");
+        if (db[code]?.url) {
+          window.location.replace(db[code].url);
+        }
+      } catch (e) {
+        console.warn("Shortlink lookup failed", e);
+      }
+    })();
 
     const i18n = {
       en: {
@@ -637,9 +655,9 @@
         appDesc3: "Scan QR codes instantly with your camera or image uploads and open link results in one tap.",
         appTag3: "📷 QR Scan",
 
-        appName4: "Video / Audio Downloader",
-        appDesc4: "Download video or audio files directly from file links you own or are allowed to save.",
-        appTag4: "⬇️ Downloader",
+        appName4: "URL Shortener",
+        appDesc4: "Create the shortest links possible like taithai.app/S/abcd in a clean minimal experience.",
+        appTag4: "🔗 Short URL",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -648,8 +666,8 @@
         openingText3: "Opening QR Code Reader… 🌸",
         noLinkYet2: "No link added yet for QR Code Generator",
         noLinkYet3: "No link added yet for QR Code Reader",
-        openingText4: "Opening Video / Audio Downloader… 🌸",
-        noLinkYet4: "No link added yet for Video / Audio Downloader"
+        openingText4: "Opening URL Shortener… 🌸",
+        noLinkYet4: "No link added yet for URL Shortener"
       },
       th: {
         htmlLang: "th",
@@ -673,9 +691,9 @@
         appDesc3: "สแกน QR Code ได้ทันทีผ่านกล้องหรือรูปภาพ พร้อมเปิดลิงก์จากผลลัพธ์ได้ในคลิกเดียว",
         appTag3: "📷 สแกน QR",
 
-        appName4: "แอปดาวน์โหลดวิดีโอ/เสียง",
-        appDesc4: "ดาวน์โหลดไฟล์วิดีโอหรือเสียงจากลิงก์ไฟล์ตรงที่คุณมีสิทธิ์ดาวน์โหลด",
-        appTag4: "⬇️ ดาวน์โหลด",
+        appName4: "URL Shortener",
+        appDesc4: "สร้างลิงก์ให้สั้นที่สุดเป็นรูปแบบ taithai.app/S/abcd ด้วยหน้าจอเรียบง่าย",
+        appTag4: "🔗 ลิงก์สั้น",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -684,8 +702,8 @@
         openingText3: "กำลังเปิด ตัวอ่านคิวอาร์โค้ด… 🌸",
         noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด",
         noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด",
-        openingText4: "กำลังเปิด แอปดาวน์โหลดวิดีโอ/เสียง… 🌸",
-        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ แอปดาวน์โหลดวิดีโอ/เสียง"
+        openingText4: "กำลังเปิด URL Shortener… 🌸",
+        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ URL Shortener"
       }
     };
 
@@ -774,18 +792,15 @@
         window.location.href = QR_READER_URL;
       }, 250);
     }
-
-
-
-    function goToMediaDownloader() {
-      if (!MEDIA_DOWNLOADER_URL || MEDIA_DOWNLOADER_URL === "javascript:void(0)") {
+    function goToUrlShortener() {
+      if (!URL_SHORTENER_URL || URL_SHORTENER_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet4);
         return;
       }
 
       showToast(i18n[currentLang].openingText4);
       setTimeout(() => {
-        window.location.href = MEDIA_DOWNLOADER_URL;
+        window.location.href = URL_SHORTENER_URL;
       }, 250);
     }
 
