@@ -3,119 +3,122 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Bangkok Doctor Plan Viewer</title>
+  <title>BU Degree Plan Explorer</title>
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background: #f7f7fb; color: #1f2430; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
-    .card { background: #fff; border: 1px solid #e7e8f0; border-radius: 14px; padding: 16px; box-shadow: 0 4px 18px rgba(0,0,0,.04); margin-bottom: 14px; }
-    h1 { margin: 0 0 8px; font-size: 1.6rem; }
-    .muted { color: #667085; font-size: .95rem; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-    input[type="text"], input[type="date"] { padding: 10px 12px; border: 1px solid #d6d9e6; border-radius: 10px; min-width: 220px; }
-    input[type="file"] { padding: 8px; }
-    button { padding: 10px 14px; border: none; border-radius: 10px; background: #e85d75; color: #fff; cursor: pointer; }
-    button.secondary { background: #4f7cff; }
-    #results .item { padding: 10px; border: 1px solid #eceef5; border-radius: 10px; margin: 8px 0; background: #fafbff; }
-    .pill { display: inline-block; background: #eef2ff; color: #3b4cca; border-radius: 999px; padding: 3px 10px; font-size: .8rem; margin-right: 6px; }
-    pre { white-space: pre-wrap; background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 10px; max-height: 300px; overflow: auto; }
+    body{font-family:'Noto Sans Thai',system-ui,sans-serif;margin:0;background:#f7f8fc;color:#1f2937}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}
+    .card{background:#fff;border:1px solid #e8ebf3;border-radius:14px;padding:16px;margin-bottom:14px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input,select{padding:10px 12px;border:1px solid #d8dce8;border-radius:10px}
+    input[type=url]{min-width:360px;flex:1}
+    button{padding:10px 14px;border:none;border-radius:10px;background:#5b7cfa;color:#fff;cursor:pointer}
+    .muted{color:#667085}
+    .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+    .chip{background:#eef2ff;color:#3949ab;border-radius:999px;padding:4px 10px;font-size:.82rem;cursor:pointer}
+    .group h3{margin:14px 0 8px}
+    .item{border:1px solid #eceff6;border-radius:12px;padding:12px;margin-bottom:8px;background:#fcfdff}
+    .item a{font-weight:600;color:#1d4ed8;text-decoration:none}
+    .meta{font-size:.86rem;color:#6b7280;margin-top:4px}
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.mjs" type="module"></script>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>ตัวช่วยดู Duty Plan หมอกรุงเทพฯ</h1>
-      <p class="muted">อัปโหลดไฟล์ PDF แล้วค้นหาชื่อแพทย์/คำที่ต้องการได้ทันที ไม่ต้องเลื่อนหาใน PDF ยาว ๆ</p>
-      <div class="row">
-        <input id="pdfFile" type="file" accept="application/pdf" />
-        <button id="loadBtn">อ่าน PDF</button>
-        <span id="status" class="muted"></span>
-      </div>
+<div class="wrap">
+  <div class="card">
+    <h1>ตัวอ่าน Degree Plan (BU) แบบอ่านง่าย</h1>
+    <p class="muted">ดึงลิงก์ PDF จากหน้า Degree Plan แล้วจัดหมวดให้อ่านง่าย ค้นหาเร็ว และกดเปิดเอกสารได้ทันที</p>
+    <div class="row">
+      <input id="sourceUrl" type="url" value="https://degreeplan.bu.ac.th/#1556788856475-c06a4ef5-110d" />
+      <button id="loadBtn">โหลดข้อมูล</button>
     </div>
-
-    <div class="card">
-      <div class="row">
-        <input id="searchInput" type="text" placeholder="พิมพ์ชื่อหมอ / แผนก / keyword" />
-        <input id="dateInput" type="date" />
-        <button class="secondary" id="searchBtn">ค้นหา</button>
-      </div>
+    <div class="row" style="margin-top:10px">
+      <input id="searchInput" type="text" placeholder="ค้นหาด้วยชื่อหลักสูตร/คณะ/ปี" style="min-width:240px;flex:1" />
+      <select id="categorySelect"><option value="">ทุกหมวด</option></select>
     </div>
-
-    <div class="card" id="results"></div>
-    <div class="card">
-      <div class="muted">Raw text (ช่วย debug เวลา PDF format แปลก)</div>
-      <pre id="rawText"></pre>
-    </div>
+    <div class="chips" id="quickChips"></div>
+    <div id="status" class="muted" style="margin-top:8px"></div>
   </div>
 
-  <script type="module">
-    const statusEl = document.getElementById('status');
-    const rawTextEl = document.getElementById('rawText');
-    const resultsEl = document.getElementById('results');
-    let lines = [];
+  <div class="card" id="summary"></div>
+  <div class="card" id="results"></div>
+</div>
+<script>
+const categoryKeywords=[
+  ['Business',['business','บริหาร','commerce','account','บัญชี']],
+  ['Engineering',['engineer','วิศว']],
+  ['Communication Arts',['communication','นิเทศ']],
+  ['Science/Tech',['science','tech','computer','it','data','วิทยา','เทคโน']],
+  ['Arts/Humanities',['art','human','language','ภาษา','ศิลป']],
+  ['International',['international','inter','นานาชาติ']],
+];
 
-    async function extractTextFromPdf(file) {
-      const { getDocument } = globalThis.pdfjsLib;
-      const buffer = await file.arrayBuffer();
-      const pdf = await getDocument({ data: buffer }).promise;
-      let allText = '';
-      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-        const page = await pdf.getPage(pageNum);
-        const content = await page.getTextContent();
-        const pageText = content.items.map(item => item.str).join(' ');
-        allText += `\n[PAGE ${pageNum}]\n${pageText}\n`;
-      }
-      return allText;
-    }
+const state={items:[],filtered:[]};
+const statusEl=document.getElementById('status');
 
-    function doSearch() {
-      const q = document.getElementById('searchInput').value.trim().toLowerCase();
-      const date = document.getElementById('dateInput').value;
-      const dateToken = date ? new Date(date).toLocaleDateString('th-TH') : '';
+function categorize(name){
+  const n=name.toLowerCase();
+  for(const [cat,keys] of categoryKeywords){if(keys.some(k=>n.includes(k))) return cat;}
+  return 'Other';
+}
 
-      const filtered = lines.filter(line => {
-        const l = line.toLowerCase();
-        const passQ = !q || l.includes(q);
-        const passDate = !dateToken || line.includes(dateToken) || line.includes(date);
-        return passQ && passDate;
-      });
+function parseLinks(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
+  const links=[];
+  for(let i=0;i<lines.length;i++){
+    const line=lines[i];
+    const m=line.match(/\((https?:\/\/[^\s)]+\.pdf[^)]*)\)/i) || line.match(/(https?:\/\/[^\s]+\.pdf\S*)/i);
+    if(!m) continue;
+    const url=m[1];
+    let title=line.replace(/\(https?:\/\/[^)]+\)/,'').trim();
+    if(!title||title.length<4){title=(lines[i-1]||'Degree Plan PDF').trim();}
+    links.push({title,url,category:categorize(title)});
+  }
+  const seen=new Set();
+  return links.filter(x=>{if(seen.has(x.url)) return false; seen.add(x.url); return true;});
+}
 
-      resultsEl.innerHTML = `<div class="muted">ผลลัพธ์ ${filtered.length} รายการ</div>`;
-      if (!filtered.length) {
-        resultsEl.innerHTML += '<div class="item">ไม่พบข้อมูลตามเงื่อนไข</div>';
-        return;
-      }
+async function loadData(){
+  const raw=document.getElementById('sourceUrl').value.trim();
+  const base=raw.split('#')[0];
+  statusEl.textContent='กำลังดึงข้อมูล...';
+  const proxyUrl='https://r.jina.ai/http://'+base.replace(/^https?:\/\//,'');
+  const res=await fetch(proxyUrl);
+  const txt=await res.text();
+  const items=parseLinks(txt);
+  state.items=items;
+  statusEl.textContent=`โหลดสำเร็จ ${items.length} ไฟล์`;
+  buildFilters(items);
+  applyFilters();
+}
 
-      filtered.slice(0, 300).forEach((line, idx) => {
-        const div = document.createElement('div');
-        div.className = 'item';
-        div.innerHTML = `<span class="pill">#${idx + 1}</span>${line}`;
-        resultsEl.appendChild(div);
-      });
-    }
+function buildFilters(items){
+  const categories=[...new Set(items.map(i=>i.category))].sort();
+  const sel=document.getElementById('categorySelect');
+  sel.innerHTML='<option value="">ทุกหมวด</option>'+categories.map(c=>`<option>${c}</option>`).join('');
+  document.getElementById('quickChips').innerHTML=categories.map(c=>`<span class="chip" data-c="${c}">${c}</span>`).join('');
+  document.querySelectorAll('.chip').forEach(ch=>ch.onclick=()=>{sel.value=ch.dataset.c;applyFilters();});
+}
 
-    document.getElementById('loadBtn').addEventListener('click', async () => {
-      const file = document.getElementById('pdfFile').files[0];
-      if (!file) return alert('กรุณาเลือกไฟล์ PDF ก่อน');
+function applyFilters(){
+  const q=document.getElementById('searchInput').value.trim().toLowerCase();
+  const c=document.getElementById('categorySelect').value;
+  state.filtered=state.items.filter(i=>(!c||i.category===c)&&(!q||(`${i.title} ${i.url} ${i.category}`.toLowerCase().includes(q))));
+  render();
+}
 
-      statusEl.textContent = 'กำลังอ่านไฟล์...';
-      try {
-        const text = await extractTextFromPdf(file);
-        rawTextEl.textContent = text;
-        lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean);
-        statusEl.textContent = `อ่านสำเร็จ ${lines.length} บรรทัด`;
-        doSearch();
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = 'อ่าน PDF ไม่สำเร็จ';
-        alert('เกิดข้อผิดพลาดในการอ่าน PDF');
-      }
-    });
+function render(){
+  const sum=document.getElementById('summary');
+  const results=document.getElementById('results');
+  const byCat={};
+  state.filtered.forEach(i=>{(byCat[i.category]??=[]).push(i)});
+  sum.innerHTML=`<b>สรุป:</b> ทั้งหมด ${state.items.length} รายการ | ที่แสดง ${state.filtered.length} รายการ | ${Object.keys(byCat).length} หมวด`;
+  if(!state.filtered.length){results.innerHTML='<div class="muted">ไม่พบข้อมูลตามเงื่อนไข</div>';return;}
+  results.innerHTML=Object.entries(byCat).sort((a,b)=>b[1].length-a[1].length).map(([cat,list])=>`<div class="group"><h3>${cat} (${list.length})</h3>${list.map(x=>`<div class="item"><a href="${x.url}" target="_blank" rel="noopener">${x.title}</a><div class="meta">${x.url}</div></div>`).join('')}</div>`).join('');
+}
 
-    document.getElementById('searchBtn').addEventListener('click', doSearch);
-    document.getElementById('searchInput').addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') doSearch();
-    });
-  </script>
+document.getElementById('loadBtn').onclick=()=>loadData().catch(e=>{console.error(e);statusEl.textContent='โหลดข้อมูลไม่สำเร็จ (อาจโดนบล็อกจากต้นทาง)';});
+document.getElementById('searchInput').addEventListener('input',applyFilters);
+document.getElementById('categorySelect').addEventListener('change',applyFilters);
+loadData().catch(()=>{});
+</script>
 </body>
 </html>
