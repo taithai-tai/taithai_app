@@ -5,131 +5,95 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BU Degree Plan Selector</title>
   <style>
-    body{font-family:'Noto Sans Thai',system-ui,sans-serif;margin:0;background:#f4f6fb;color:#1f2937}
-    .wrap{max-width:1150px;margin:0 auto;padding:22px}
-    .card{background:#fff;border:1px solid #e8ecf5;border-radius:16px;padding:16px;margin-bottom:14px}
-    h1{margin:0 0 8px}.muted{color:#667085}
-    .row{display:grid;grid-template-columns:repeat(3,minmax(180px,1fr));gap:10px}
-    select,button{padding:11px 12px;border:1px solid #d8deea;border-radius:10px;font-size:15px}
-    button{background:#5b7cfa;color:#fff;border:none;cursor:pointer}
-    .pill{display:inline-block;background:#eef2ff;color:#3b4cca;padding:3px 9px;border-radius:999px;font-size:12px;margin-right:6px}
-    .result{display:grid;grid-template-columns:330px 1fr;gap:12px}
-    .list .item{padding:10px;border:1px solid #ecf0f7;border-radius:10px;margin-bottom:8px;background:#fcfdff;cursor:pointer}
-    .list .item.active{border-color:#5b7cfa;background:#eef3ff}
-    iframe{width:100%;height:76vh;border:1px solid #dfe5f2;border-radius:12px;background:#fff}
-    @media(max-width:960px){.result{grid-template-columns:1fr}.row{grid-template-columns:1fr}}
+    body{font-family:'Noto Sans Thai',system-ui,sans-serif;margin:0;background:#f5f7fc;color:#1f2937}
+    .wrap{max-width:1100px;margin:0 auto;padding:20px}.card{background:#fff;border:1px solid #e7ecf5;border-radius:14px;padding:16px;margin-bottom:12px}
+    .row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px} select,button{padding:11px;border:1px solid #d6deea;border-radius:10px}
+    button{background:#4f7cff;color:#fff;border:none;cursor:pointer}.muted{color:#667085}
+    .result{display:grid;grid-template-columns:320px 1fr;gap:12px}.item{padding:10px;border:1px solid #e8edf7;border-radius:10px;margin-bottom:8px;cursor:pointer}
+    .item.active{background:#eef3ff;border-color:#4f7cff} iframe{width:100%;height:75vh;border:1px solid #dfe5f3;border-radius:10px}
+    @media(max-width:920px){.row{grid-template-columns:1fr}.result{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-    <h1>เลือกดู Degree Plan แบบไม่ต้องพิมพ์เอง</h1>
-    <p class="muted">เลือก <b>คณะ/สาขา/ปี</b> จากตัวเลือกสำเร็จรูป แล้วระบบจะแสดง PDF ให้ดูทันที</p>
-    <div class="row">
-      <select id="facultySelect"><option>กำลังโหลดคณะ...</option></select>
-      <select id="majorSelect" disabled><option>เลือกสาขา</option></select>
-      <select id="yearSelect" disabled><option>เลือกปี</option></select>
+    <h2 style="margin:0 0 8px">เลือกคณะ > สาขา > ปี แล้วดู Degree Plan ได้ทันที</h2>
+    <div class="muted">ข้อมูลเป็นชุดคงที่ (fixed options) เลือกจาก dropdown ได้เลย ไม่ต้องพิมพ์</div>
+    <div class="row" style="margin-top:10px">
+      <select id="faculty"></select>
+      <select id="major" disabled></select>
+      <select id="year" disabled></select>
     </div>
     <div style="margin-top:10px"><button id="showBtn" disabled>แสดง Degree Plan</button></div>
-    <div id="status" class="muted" style="margin-top:8px"></div>
   </div>
 
   <div class="card result">
-    <div class="list" id="listPanel"></div>
+    <div id="list"></div>
     <div>
-      <div id="docMeta" class="muted" style="margin-bottom:8px"></div>
-      <iframe id="pdfFrame" title="Degree Plan Preview"></iframe>
+      <div id="meta" class="muted" style="margin-bottom:8px"></div>
+      <iframe id="viewer"></iframe>
     </div>
   </div>
 </div>
 <script>
-const sourceUrl='https://degreeplan.bu.ac.th/';
-const proxyUrl='https://r.jina.ai/http://degreeplan.bu.ac.th/';
-const statusEl=document.getElementById('status');
-const facultySel=document.getElementById('facultySelect');
-const majorSel=document.getElementById('majorSelect');
-const yearSel=document.getElementById('yearSelect');
-const showBtn=document.getElementById('showBtn');
-const listPanel=document.getElementById('listPanel');
-const pdfFrame=document.getElementById('pdfFrame');
-const docMeta=document.getElementById('docMeta');
-let items=[];
-
-function extractYear(text){const m=text.match(/(20\d{2}|25\d{2})/);return m?m[1]:'ไม่ระบุปี';}
-function cleanTitle(t){return t.replace(/\s+/g,' ').replace(/\(.*?\.pdf.*?\)/ig,'').trim();}
-
-function parse(text){
-  const lines=text.split('\n').map(l=>l.trim()).filter(Boolean);
-  const out=[];
-  for(let i=0;i<lines.length;i++){
-    const line=lines[i];
-    const m=line.match(/(https?:\/\/[^\s)]+\.pdf\S*)/i);
-    if(!m) continue;
-    const url=m[1].replace(/[)>\]]+$/,'');
-    const near=[lines[i-2]||'',lines[i-1]||'',line].join(' ');
-    const title=cleanTitle(near)||'Degree Plan';
-    const parts=title.split(/[\-|–|—|\/]/).map(s=>s.trim()).filter(Boolean);
-    const faculty=parts[0]||'ไม่ระบุคณะ';
-    const major=parts[1]||parts[0]||'ไม่ระบุสาขา';
-    const year=extractYear(title+' '+url);
-    out.push({faculty,major,year,title,url});
+// เพิ่มรายการใหม่ใน array นี้ได้เลย เมื่อมีไฟล์ใหม่จาก BU
+const DEGREE_PLANS = [
+  {
+    faculty: 'School of Business Administration',
+    major: 'Undergraduate Programs',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - หลักสูตรปริญญาตรี คณะบริหารธุรกิจ',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
   }
-  const seen=new Set();
-  return out.filter(x=>{const k=x.url;if(seen.has(k)) return false;seen.add(k);return true;});
+];
+
+const facultyEl = document.getElementById('faculty');
+const majorEl = document.getElementById('major');
+const yearEl = document.getElementById('year');
+const showBtn = document.getElementById('showBtn');
+const listEl = document.getElementById('list');
+const metaEl = document.getElementById('meta');
+const viewer = document.getElementById('viewer');
+
+const unique = arr => [...new Set(arr)];
+function setOptions(el, placeholder, values){el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');}
+
+function initFaculties(){
+  setOptions(facultyEl, 'เลือกคณะ', unique(DEGREE_PLANS.map(x=>x.faculty)));
+  setOptions(majorEl, 'เลือกสาขา', []);
+  setOptions(yearEl, 'เลือกปี', []);
 }
 
-function unique(arr){return [...new Set(arr)];}
-function buildFaculties(){
-  const faculties=unique(items.map(x=>x.faculty)).sort();
-  facultySel.innerHTML='<option value="">เลือกคณะ</option>'+faculties.map(f=>`<option value="${f}">${f}</option>`).join('');
-}
-function buildMajors(){
-  const f=facultySel.value;
-  const majors=unique(items.filter(x=>x.faculty===f).map(x=>x.major)).sort();
-  majorSel.disabled=!f; yearSel.disabled=true; showBtn.disabled=true;
-  majorSel.innerHTML='<option value="">เลือกสาขา</option>'+majors.map(m=>`<option value="${m}">${m}</option>`).join('');
-  yearSel.innerHTML='<option value="">เลือกปี</option>';
-}
-function buildYears(){
-  const f=facultySel.value,m=majorSel.value;
-  const years=unique(items.filter(x=>x.faculty===f&&x.major===m).map(x=>x.year)).sort().reverse();
-  yearSel.disabled=!m; showBtn.disabled=true;
-  yearSel.innerHTML='<option value="">เลือกปี</option>'+years.map(y=>`<option value="${y}">${y}</option>`).join('');
-}
-
-function renderList(filtered){
-  if(!filtered.length){listPanel.innerHTML='<div class="muted">ไม่พบไฟล์ที่ตรงเงื่อนไข</div>';pdfFrame.removeAttribute('src');docMeta.textContent='';return;}
-  listPanel.innerHTML=filtered.map((x,i)=>`<div class="item ${i===0?'active':''}" data-i="${i}"><span class="pill">${x.year}</span>${x.title}</div>`).join('');
-  openItem(filtered,0);
-  listPanel.querySelectorAll('.item').forEach(el=>el.onclick=()=>{listPanel.querySelectorAll('.item').forEach(a=>a.classList.remove('active'));el.classList.add('active');openItem(filtered,+el.dataset.i);});
-}
-function openItem(list,i){
-  const x=list[i];
-  docMeta.innerHTML=`<b>${x.faculty}</b> • ${x.major} • ${x.year}<br><a href="${x.url}" target="_blank">เปิดไฟล์โดยตรง</a>`;
-  pdfFrame.src=x.url;
-}
-
-async function init(){
-  statusEl.textContent='กำลังโหลดข้อมูลจาก degreeplan.bu.ac.th ...';
-  try{
-    const res=await fetch(proxyUrl); const txt=await res.text();
-    items=parse(txt);
-    statusEl.textContent=`โหลดสำเร็จ ${items.length} ไฟล์`;
-    buildFaculties();
-  }catch(e){
-    console.error(e); statusEl.textContent='โหลดไม่สำเร็จ (ต้นทางอาจป้องกันการเข้าถึง)';
-  }
-}
-
-facultySel.onchange=buildMajors;
-majorSel.onchange=buildYears;
-yearSel.onchange=()=>{showBtn.disabled=!yearSel.value};
-showBtn.onclick=()=>{
-  const f=facultySel.value,m=majorSel.value,y=yearSel.value;
-  const filtered=items.filter(x=>x.faculty===f&&x.major===m&&x.year===y);
-  renderList(filtered);
+facultyEl.onchange=()=>{
+  const f=facultyEl.value;
+  majorEl.disabled=!f; yearEl.disabled=true; showBtn.disabled=true;
+  const majors=unique(DEGREE_PLANS.filter(x=>x.faculty===f).map(x=>x.major));
+  setOptions(majorEl,'เลือกสาขา',majors); setOptions(yearEl,'เลือกปี',[]);
 };
-init();
+
+majorEl.onchange=()=>{
+  const f=facultyEl.value,m=majorEl.value;
+  yearEl.disabled=!m; showBtn.disabled=true;
+  const years=unique(DEGREE_PLANS.filter(x=>x.faculty===f&&x.major===m).map(x=>x.year)).sort().reverse();
+  setOptions(yearEl,'เลือกปี',years);
+};
+
+yearEl.onchange=()=>{showBtn.disabled=!yearEl.value};
+
+function renderPlans(items){
+  if(!items.length){listEl.innerHTML='<div class="muted">ไม่พบข้อมูล</div>'; viewer.removeAttribute('src'); metaEl.textContent=''; return;}
+  listEl.innerHTML=items.map((x,i)=>`<div class="item ${i===0?'active':''}" data-i="${i}">${x.title}</div>`).join('');
+  const open=(i)=>{const x=items[i]; metaEl.innerHTML=`<b>${x.faculty}</b> • ${x.major} • ปี ${x.year}<br><a href="${x.url}" target="_blank">เปิดไฟล์ต้นฉบับ</a>`; viewer.src=x.url;};
+  open(0);
+  listEl.querySelectorAll('.item').forEach(el=>el.onclick=()=>{listEl.querySelectorAll('.item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); open(+el.dataset.i);});
+}
+
+showBtn.onclick=()=>{
+  const items=DEGREE_PLANS.filter(x=>x.faculty===facultyEl.value&&x.major===majorEl.value&&x.year===yearEl.value);
+  renderPlans(items);
+};
+
+initFaculties();
 </script>
 </body>
 </html>
