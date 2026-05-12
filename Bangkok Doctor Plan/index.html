@@ -66,6 +66,21 @@ function initFaculties(){
   setOptions(majorEl, 'เลือกสาขา', []);
   setOptions(yearEl, 'เลือกปี', []);
   catalogInfo.textContent = `มีคณะให้เลือก ${faculties.length} คณะ`;
+  if (faculties.length) {
+    facultyEl.value = faculties[0];
+    facultyEl.onchange();
+    const majors = unique(DEGREE_PLANS.filter(x => x.faculty === facultyEl.value).map(x => x.major));
+    if (majors.length) {
+      majorEl.value = majors[0];
+      majorEl.onchange();
+      const years = unique(DEGREE_PLANS.filter(x => x.faculty === facultyEl.value && x.major === majorEl.value).map(x => x.year)).sort().reverse();
+      if (years.length) {
+        yearEl.value = years[0];
+        showBtn.disabled = false;
+        showBtn.onclick();
+      }
+    }
+  }
 }
 
 facultyEl.onchange=()=>{
