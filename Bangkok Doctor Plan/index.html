@@ -746,8 +746,17 @@
     }
 
     function extractCourseCodes(text){
-      const matches = text.match(/\b[A-Z]{2,4}\d{3}\b/g) || [];
-      return [...new Set(matches)];
+      const normalized = text
+        .replace(/[\u2013\u2014]/g,'-')
+        .replace(/\s+/g,' ')
+        .toUpperCase();
+      const regex = /\b([A-Z]{2,4})\s*-?\s*(\d{3})\b/g;
+      const found = [];
+      let match;
+      while((match = regex.exec(normalized)) !== null){
+        found.push(`${match[1]}${match[2]}`);
+      }
+      return [...new Set(found)];
     }
 
     function parseTranscriptRecords(text){
