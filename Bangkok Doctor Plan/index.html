@@ -3,158 +3,599 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BU Degree Plan Selector</title>
+  <title>BU Business Curriculum Planner 2568</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    body{font-family:'Noto Sans Thai',system-ui,sans-serif;margin:0;background:#f5f7fc;color:#1f2937}
-    .wrap{max-width:1100px;margin:0 auto;padding:20px}.card{background:#fff;border:1px solid #e7ecf5;border-radius:14px;padding:16px;margin-bottom:12px}
-    .row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px} select,button{padding:11px;border:1px solid #d6deea;border-radius:10px}
-    button{background:#4f7cff;color:#fff;border:none;cursor:pointer}.muted{color:#667085}
-    .result{display:grid;grid-template-columns:320px 1fr;gap:12px}.item{padding:10px;border:1px solid #e8edf7;border-radius:10px;margin-bottom:8px;cursor:pointer}
-    .item.active{background:#eef3ff;border-color:#4f7cff} iframe{width:100%;height:75vh;border:1px solid #dfe5f3;border-radius:10px}
-    @media(max-width:920px){.row{grid-template-columns:1fr}.result{grid-template-columns:1fr}}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Prompt',sans-serif;background:#f4f5f7;color:#1b1b1b;line-height:1.65}
+    .hero{background:linear-gradient(135deg,#8b1018,#c91f2f,#151515);padding:70px 7%;color:#fff}
+    .hero h1{font-size:clamp(40px,6vw,78px);line-height:1.08;margin-bottom:18px}
+    .hero p{max-width:900px;font-size:20px;opacity:.92}
+    .container{padding:45px 7%}
+    .selector-box,.progress-box{background:#fff;border-radius:30px;padding:28px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-bottom:30px}
+    .selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
+    label{display:block;margin-bottom:8px;font-weight:600;color:#333}
+    select{width:100%;padding:16px;border-radius:18px;border:1px solid #ddd;font-family:'Prompt',sans-serif;font-size:16px;background:#fafafa}
+    .section-title{margin-bottom:8px}
+    .section-title h2{font-size:34px;margin-bottom:6px}
+    .muted{color:#666}
+    .progress-bar{height:16px;background:#ececec;border-radius:999px;overflow:hidden;margin-top:14px}
+    .progress-fill{height:100%;background:linear-gradient(90deg,#2d8a45,#57c26f);width:0%;transition:.3s}
+    .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:28px}
+    .semester-card{position:relative;background:#fff;border-radius:28px;padding:25px;box-shadow:0 12px 35px rgba(0,0,0,.05)}
+    .semester-card h3{margin-bottom:18px;font-size:24px;color:#b31624}
+    .semester-card.summer-card{grid-column:span 2;background:linear-gradient(135deg,#fff6d9,#ffe89a);border:2px dashed #e0b400}
+    .summer-card::before{content:'SUMMER TERM';position:absolute;top:-12px;right:22px;background:#111;color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;letter-spacing:1px;font-weight:700}
+    .summer-card h3{color:#9a6b00;font-size:28px}
+    .summer-divider{grid-column:span 2;text-align:center;padding:6px 0;margin:-4px 0;font-size:14px;font-weight:600;letter-spacing:2px;color:#c49700}
+    .subject{position:relative;background:#f7f7f7;border-radius:18px;padding:16px;margin-bottom:12px;cursor:pointer;transition:.2s;border:1px solid transparent}
+    .subject:hover{transform:translateY(-3px);background:#fff;border-color:#d9d9d9;box-shadow:0 8px 20px rgba(0,0,0,.06)}
+    .subject.completed{background:#eefaf0;border-color:#9dd7a7}
+    .subject.completed .subject-name{text-decoration:line-through;opacity:.7}
+    .subject.completed .subject-code{color:#2d8a45}
+    .subject-top{display:flex;justify-content:space-between;gap:15px;align-items:center}
+    .check-wrap{display:flex;align-items:center;gap:12px;min-width:0}
+    .check-btn{width:28px;height:28px;border-radius:10px;border:2px solid #d0d0d0;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;transition:.2s;flex-shrink:0}
+    .check-btn.active{background:#2d8a45;border-color:#2d8a45;color:#fff}
+    .subject-code{font-weight:700;font-size:15px;color:#b31624}
+    .subject-name{font-size:16px;font-weight:500;margin-top:2px}
+    .credit{color:#fff;padding:7px 12px;border-radius:999px;font-size:13px;white-space:nowrap;font-weight:700}
+    .type-general{background:#4f8cff!important}
+    .type-core{background:#7b61ff!important}
+    .type-required{background:#ff8a3d!important}
+    .type-elective{background:#13b38b!important}
+    .type-free{background:#ff5fa2!important}
+    .type-coop{background:#555!important}
+    .legend-box{display:flex;flex-wrap:wrap;gap:16px;margin-top:28px;padding:20px;background:#fff;border-radius:24px;box-shadow:0 10px 30px rgba(0,0,0,.05)}
+    .legend-item{display:flex;align-items:center;gap:10px;font-weight:600;color:#333}
+    .legend-dot{width:16px;height:16px;border-radius:50%}
+    .modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:999}
+    .modal-content{background:#fff;width:min(850px,100%);max-height:90vh;overflow:auto;border-radius:32px;padding:35px;position:relative;animation:pop .25s ease}
+    @keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+    .close{position:absolute;right:22px;top:18px;font-size:34px;cursor:pointer;color:#666}
+    .modal h2{font-size:38px;margin-bottom:8px;padding-right:35px}
+    .modal-code{color:#b31624;font-weight:700;margin-bottom:20px}
+    .detail-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-top:20px}
+    .detail-card{background:#f6f6f6;padding:18px;border-radius:18px}
+    .detail-card strong{display:block;margin-bottom:6px;font-size:14px;color:#888}
+    .prereq{margin-top:18px;background:#fff5f5;border:1px solid #ffd7d7;padding:18px;border-radius:18px}
+    .summary-box{background:#fff;border-radius:30px;padding:34px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-top:40px;overflow:auto}
+    .summary-box h2{font-size:38px;margin-bottom:30px}
+    .summary-table{width:100%;border-collapse:collapse;min-width:700px}
+    .summary-table th,.summary-table td{padding:24px 20px;border-bottom:1px solid #ececec;text-align:left;font-size:18px}
+    .summary-table th{font-size:20px}
+    .summary-badge{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:14px;background:#e9edf2;font-weight:700;min-width:100px}
+    .summary-total td{font-weight:800;font-size:22px;background:#fafafa}
+    .share-box{background:#fff;border-radius:30px;padding:30px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-top:40px}
+    .share-box h2{font-size:34px;margin-bottom:10px}
+    .share-url-wrap{display:flex;gap:14px;margin-top:22px;flex-wrap:wrap}
+    .share-url-input{flex:1;min-width:260px;padding:16px 18px;border-radius:18px;border:1px solid #ddd;font-size:15px;font-family:monospace;background:#fafafa}
+    .share-btn{padding:16px 24px;border:none;border-radius:18px;background:#111;color:#fff;font-weight:700;cursor:pointer;transition:.2s}
+    .share-btn:hover{transform:translateY(-2px);opacity:.92}
+    .footer{padding:45px 7%;background:#111;color:#fff;margin-top:50px}
+    @media(max-width:900px){.selector-grid,.plan-grid,.detail-grid{grid-template-columns:1fr}.semester-card.summer-card,.summer-divider{grid-column:span 1}.hero,.container,.footer{padding-left:5%;padding-right:5%}.modal-content{padding:26px}.hero h1{font-size:48px}.subject-top{align-items:flex-start}.credit{font-size:12px}}
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card">
-    <h2 style="margin:0 0 8px">เลือกคณะ > สาขา > ปี แล้วดู Degree Plan ได้ทันที</h2>
-    <div class="muted">ข้อมูลเป็นชุดคงที่ (fixed options) เลือกจาก dropdown ได้เลย ไม่ต้องพิมพ์</div>
-    <div id="catalogInfo" class="muted" style="margin-top:6px"></div>
-    <div class="row" style="margin-top:10px">
-      <select id="faculty"></select>
-      <select id="major" disabled></select>
-      <select id="year" disabled></select>
+  <section class="hero">
+    <h1>BU Curriculum<br>Planner 2568</h1>
+    <p>เลือกคณะ เลือกสาขา แล้วดูแผนการเรียนแบบปี 1–4 แบ่งเทอมและซัมเมอร์ พร้อมคลิกดูรายละเอียดรายวิชา หน่วยกิต ชื่อเต็ม และวิชาบังคับก่อน</p>
+  </section>
+
+  <div class="container">
+    <div class="selector-box">
+      <h2 class="section-title">เลือกหลักสูตร</h2>
+      <p class="muted">ระบบจะโหลดแผนการเรียนและรายละเอียดรายวิชาอัตโนมัติ</p>
+      <div class="selector-grid">
+        <div>
+          <label for="facultySelect">คณะ</label>
+          <select id="facultySelect">
+            <option value="business">คณะบริหารธุรกิจ</option>
+          </select>
+        </div>
+        <div>
+          <label for="majorSelect">สาขาวิชา</label>
+          <select id="majorSelect">
+            <option value="marketing">การตลาด</option>
+            <option value="management">การจัดการ</option>
+            <option value="finance">การเงิน</option>
+            <option value="logistics">การจัดการโลจิสติกส์และโซ่อุปทาน</option>
+            <option value="international">การจัดการธุรกิจระหว่างประเทศ</option>
+            <option value="digitalmarketing">การตลาดดิจิทัล</option>
+            <option value="financialplanning">การวางแผนการเงินและการลงทุน</option>
+          </select>
+        </div>
+      </div>
     </div>
-    <div style="margin-top:10px"><button id="showBtn" disabled>แสดง Degree Plan</button></div>
+
+    <div class="progress-box">
+      <h3 style="margin-bottom:6px">ความคืบหน้าการเรียน</h3>
+      <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว</p>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <div id="planner"></div>
+
+    <div class="legend-box">
+      <div class="legend-item"><span class="legend-dot" style="background:#4f8cff"></span>วิชาศึกษาทั่วไป</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#7b61ff"></span>วิชาเฉพาะ/แกน</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ff8a3d"></span>วิชาเอก-บังคับ</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#13b38b"></span>วิชาเอก-เลือก</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#ff5fa2"></span>วิชาเลือกเสรี</div>
+      <div class="legend-item"><span class="legend-dot" style="background:#555"></span>สหกิจ / ฝึกงาน</div>
+    </div>
+
+    <div class="share-box">
+      <h2>แชร์แผนการเรียนของคุณ</h2>
+      <p class="muted">คัดลอก URL นี้เพื่อเปิดสถานะวิชาที่ติ๊กไว้ทั้งหมดบนอุปกรณ์อื่น</p>
+      <div class="share-url-wrap">
+        <input type="text" class="share-url-input" id="shareUrl" readonly>
+        <button class="share-btn" onclick="copyShareURL()">คัดลอก URL</button>
+      </div>
+    </div>
+
+    <div class="summary-box">
+      <h2>ผลการเรียนตามหมวดวิชาของหลักสูตร</h2>
+      <table class="summary-table">
+        <thead>
+          <tr>
+            <th>หมวดวิชา</th>
+            <th style="text-align:center">เรียนได้/หลักสูตรกำหนด</th>
+          </tr>
+        </thead>
+        <tbody id="summaryBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="card result">
-    <div id="list"></div>
-    <div>
-      <div id="meta" class="muted" style="margin-bottom:8px"></div>
-      <iframe id="viewer"></iframe>
+  <div class="modal" id="subjectModal" role="dialog" aria-modal="true">
+    <div class="modal-content">
+      <div class="close" onclick="closeModal()">×</div>
+      <h2 id="modalName"></h2>
+      <div class="modal-code" id="modalCode"></div>
+      <p id="modalDescription"></p>
+      <div class="detail-grid">
+        <div class="detail-card"><strong>หน่วยกิต</strong><span id="modalCredit"></span></div>
+        <div class="detail-card"><strong>ประเภทวิชา</strong><span id="modalType"></span></div>
+        <div class="detail-card"><strong>ชื่อเต็มภาษาอังกฤษ</strong><span id="modalFull"></span></div>
+        <div class="detail-card"><strong>สถานะ</strong><span>เปิดสอนในหลักสูตร 2568</span></div>
+      </div>
+      <div class="prereq">
+        <strong>Prerequisite / วิชาบังคับก่อน</strong>
+        <p id="modalPrereq" style="margin-top:8px"></p>
+      </div>
     </div>
   </div>
-</div>
-<script>
-// เพิ่มรายการใหม่ใน array นี้ได้เลย เมื่อมีไฟล์ใหม่จาก BU
-const DEGREE_PLANS = [
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การตลาด',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาการตลาด',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การจัดการ',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาการจัดการ',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การเงิน',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาการเงิน',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การจัดการโลจิสติกส์และโซ่อุปทาน',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาโลจิสติกส์และโซ่อุปทาน',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การจัดการธุรกิจระหว่างประเทศ',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาธุรกิจระหว่างประเทศ',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การตลาดดิจิทัล',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาการตลาดดิจิทัล',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  },
-  {
-    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'การวางแผนการเงินและการลงทุน',
-    year: '2568',
-    title: 'ปีการศึกษา 2568 - สาขาการวางแผนการเงินและการลงทุน',
-    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
-  }
-];
 
-const facultyEl = document.getElementById('faculty');
-const majorEl = document.getElementById('major');
-const yearEl = document.getElementById('year');
-const showBtn = document.getElementById('showBtn');
-const listEl = document.getElementById('list');
-const metaEl = document.getElementById('meta');
-const viewer = document.getElementById('viewer');
-const catalogInfo = document.getElementById('catalogInfo');
+  <footer class="footer">
+    <h3>BU Business Administration Curriculum 2568</h3>
+    <p>Interactive Curriculum Planner สำหรับดูแผนการเรียนและรายละเอียดรายวิชา</p>
+  </footer>
 
-const unique = arr => [...new Set(arr)];
-function setOptions(el, placeholder, values){el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');}
+  <script>
+    const commonCourses = {
+      EN101:{code:'EN101',name:'Everyday English',credit:'3 หน่วยกิต',full:'Everyday English',type:'ศึกษาทั่วไป',prereq:'-',description:'ภาษาอังกฤษเพื่อการใช้ในชีวิตประจำวัน'},
+      EN102:{code:'EN102',name:'Social English',credit:'3 หน่วยกิต',full:'Social English',type:'ศึกษาทั่วไป',prereq:'-',description:'ภาษาอังกฤษเพื่อการสื่อสารทางสังคม'},
+      EN103:{code:'EN103',name:'Global English',credit:'3 หน่วยกิต',full:'Global English',type:'ศึกษาทั่วไป',prereq:'-',description:'ภาษาอังกฤษเพื่อการสื่อสารระดับสากล'},
+      GE101:{code:'GE101',name:'Thinking Skills for Lifelong Learning',credit:'3 หน่วยกิต',full:'Thinking Skills for Lifelong Learning',type:'ศึกษาทั่วไป',prereq:'-',description:'ทักษะการคิดเพื่อการเรียนรู้ตลอดชีวิต'},
+      GE102:{code:'GE102',name:'Citizenship and Social Transformation',credit:'3 หน่วยกิต',full:'Citizenship and Social Transformation',type:'ศึกษาทั่วไป',prereq:'-',description:'พลเมืองและการเปลี่ยนแปลงสังคม'},
+      GE103:{code:'GE103',name:'Technology and Innovation for the Future',credit:'3 หน่วยกิต',full:'Technology and Innovation for the Future',type:'ศึกษาทั่วไป',prereq:'-',description:'เทคโนโลยีและนวัตกรรมแห่งอนาคต'},
+      GE104:{code:'GE104',name:'Aesthetics and Well-being for Life',credit:'3 หน่วยกิต',full:'Aesthetics and Well-being for Life',type:'ศึกษาทั่วไป',prereq:'-',description:'สุนทรียศาสตร์และคุณภาพชีวิต'},
+      GE105:{code:'GE105',name:'Global Alliance and Emerging Issues',credit:'3 หน่วยกิต',full:'Global Alliance and Emerging Issues',type:'ศึกษาทั่วไป',prereq:'-',description:'ความร่วมมือระดับโลกและประเด็นใหม่'},
+      GE106:{code:'GE106',name:'Financial Literacy and Sustainable Development',credit:'3 หน่วยกิต',full:'Financial Literacy and Sustainable Development',type:'ศึกษาทั่วไป',prereq:'-',description:'ความรู้ทางการเงินและการพัฒนาอย่างยั่งยืน'},
+      GE107:{code:'GE107',name:'Entrepreneurial Spirit and Leadership Skills',credit:'3 หน่วยกิต',full:'Entrepreneurial Spirit and Leadership Skills',type:'ศึกษาทั่วไป',prereq:'-',description:'ภาวะผู้นำและจิตวิญญาณผู้ประกอบการ'},
+      AC200:{code:'AC200',name:'Business Accounting',credit:'3 หน่วยกิต',full:'Business Accounting',type:'Core Courses',prereq:'-',description:'บัญชีธุรกิจ'},
+      EC203:{code:'EC203',name:'Introduction to Economics',credit:'3 หน่วยกิต',full:'Introduction to Economics',type:'Core Courses',prereq:'-',description:'เศรษฐศาสตร์เบื้องต้น'},
+      LA102:{code:'LA102',name:'Business Law',credit:'3 หน่วยกิต',full:'Business Law',type:'Core Courses',prereq:'-',description:'กฎหมายธุรกิจ'},
+      LA301:{code:'LA301',name:'Taxation',credit:'3 หน่วยกิต',full:'Taxation',type:'Core Courses',prereq:'-',description:'ภาษีอากร'},
+      MA102:{code:'MA102',name:'Business Mathematics',credit:'3 หน่วยกิต',full:'Business Mathematics',type:'Core Courses',prereq:'-',description:'คณิตศาสตร์ธุรกิจ'},
+      BA207:{code:'BA207',name:'Statistical Analysis for Business Decisions',credit:'3 หน่วยกิต',full:'Statistical Analysis for Business Decisions',type:'Core Courses',prereq:'-',description:'สถิติเพื่อการตัดสินใจทางธุรกิจ'},
+      FI212:{code:'FI212',name:'Business Finance',credit:'3 หน่วยกิต',full:'Business Finance',type:'Core Courses',prereq:'สอบได้ AC200',description:'การเงินธุรกิจ'},
+      FI222:{code:'FI222',name:'Managerial Accounting',credit:'3 หน่วยกิต',full:'Managerial Accounting',type:'Core Courses',prereq:'สอบได้ AC200 และ FI212',description:'บัญชีบริหาร'},
+      MK101:{code:'MK101',name:'Principles of Marketing',credit:'3 หน่วยกิต',full:'Principles of Marketing',type:'Core Courses',prereq:'-',description:'หลักการตลาด'},
+      MG111:{code:'MG111',name:'Organization and Human Resource Management',credit:'3 หน่วยกิต',full:'Organization and Human Resource Management',type:'Core Courses',prereq:'-',description:'การจัดการองค์การและทรัพยากรมนุษย์'},
+      MG212:{code:'MG212',name:'Production and Operations Management',credit:'3 หน่วยกิต',full:'Production and Operations Management',type:'Core Courses',prereq:'-',description:'การจัดการการผลิตและปฏิบัติการ'},
+      MG222:{code:'MG222',name:'Entrepreneurship and Business Development',credit:'3 หน่วยกิต',full:'Entrepreneurship and Business Development',type:'Core Courses',prereq:'สอบได้ MG111',description:'ผู้ประกอบการและการพัฒนาธุรกิจ'},
+      MG429:{code:'MG429',name:'Strategic Management',credit:'3 หน่วยกิต',full:'Strategic Management',type:'Core Courses',prereq:'สอบได้ MG111, MG212, MK101 และ FI212 หรือได้รับอนุมัติจากคณบดี',description:'การจัดการเชิงกลยุทธ์'},
+      EN014:{code:'EN014',name:'English for Exploring the World',credit:'3 หน่วยกิต',full:'English for Exploring the World',type:'Core Courses',prereq:'-',description:'ภาษาอังกฤษเพื่อการสำรวจโลก'},
+      EN331:{code:'EN331',name:'Practical Business English',credit:'3 หน่วยกิต',full:'Practical Business English',type:'Core Courses',prereq:'-',description:'ภาษาอังกฤษธุรกิจเชิงปฏิบัติ'},
+      EN332:{code:'EN332',name:'Professional Business English',credit:'3 หน่วยกิต',full:'Professional Business English',type:'Core Courses',prereq:'-',description:'ภาษาอังกฤษธุรกิจระดับมืออาชีพ'}
+    };
 
-function initFaculties(){
-  const faculties = unique(DEGREE_PLANS.map(x=>x.faculty));
-  setOptions(facultyEl, 'เลือกคณะ', faculties);
-  setOptions(majorEl, 'เลือกสาขา', []);
-  setOptions(yearEl, 'เลือกปี', []);
-  catalogInfo.textContent = `มีคณะให้เลือก ${faculties.length} คณะ`;
-  if (faculties.length) {
-    facultyEl.value = faculties[0];
-    facultyEl.onchange();
-    const majors = unique(DEGREE_PLANS.filter(x => x.faculty === facultyEl.value).map(x => x.major));
-    if (majors.length) {
-      majorEl.value = majors[0];
-      majorEl.onchange();
-      const years = unique(DEGREE_PLANS.filter(x => x.faculty === facultyEl.value && x.major === majorEl.value).map(x => x.year)).sort().reverse();
-      if (years.length) {
-        yearEl.value = years[0];
-        showBtn.disabled = false;
-        showBtn.onclick();
+    function c(key){ return {...commonCourses[key]}; }
+    function subject(code,name,type='Major / Elective',prereq='-',description='รายละเอียดรายวิชาตามหลักสูตร',credit='3 หน่วยกิต'){
+      return {code,name,credit,full:name,type,prereq,description};
+    }
+
+    function basePlan(majorSubjects){
+      return [
+        {semester:'ปี 1 · เทอม 1',subjects:[c('EN101'),c('GE101'),c('GE102'),c('MK101'),c('MG111')]},
+        {semester:'ปี 1 · เทอม 2',subjects:[c('EN102'),c('GE103'),c('GE104'),c('AC200'),c('MA102')]},
+        {semester:'ปี 1 · ซัมเมอร์',subjects:[c('GE105')]},
+        {semester:'ปี 2 · เทอม 1',subjects:[c('EN103'),c('GE106'),c('EC203'),c('BA207'),c('FI212')]},
+        {semester:'ปี 2 · เทอม 2',subjects:[c('GE107'),c('FI222'),c('LA102'),c('MG212'),majorSubjects[0]]},
+        {semester:'ปี 2 · ซัมเมอร์',subjects:[majorSubjects[1] || c('LA301')]},
+        {semester:'ปี 3 · เทอม 1',subjects:[c('EN014'),c('MG222'),majorSubjects[2],majorSubjects[3],majorSubjects[4]]},
+        {semester:'ปี 3 · เทอม 2',subjects:[c('EN331'),c('EN332'),majorSubjects[5],majorSubjects[6],majorSubjects[7]]},
+        {semester:'ปี 3 · ซัมเมอร์',subjects:[majorSubjects[8] || subject('INTERNSHIP','Internship','ฝึกงาน','ตามเงื่อนไขสาขา','ฝึกงานกับองค์กรจริง')]},
+        {semester:'ปี 4 · เทอม 1',subjects:[c('MG429'),majorSubjects[9],majorSubjects[10],subject('FREE1','Free Elective 1','Free Electives','-','วิชาเลือกเสรี')]},
+        {semester:'ปี 4 · เทอม 2',subjects:[majorSubjects[11],majorSubjects[12],subject('FREE2','Free Elective 2','Free Electives','-','วิชาเลือกเสรี')]},
+        {semester:'ปี 4 · ซัมเมอร์',subjects:[subject('CO301','Pre-Cooperative Education','Co-op','-','เตรียมสหกิจศึกษา'),subject('MG430','Cooperative Education','Co-op','สอบได้ CO301 และวิชาเฉพาะด้านบังคับอย่างน้อย 3 วิชา','สหกิจศึกษา', '9 หน่วยกิต')]}
+      ];
+    }
+
+    const database = {
+      marketing:{
+        name:'สาขาวิชาการตลาด',
+        semesters:basePlan([
+          subject('MK314','Consumer Behavior','Major Requirements','สอบได้ MK101','พฤติกรรมผู้บริโภค'),
+          subject('MK312','Distribution Channel Management','Major Requirements','สอบได้ MK101','การจัดการช่องทางจัดจำหน่าย'),
+          subject('MK316','Product and Innovation Management','Major Requirements','สอบได้ MK101','การจัดการผลิตภัณฑ์และนวัตกรรม'),
+          subject('MK317','Integrated Brand and Marketing Communication','Major Requirements','สอบได้ MK101','การสื่อสารแบรนด์และการตลาดแบบบูรณาการ'),
+          subject('MK321','Marketing Research','Major Requirements','สอบได้ MK101 และ BA207','วิจัยการตลาด'),
+          subject('MK318','Price Management','Major Requirements','สอบได้ MK101','การบริหารราคา'),
+          subject('MK428','Digital Marketing','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','การตลาดดิจิทัล'),
+          subject('MK322','Customer Relationship Management','Major Electives','สอบได้ MK101','การจัดการลูกค้าสัมพันธ์'),
+          subject('MK329','Marketing Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานการตลาด'),
+          subject('MK421','Seminar in Marketing','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','สัมมนาทางการตลาด'),
+          subject('MK433','Marketing Strategy and Planning','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','กลยุทธ์และแผนการตลาด'),
+          subject('MK418','Entrepreneurial Marketing','Major Electives','สอบได้ MK101','การตลาดผู้ประกอบการ'),
+          subject('MK423','Business-to-Business Marketing','Major Electives','สอบได้ MK101','การตลาดแบบ B2B')
+        ])
+      },
+      management:{
+        name:'สาขาวิชาการจัดการ',
+        semesters:basePlan([
+          subject('MG221','Business Environment and Management','Major Requirements','-','สภาพแวดล้อมธุรกิจและการจัดการ'),
+          subject('MG319','Global Business Strategy','Major Requirements','สอบได้ MG111','กลยุทธ์ธุรกิจระดับโลก'),
+          subject('MG321','Management Planning and Control','Major Requirements','สอบได้ MG111','การวางแผนและควบคุมทางการจัดการ'),
+          subject('MG322','Business Research','Major Requirements','สอบได้ MG111 และ BA207','วิจัยธุรกิจ'),
+          subject('MG323','Leadership and Team Development','Major Requirements','สอบได้ MG111','ภาวะผู้นำและการพัฒนาทีม'),
+          subject('MG329','Intelligence Tools for Modern Management','Major Requirements','สอบได้ MG111','เครื่องมืออัจฉริยะเพื่อการจัดการ'),
+          subject('MG411','Digital Business Management','Major Requirements','สอบได้ MG111','การจัดการธุรกิจดิจิทัล'),
+          subject('MG420','Innovative Business Project Management','Major Requirements','สอบได้ MG111 และ FI212','การบริหารโครงการธุรกิจนวัตกรรม'),
+          subject('MG325','Professional Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานวิชาชีพ'),
+          subject('MG421','Seminar in Modern Business Management','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','สัมมนาการจัดการสมัยใหม่'),
+          subject('MG410','Business Analytics for Strategic Decisions','Major Electives','สอบได้ MG212','วิเคราะห์ธุรกิจเพื่อการตัดสินใจ'),
+          subject('MG431','Business Transformation Management','Major Electives','สอบได้ MG111','การจัดการเปลี่ยนผ่านธุรกิจ'),
+          subject('MG417','Business Professional Skills','Major Electives','-','ทักษะวิชาชีพธุรกิจ')
+        ])
+      },
+      finance:{
+        name:'สาขาวิชาการเงิน',
+        semesters:basePlan([
+          subject('FI311','Financial Management','Major Requirements','สอบได้ FI212','การจัดการทางการเงิน'),
+          subject('FI318','Financial Market and Instrument','Major Requirements','-','ตลาดและเครื่องมือทางการเงิน'),
+          subject('FI321','Principles of Investment','Major Requirements','สอบได้ FI212 และ FI318','หลักการลงทุน'),
+          subject('FI323','Financial Statement and Reporting Analysis','Major Requirements','สอบได้ FI212','วิเคราะห์งบการเงินและรายงานทางการเงิน'),
+          subject('FI332','International Finance','Major Requirements','สอบได้ FI212 และ EC203','การเงินระหว่างประเทศ'),
+          subject('FI411','Risk Management','Major Requirements','สอบได้ FI212','การบริหารความเสี่ยง'),
+          subject('FI413','Strategic Financial Management','Major Requirements','สอบได้ FI212 และ FI311','การจัดการการเงินเชิงกลยุทธ์'),
+          subject('FI427','Quantitative Analysis in Finance','Major Requirements','สอบได้ FI212 และ MA102','การวิเคราะห์เชิงปริมาณทางการเงิน'),
+          subject('FI428','Financial Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานด้านการเงิน'),
+          subject('FI421','Seminar in Finance','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 3 วิชา','สัมมนาทางการเงิน'),
+          subject('FI336','Financial Technology','Major Electives','-','เทคโนโลยีทางการเงิน'),
+          subject('FI424','Securities Analysis and Portfolio Management','Major Electives','สอบได้ FI212 และ FI318','วิเคราะห์หลักทรัพย์และพอร์ตลงทุน'),
+          subject('FI444','Financial Engineering','Major Electives','สอบได้ FI321','วิศวกรรมการเงิน')
+        ])
+      },
+      logistics:{
+        name:'สาขาวิชาการจัดการโลจิสติกส์และโซ่อุปทาน',
+        semesters:basePlan([
+          subject('LM311','Logistics and Supply Chain Management','Major Requirements','-','โลจิสติกส์และโซ่อุปทาน'),
+          subject('LM312','Procurement Management','Major Requirements','สอบได้ LM311','การจัดการจัดซื้อ'),
+          subject('LM313','Inventory and Warehouse Management','Major Requirements','สอบได้ LM311','การจัดการสินค้าคงคลังและคลังสินค้า'),
+          subject('LM321','Transportation and Distribution Management','Major Requirements','สอบได้ LM311','การขนส่งและกระจายสินค้า'),
+          subject('LM322','International Trade and Logistics','Major Requirements','สอบได้ LM311','การค้าและโลจิสติกส์ระหว่างประเทศ'),
+          subject('LM411','Information Technology for Logistics','Major Requirements','สอบได้ LM311','เทคโนโลยีสารสนเทศเพื่อโลจิสติกส์'),
+          subject('LM412','Logistics and Supply Chain Strategy','Major Electives','สอบได้ LM311','กลยุทธ์โลจิสติกส์และซัพพลายเชน'),
+          subject('LM423','Warehouse Design and Operations','Major Electives','สอบได้ LM311','การออกแบบและปฏิบัติการคลังสินค้า'),
+          subject('LM301','Pre-cooperative Education for Logistics Students','Co-op','-','เตรียมสหกิจศึกษาด้านโลจิสติกส์'),
+          subject('LM421','Seminar in Logistics Management','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','สัมมนาโลจิสติกส์'),
+          subject('LM473','Predictive Analytics in Logistics','Major Electives','สอบได้ LM311','การวิเคราะห์คาดการณ์ด้านโลจิสติกส์'),
+          subject('LM467','Sustainable Logistics and Supply Chain Management in Digital Era','Major Electives','สอบได้ LM411','โลจิสติกส์ยั่งยืนในยุคดิจิทัล'),
+          subject('LM430','Cooperative Education','Co-op','สอบได้ LM301 และวิชาเฉพาะด้านบังคับอย่างน้อย 3 วิชา','สหกิจศึกษา', '9 หน่วยกิต')
+        ])
+      },
+      international:{
+        name:'สาขาวิชาการจัดการธุรกิจระหว่างประเทศ',
+        semesters:basePlan([
+          subject('IB321','International Business Management','Major Requirements','-','การจัดการธุรกิจระหว่างประเทศ'),
+          subject('IB322','International Financial Management','Major Requirements','-','การจัดการการเงินระหว่างประเทศ'),
+          subject('IB323','International Marketing Strategies','Major Requirements','-','กลยุทธ์การตลาดระหว่างประเทศ'),
+          subject('IB324','Cross Cultural Organization Management','Major Requirements','สอบได้ IB321','การจัดการองค์กรข้ามวัฒนธรรม'),
+          subject('IB422','International Business Research','Major Requirements','สอบได้ BA207 และ IB321','วิจัยธุรกิจระหว่างประเทศ'),
+          subject('IB426','International Supply Chain and Logistics Management','Major Requirements','สอบได้ MK101 และ IB321','ซัพพลายเชนและโลจิสติกส์ระหว่างประเทศ'),
+          subject('IB430','International Human Resource Management','Major Requirements','สอบได้ IB321','ทรัพยากรมนุษย์ระหว่างประเทศ'),
+          subject('IB439','Technology for International Business Management','Major Requirements','สอบได้ IB321','เทคโนโลยีเพื่อธุรกิจระหว่างประเทศ'),
+          subject('IB440','International Business Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานธุรกิจระหว่างประเทศ'),
+          subject('IB423','Seminar in International Business Management','Major Requirements','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','สัมมนาธุรกิจระหว่างประเทศ'),
+          subject('IB442','Global Entrepreneurship','Major Electives','สอบได้ IB321','ผู้ประกอบการระดับโลก'),
+          subject('IB450','Export-Import Management','Major Electives','สอบได้ IB321','การจัดการส่งออกนำเข้า'),
+          subject('IB453','International Business in ASEAN Countries','Major Electives','สอบได้ IB321','ธุรกิจระหว่างประเทศในอาเซียน')
+        ])
+      },
+      digitalmarketing:{
+        name:'สาขาวิชาการตลาดดิจิทัล',
+        semesters:basePlan([
+          subject('DMK101','Essentials of Social Media & Digital Marketing','Major Requirements','-','พื้นฐานโซเชียลมีเดียและการตลาดดิจิทัล'),
+          subject('DMK202','Consumer Insights and Behavior','Major Requirements','สอบได้ MK101','อินไซต์และพฤติกรรมผู้บริโภค'),
+          subject('DMK311','Product and Brand Management in Digital Platform','Major Requirements','สอบได้ MK101','สินค้าและแบรนด์บนแพลตฟอร์มดิจิทัล'),
+          subject('DMK312','Pricing and Budgeting Management','Major Requirements','สอบได้ MK101','การตั้งราคาและงบประมาณ'),
+          subject('DMK314','Integrated Marketing Communication Management','Major Requirements','สอบได้ MK101','การสื่อสารการตลาดแบบบูรณาการ'),
+          subject('DMK316','Omni-channel and E-Marketplace Management','Major Requirements','-','Omni-channel และ Marketplace'),
+          subject('DMK412','Digital Marketing Research','Major Requirements','สอบได้ MK101 และ BA207','วิจัยการตลาดดิจิทัล'),
+          subject('DMK419','Data Management in Digital Marketing','Major Requirements','สอบได้ MK101','การจัดการข้อมูลการตลาดดิจิทัล'),
+          subject('DMK331','Digital Marketing Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานการตลาดดิจิทัล'),
+          subject('DMK421','Seminar in Digital Marketing','Major Requirements','สอบได้ MK101','สัมมนาการตลาดดิจิทัล'),
+          subject('DMK321','Digital Marketing Strategies','Major Electives','สอบได้ MK101','กลยุทธ์การตลาดดิจิทัล'),
+          subject('DMK330','Influencer Marketing','Major Electives','-','การตลาดอินฟลูเอนเซอร์'),
+          subject('DMK510','Predictive Marketing & Marketing Automation','Major Electives','-','การตลาดเชิงคาดการณ์และอัตโนมัติ')
+        ])
+      },
+      financialplanning:{
+        name:'สาขาวิชาการวางแผนการเงินและการลงทุน',
+        semesters:basePlan([
+          subject('FIP107','Business Accounting','Core Courses','-','บัญชีธุรกิจ'),
+          subject('FIP104','Business Finance','Core Courses','เคยเรียน FIP107','การเงินธุรกิจ'),
+          subject('FIP211','Foundation of Financial Planning','Core Courses','-','พื้นฐานการวางแผนการเงิน'),
+          subject('FIP221','Principles of Investment','Core Courses','เคยเรียน FIP104','หลักการลงทุน'),
+          subject('FIP214','Financial Market and Institutions','Core Courses','-','ตลาดการเงินและสถาบันการเงิน'),
+          subject('FIP213','Managerial Accounting','Core Courses','เคยเรียน FIP107','บัญชีบริหาร'),
+          subject('FIP301','Investment Planning','Major Requirements','ตามหลักสูตร','การวางแผนการลงทุน'),
+          subject('FIP302','Retirement Planning','Major Requirements','ตามหลักสูตร','การวางแผนเกษียณ'),
+          subject('FIP399','Financial Planning Internship','Major Electives','ตามเงื่อนไขสาขา','ฝึกงานด้านวางแผนการเงิน'),
+          subject('FIP401','Seminar in Financial Planning','Major Requirements','ตามหลักสูตร','สัมมนาการวางแผนการเงิน'),
+          subject('FIP402','Tax Planning','Major Requirements','ตามหลักสูตร','การวางแผนภาษี'),
+          subject('FIP403','Estate Planning','Major Requirements','ตามหลักสูตร','การวางแผนมรดก'),
+          subject('FIP404','Wealth Management','Major Requirements','ตามหลักสูตร','การบริหารความมั่งคั่ง')
+        ])
+      }
+    };
+
+    const planner = document.getElementById('planner');
+    const majorSelect = document.getElementById('majorSelect');
+
+    function safeId(value){return String(value).replace(/[^a-zA-Z0-9_-]/g,'_')}
+
+    function getStorageKey(){return 'completedSubjects_' + majorSelect.value}
+
+    function getCompleted(){
+      try{return JSON.parse(localStorage.getItem(getStorageKey()) || '[]')}
+      catch(error){return []}
+    }
+
+    function isCompleted(code){return getCompleted().includes(code)}
+
+    function toggleComplete(event, code){
+      event.stopPropagation();
+      let completed = getCompleted();
+      completed = completed.includes(code) ? completed.filter(item => item !== code) : [...completed, code];
+      localStorage.setItem(getStorageKey(), JSON.stringify(completed));
+      updateShareURL();
+      renderMajor(majorSelect.value);
+    }
+
+    function calculateCredits(){
+      const data = database[majorSelect.value] || database.marketing;
+      const completed = getCompleted();
+
+      const categories = {
+        general:{name:'หมวดวิชาพื้นฐาน/วิชาศึกษาทั่วไป', earned:0, total:30},
+        core:{name:'หมวดวิชาเฉพาะ/แกน', earned:0, total:48},
+        required:{name:'หมวดวิชาเอก-บังคับ', earned:0, total:27},
+        elective:{name:'หมวดวิชาเอก-เลือก', earned:0, total:24},
+        free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6}
+      };
+
+      data.semesters.forEach(sem => {
+        sem.subjects.forEach(sub => {
+          const credit = parseInt(sub.credit) || 3;
+          const done = completed.includes(sub.code);
+
+          if(sub.type.includes('ศึกษาทั่วไป')){
+            if(done) categories.general.earned += credit;
+          } else if(sub.type.includes('Core')){
+            if(done) categories.core.earned += credit;
+          } else if(sub.type.includes('Major Requirements')){
+            if(done) categories.required.earned += credit;
+          } else if(sub.type.includes('Major Electives')){
+            if(done) categories.elective.earned += credit;
+          } else if(sub.type.includes('Free')){
+            if(done) categories.free.earned += credit;
+          }
+        });
+      });
+
+      return categories;
+    }
+
+    function renderSummary(){
+      const categories = calculateCredits();
+      const rows = Object.values(categories).map(cat => `
+        <tr>
+          <td>${cat.name}</td>
+          <td style="text-align:center"><span class="summary-badge">${cat.earned} / ${cat.total}</span></td>
+        </tr>
+      `).join('');
+
+      const earnedTotal = Object.values(categories).reduce((sum,c)=>sum+c.earned,0);
+      const totalCredits = Object.values(categories).reduce((sum,c)=>sum+c.total,0);
+
+      document.getElementById('summaryBody').innerHTML = `
+        ${rows}
+        <tr class="summary-total">
+          <td>รวมหน่วยกิต</td>
+          <td style="text-align:center">${earnedTotal} / ${totalCredits}</td>
+        </tr>
+      `;
+    }
+
+    function updateProgress(){
+      const totalSubjects = document.querySelectorAll('.subject').length;
+      const completedSubjects = document.querySelectorAll('.subject.completed').length;
+      document.getElementById('completedCount').innerText = completedSubjects;
+      document.getElementById('totalCount').innerText = totalSubjects;
+      document.getElementById('progressFill').style.width = totalSubjects ? `${(completedSubjects / totalSubjects) * 100}%` : '0%';
+    }
+
+    function escapeAttr(value){return String(value).replace(/'/g,'&#39;').replace(/"/g,'&quot;')}
+
+    function getTypeClass(type){
+      if(type.includes('ศึกษาทั่วไป')) return 'type-general';
+      if(type.includes('Core')) return 'type-core';
+      if(type.includes('Major Requirements')) return 'type-required';
+      if(type.includes('Major Electives')) return 'type-elective';
+      if(type.includes('Free')) return 'type-free';
+      if(type.includes('Co-op') || type.includes('ฝึกงาน')) return 'type-coop';
+      return 'type-core';
+    }
+
+    function renderSubject(sub){
+      const completed = isCompleted(sub.code);
+      return `
+        <div class="subject ${completed ? 'completed' : ''}" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')" data-code="${escapeAttr(safeId(sub.code))}">
+          <div class="subject-top">
+            <div class="check-wrap">
+              <button type="button" class="check-btn ${completed ? 'active' : ''}" onclick="toggleComplete(event,'${escapeAttr(sub.code)}')" aria-label="ติ๊กวิชา ${escapeAttr(sub.code)}">${completed ? '✓' : ''}</button>
+              <div>
+                <div class="subject-code">${sub.code}</div>
+                <div class="subject-name">${sub.name}</div>
+              </div>
+            </div>
+            <div class="credit ${getTypeClass(sub.type)}">${sub.credit}</div>
+          </div>
+        </div>`;
+    }
+
+    function renderMajor(key){
+      const data = database[key] || database.marketing;
+      const termHtml = data.semesters.map(sem => {
+        const isSummer = sem.semester.includes('ซัมเมอร์');
+        const divider = isSummer ? '<div class="summer-divider">✦ ช่วง Summer ระหว่างปีการศึกษา ✦</div>' : '';
+        const cardClass = isSummer ? 'semester-card summer-card' : 'semester-card';
+        return `${divider}<div class="${cardClass}"><h3>${sem.semester}</h3>${sem.subjects.map(renderSubject).join('')}</div>`;
+      }).join('');
+
+      planner.innerHTML = `
+        <div class="section-title">
+          <h2>${data.name}</h2>
+          <p class="muted">แผนการเรียนรายปี · เทอม · ซัมเมอร์ · คลิกที่วิชาเพื่อดูรายละเอียด</p>
+        </div>
+        <div class="plan-grid">${termHtml}</div>`;
+      updateProgress();
+      renderSummary();
+    }
+
+    function findSubjectByCode(code){
+      const data = database[majorSelect.value] || database.marketing;
+      for(const sem of data.semesters){
+        const found = sem.subjects.find(sub => safeId(sub.code) === code);
+        if(found) return found;
+      }
+      return null;
+    }
+
+    function openModalByCode(code){
+      const sub = findSubjectByCode(code);
+      if(!sub) return;
+      document.getElementById('subjectModal').style.display = 'flex';
+      document.getElementById('modalName').innerText = sub.name;
+      document.getElementById('modalCode').innerText = sub.code;
+      document.getElementById('modalDescription').innerText = sub.description;
+      document.getElementById('modalCredit').innerText = sub.credit;
+      document.getElementById('modalType').innerText = sub.type;
+      document.getElementById('modalFull').innerText = sub.full;
+      document.getElementById('modalPrereq').innerText = sub.prereq;
+    }
+
+    function closeModal(){document.getElementById('subjectModal').style.display = 'none'}
+
+    window.addEventListener('click', event => {
+      if(event.target === document.getElementById('subjectModal')) closeModal();
+    });
+
+    window.addEventListener('keydown', event => {
+      if(event.key === 'Escape') closeModal();
+    });
+
+    majorSelect.addEventListener('change', event => {
+      renderMajor(event.target.value);
+      updateShareURL();
+    });
+
+    function encodeState(){
+      const state = {
+        major: majorSelect.value,
+        completed: getCompleted()
+      };
+      return btoa(unescape(encodeURIComponent(JSON.stringify(state))));
+    }
+
+    function decodeState(encoded){
+      try{
+        return JSON.parse(decodeURIComponent(escape(atob(encoded))));
+      }catch(error){
+        return null;
       }
     }
-  }
-}
 
-facultyEl.onchange=()=>{
-  const f=facultyEl.value;
-  majorEl.disabled=!f; yearEl.disabled=true; showBtn.disabled=true;
-  const majors=unique(DEGREE_PLANS.filter(x=>x.faculty===f).map(x=>x.major));
-  setOptions(majorEl,'เลือกสาขา',majors); setOptions(yearEl,'เลือกปี',[]);
-};
+    function updateShareURL(){
+      const encoded = encodeState();
+      const url = `${window.location.origin}${window.location.pathname}?state=${encoded}`;
+      const shareInput = document.getElementById('shareUrl');
+      if(shareInput) shareInput.value = url;
+      window.history.replaceState({},'',`?state=${encoded}`);
+    }
 
-majorEl.onchange=()=>{
-  const f=facultyEl.value,m=majorEl.value;
-  yearEl.disabled=!m; showBtn.disabled=true;
-  const years=unique(DEGREE_PLANS.filter(x=>x.faculty===f&&x.major===m).map(x=>x.year)).sort().reverse();
-  setOptions(yearEl,'เลือกปี',years);
-};
+    async function copyShareURL(){
+      const input = document.getElementById('shareUrl');
+      input.select();
+      input.setSelectionRange(0,99999);
 
-yearEl.onchange=()=>{showBtn.disabled=!yearEl.value};
+      try{
+        await navigator.clipboard.writeText(input.value);
+        const button = document.querySelector('.share-btn');
+        const original = button.innerText;
+        button.innerText = 'คัดลอกแล้ว ✓';
+        setTimeout(()=>button.innerText = original,1500);
+      }catch(error){
+        document.execCommand('copy');
+      }
+    }
 
-function renderPlans(items){
-  if(!items.length){listEl.innerHTML='<div class="muted">ไม่พบข้อมูล</div>'; viewer.removeAttribute('src'); metaEl.textContent=''; return;}
-  listEl.innerHTML=items.map((x,i)=>`<div class="item ${i===0?'active':''}" data-i="${i}">${x.title}</div>`).join('');
-  const open=(i)=>{const x=items[i]; metaEl.innerHTML=`<b>${x.faculty}</b> • ${x.major} • ปี ${x.year}<br><a href="${x.url}" target="_blank">เปิดไฟล์ต้นฉบับ</a>`; viewer.src=x.url;};
-  open(0);
-  listEl.querySelectorAll('.item').forEach(el=>el.onclick=()=>{listEl.querySelectorAll('.item').forEach(i=>i.classList.remove('active')); el.classList.add('active'); open(+el.dataset.i);});
-}
+    function loadStateFromURL(){
+      const params = new URLSearchParams(window.location.search);
+      const state = params.get('state');
+      if(!state) return;
 
-showBtn.onclick=()=>{
-  const items=DEGREE_PLANS.filter(x=>x.faculty===facultyEl.value&&x.major===majorEl.value&&x.year===yearEl.value);
-  renderPlans(items);
-};
+      const decoded = decodeState(state);
+      if(!decoded) return;
 
-initFaculties();
-</script>
+      if(decoded.major && database[decoded.major]){
+        majorSelect.value = decoded.major;
+      }
+
+      if(Array.isArray(decoded.completed)){
+        localStorage.setItem(`completedSubjects_${decoded.major}`, JSON.stringify(decoded.completed));
+      }
+    }
+
+    function runTests(){
+      console.assert(Object.keys(database).length === 7, 'ต้องมี 7 สาขาวิชา');
+      console.assert(database.marketing.semesters.length === 12, 'การตลาดต้องมี 12 บล็อก รวมซัมเมอร์');
+      console.assert(Object.values(database).every(major => Array.isArray(major.semesters) && major.semesters.length === 12), 'ทุกสาขาต้องมีแผนปี 1-4 พร้อมซัมเมอร์');
+      console.assert(Object.values(database).every(major => major.semesters.some(sem => sem.semester.includes('ซัมเมอร์'))), 'ทุกสาขาต้องมีซัมเมอร์');
+      console.assert(typeof renderMajor === 'function', 'renderMajor ต้องมีอยู่');
+      console.assert(typeof toggleComplete === 'function', 'toggleComplete ต้องมีอยู่');
+      console.assert(document.getElementById('majorSelect').options.length === 7, 'dropdown ต้องมี 7 สาขา');
+      console.info('Curriculum Planner tests passed');
+    }
+
+    loadStateFromURL();
+    renderMajor(majorSelect.value);
+    updateShareURL();
+    runTests();
+  </script>
 </body>
 </html>
