@@ -41,9 +41,51 @@
 const DEGREE_PLANS = [
   {
     faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
-    major: 'หลักสูตรปริญญาตรี',
+    major: 'การตลาด',
     year: '2568',
-    title: 'ปีการศึกษา 2568 - หลักสูตรปริญญาตรี คณะบริหารธุรกิจ',
+    title: 'ปีการศึกษา 2568 - สาขาการตลาด',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การจัดการ',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาการจัดการ',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การเงิน',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาการเงิน',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การจัดการโลจิสติกส์และโซ่อุปทาน',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาโลจิสติกส์และโซ่อุปทาน',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การจัดการธุรกิจระหว่างประเทศ',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาธุรกิจระหว่างประเทศ',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การตลาดดิจิทัล',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาการตลาดดิจิทัล',
+    url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
+  },
+  {
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'การวางแผนการเงินและการลงทุน',
+    year: '2568',
+    title: 'ปีการศึกษา 2568 - สาขาการวางแผนการเงินและการลงทุน',
     url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
   }
 ];
