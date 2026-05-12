@@ -408,7 +408,7 @@
       const hasCourse = extra.some(item => item.code === course.code);
       extra = hasCourse
         ? extra.filter(item => item.code !== course.code)
-        : [...extra, {code: course.code, name: course.name, major: course.major, credit: course.credit}];
+        : [...extra, {code: course.code, name: course.name, major: course.major, credit: course.credit, type: course.type || 'Major Electives'}];
       localStorage.setItem(getExtraStorageKey(), JSON.stringify(extra));
       renderExtraSubjects();
       searchCourses();
@@ -424,9 +424,12 @@
         <div class="extra-item">
           <div>
             <strong>${item.code}</strong> · ${item.name}<br>
-            <small class="muted">${item.major} • ${item.credit}</small>
+            <small class="muted">${item.major}</small>
           </div>
-          <button type="button" class="check-btn active" onclick="toggleExtraComplete({code:'${escapeAttr(item.code)}',name:'${escapeAttr(item.name)}',major:'${escapeAttr(item.major)}',credit:'${escapeAttr(item.credit)}'})">✓</button>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="credit ${getTypeClass(item.type || 'Major Electives')}">${item.credit}</span>
+            <button type="button" class="check-btn active" onclick="toggleExtraComplete({code:'${escapeAttr(item.code)}',name:'${escapeAttr(item.name)}',major:'${escapeAttr(item.major)}',credit:'${escapeAttr(item.credit)}',type:'${escapeAttr(item.type || 'Major Electives')}'})">✓</button>
+          </div>
         </div>
       `).join('');
     }
@@ -449,7 +452,8 @@
         core:{name:'หมวดวิชาเฉพาะ/แกน', earned:0, total:48},
         required:{name:'หมวดวิชาเอก-บังคับ', earned:0, total:27},
         elective:{name:'หมวดวิชาเอก-เลือก', earned:0, total:24},
-        free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6}
+        free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6},
+        extra:{name:'หน่วยกิตนอกดีกรีแพลน/ลงเกิน', earned:0, total:0}
       };
 
       data.semesters.forEach(sem => {
@@ -471,6 +475,10 @@
         });
       });
 
+      getExtraSubjects().forEach(sub => {
+        categories.extra.earned += parseInt(sub.credit) || 3;
+      });
+
       return categories;
     }
 
@@ -479,7 +487,7 @@
       const rows = Object.values(categories).map(cat => `
         <tr>
           <td>${cat.name}</td>
-          <td style="text-align:center"><span class="summary-badge">${cat.earned} / ${cat.total}</span></td>
+          <td style="text-align:center"><span class="summary-badge">${cat.total === 0 ? `${cat.earned} / -` : `${cat.earned} / ${cat.total}`}</span></td>
         </tr>
       `).join('');
 
@@ -602,7 +610,7 @@
             <small class="muted">${sub.major} • ${sub.semester} • ${sub.credit}</small>
           </div>
           <div style="margin-top:8px">
-            <button type="button" class="check-btn ${isExtraCompleted(sub.code) ? 'active' : ''}" onclick="toggleExtraComplete({code:'${escapeAttr(sub.code)}',name:'${escapeAttr(sub.name)}',major:'${escapeAttr(sub.major)}',credit:'${escapeAttr(sub.credit)}'})" aria-label="ติ๊กวิชานอกแผน ${escapeAttr(sub.code)}">${isExtraCompleted(sub.code) ? '✓' : '+'}</button>
+            <button type="button" class="check-btn ${isExtraCompleted(sub.code) ? 'active' : ''}" onclick="toggleExtraComplete({code:'${escapeAttr(sub.code)}',name:'${escapeAttr(sub.name)}',major:'${escapeAttr(sub.major)}',credit:'${escapeAttr(sub.credit)}',type:'${escapeAttr(sub.type)}'})" aria-label="ติ๊กวิชานอกแผน ${escapeAttr(sub.code)}">${isExtraCompleted(sub.code) ? '✓' : '+'}</button>
             <small class="muted" style="margin-left:8px">${isExtraCompleted(sub.code) ? 'เลือกแล้ว' : 'เพิ่มไปวิชานอกแผน'}</small>
           </div>
         </div>
