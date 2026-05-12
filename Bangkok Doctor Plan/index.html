@@ -19,6 +19,7 @@
   <div class="card">
     <h2 style="margin:0 0 8px">เลือกคณะ > สาขา > ปี แล้วดู Degree Plan ได้ทันที</h2>
     <div class="muted">ข้อมูลเป็นชุดคงที่ (fixed options) เลือกจาก dropdown ได้เลย ไม่ต้องพิมพ์</div>
+    <div id="catalogInfo" class="muted" style="margin-top:6px"></div>
     <div class="row" style="margin-top:10px">
       <select id="faculty"></select>
       <select id="major" disabled></select>
@@ -39,8 +40,8 @@
 // เพิ่มรายการใหม่ใน array นี้ได้เลย เมื่อมีไฟล์ใหม่จาก BU
 const DEGREE_PLANS = [
   {
-    faculty: 'School of Business Administration',
-    major: 'Undergraduate Programs',
+    faculty: 'คณะบริหารธุรกิจ (School of Business Administration)',
+    major: 'หลักสูตรปริญญาตรี',
     year: '2568',
     title: 'ปีการศึกษา 2568 - หลักสูตรปริญญาตรี คณะบริหารธุรกิจ',
     url: 'https://degreeplan.bu.ac.th/download/degree-plan/undergraduate-programs/02-school-of-business-administration/%E0%B8%9B%E0%B8%B5%E0%B8%81%E0%B8%B2%E0%B8%A3%E0%B8%A8%E0%B8%B6%E0%B8%81%E0%B8%A9%E0%B8%B2%202568%20-%20%E0%B8%AB%E0%B8%A5%E0%B8%B1%E0%B8%81%E0%B8%AA%E0%B8%B9%E0%B8%95%E0%B8%A3%E0%B8%9B%E0%B8%A3%E0%B8%B4%E0%B8%8D%E0%B8%8D%E0%B8%B2%E0%B8%95%E0%B8%A3%E0%B8%B5%20%E0%B8%84%E0%B8%93%E0%B8%B0%E0%B8%9A%E0%B8%A3%E0%B8%B4%E0%B8%AB%E0%B8%B2%E0%B8%A3%E0%B8%98%E0%B8%B8%E0%B8%A3%E0%B8%81%E0%B8%B4%E0%B8%88.pdf'
@@ -54,14 +55,17 @@ const showBtn = document.getElementById('showBtn');
 const listEl = document.getElementById('list');
 const metaEl = document.getElementById('meta');
 const viewer = document.getElementById('viewer');
+const catalogInfo = document.getElementById('catalogInfo');
 
 const unique = arr => [...new Set(arr)];
 function setOptions(el, placeholder, values){el.innerHTML=`<option value="">${placeholder}</option>`+values.map(v=>`<option value="${v}">${v}</option>`).join('');}
 
 function initFaculties(){
-  setOptions(facultyEl, 'เลือกคณะ', unique(DEGREE_PLANS.map(x=>x.faculty)));
+  const faculties = unique(DEGREE_PLANS.map(x=>x.faculty));
+  setOptions(facultyEl, 'เลือกคณะ', faculties);
   setOptions(majorEl, 'เลือกสาขา', []);
   setOptions(yearEl, 'เลือกปี', []);
+  catalogInfo.textContent = `มีคณะให้เลือก ${faculties.length} คณะ`;
 }
 
 facultyEl.onchange=()=>{
