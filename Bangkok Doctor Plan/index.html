@@ -122,7 +122,7 @@
 
     <div class="search-box">
       <h3 style="margin-bottom:6px">ค้นหารายวิชา</h3>
-      <p class="muted">พิมพ์รหัสวิชา หรือชื่อวิชา แล้วคลิกผลลัพธ์เพื่อเปิดรายละเอียดทันที</p>
+      <p class="muted">พิมพ์รหัสวิชา หรือชื่อวิชา แล้วคลิกผลลัพธ์เพื่อเปิดรายละเอียดทันที (ค้นหาได้ทุกวิชาทุกสาขา)</p>
       <div class="search-wrap">
         <input type="text" id="courseSearch" class="search-input" placeholder="เช่น MK101, Marketing, การตลาด" autocomplete="off">
         <button class="search-btn" type="button" onclick="searchCourses()">ค้นหา</button>
@@ -514,9 +514,22 @@
       return null;
     }
 
-    function getAllSubjectsForMajor(){
-      const data = database[majorSelect.value] || database.marketing;
-      return data.semesters.flatMap(sem => sem.subjects.map(sub => ({...sub, semester: sem.semester})));
+    function getAllSubjects(){
+      const seen = new Set();
+      const subjects = [];
+
+      Object.entries(database).forEach(([majorKey, major]) => {
+        major.semesters.forEach(sem => {
+          sem.subjects.forEach(sub => {
+            const key = safeId(sub.code);
+            if(seen.has(key)) return;
+            seen.add(key);
+            subjects.push({...sub, semester: sem.semester, major: major.name, codeId: key});
+          });
+        });
+      });
+
+      return subjects;
     }
 
     function searchCourses(){
@@ -526,22 +539,41 @@
         return;
       }
 
-      const matches = getAllSubjectsForMajor().filter(sub => {
+      const matches = getAllSubjects().filter(sub => {
         const haystack = `${sub.code} ${sub.name} ${sub.description} ${sub.full}`.toLowerCase();
         return haystack.includes(keyword);
       });
 
       if(!matches.length){
-        searchResult.innerHTML = '<span class="muted">ไม่พบรายวิชาที่ค้นหาในสาขาที่เลือก</span>';
+        searchResult.innerHTML = '<span class="muted">ไม่พบรายวิชาที่ค้นหาในทุกสาขา</span>';
         return;
       }
 
       searchResult.innerHTML = matches.slice(0,10).map(sub => `
-        <div class="search-item" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')">
+        <div class="search-item" onclick="openSubjectFromSearch('${escapeAttr(sub.codeId)}')">
           <strong>${sub.code}</strong> · ${sub.name}<br>
-          <small class="muted">${sub.semester} • ${sub.credit}</small>
+          <small class="muted">${sub.major} • ${sub.semester} • ${sub.credit}</small>
         </div>
       `).join('');
+    }
+
+    function openSubjectFromSearch(codeId){
+      const foundInCurrentMajor = findSubjectByCode(codeId);
+      if(foundInCurrentMajor){
+        openModalByCode(codeId);
+        return;
+      }
+
+      const matchedMajorEntry = Object.entries(database).find(([,major]) =>
+        major.semesters.some(sem => sem.subjects.some(sub => safeId(sub.code) === codeId))
+      );
+
+      if(!matchedMajorEntry) return;
+      const [majorKey] = matchedMajorEntry;
+      majorSelect.value = majorKey;
+      renderMajor(majorKey);
+      updateShareURL();
+      openModalByCode(codeId);
     }
 
     function openModalByCode(code){
