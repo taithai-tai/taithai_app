@@ -652,7 +652,9 @@
         return;
       }
 
-      searchResult.innerHTML = matches.slice(0,10).map(sub => `
+      searchResult.innerHTML = `
+        <div class="muted" style="margin-bottom:10px">พบทั้งหมด ${matches.length} วิชา</div>
+      ` + matches.map(sub => `
         <div class="search-item">
           <div onclick="openSubjectFromSearch('${escapeAttr(sub.codeId)}')">
             <strong>${sub.code}</strong> · ${sub.name}<br>
