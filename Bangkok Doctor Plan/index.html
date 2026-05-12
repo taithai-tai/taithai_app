@@ -30,6 +30,11 @@
     .upload-row button{padding:14px 24px;border:none;border-radius:16px;background:#111;color:#fff;font-weight:700;cursor:pointer}
     .grade-badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:#2d8a45;color:#fff;font-size:12px;font-weight:700;margin-left:8px}
     .upload-status{margin-top:12px;font-weight:600}
+    .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .confirm-card{background:#fff;width:min(760px,100%);max-height:85vh;overflow:auto;border-radius:24px;padding:24px}
+    .confirm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .confirm-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+    .confirm-chip{background:#f3f3f3;border-radius:999px;padding:8px 12px;font-weight:600;text-align:center}
     .selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
     label{display:block;margin-bottom:8px;font-weight:600;color:#333}
     select{width:100%;padding:16px;border-radius:18px;border:1px solid #ddd;font-family:'Prompt',sans-serif;font-size:16px;background:#fafafa}
@@ -216,6 +221,18 @@
     <h3>BU Business Administration Curriculum 2568</h3>
     <p>Interactive Curriculum Planner สำหรับดูแผนการเรียนและรายละเอียดรายวิชา</p>
   </footer>
+
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-card">
+      <h3>ตรวจสอบรายวิชาจาก Transcript</h3>
+      <p class="muted">ระบบเจอรายวิชาต่อไปนี้ กรุณาตรวจสอบก่อนติ๊กอัตโนมัติ</p>
+      <div id="confirmList" class="confirm-list"></div>
+      <div class="confirm-actions">
+        <button class="share-btn" type="button" onclick="cancelTranscriptApply()" style="background:#666">ยกเลิก</button>
+        <button class="share-btn" type="button" onclick="confirmTranscriptApply()">ติ๊กอัตโนมัติ</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const commonCourses = {
@@ -405,6 +422,7 @@
     const extraList = document.getElementById('extraList');
     const transcriptExtraContainer = document.getElementById('extraSubjects');
     const uploadStatus = document.getElementById('uploadStatus');
+    let pendingTranscriptCodes = [];
 
     function safeId(value){return String(value).replace(/[^a-zA-Z0-9_-]/g,'_')}
 
@@ -758,6 +776,41 @@
       updateShareURL();
     }
 
+    function applyTranscriptCodes(codes){
+      const allSubjects = getCurrentMajorSubjects();
+      const degreePlanCodes = new Set(allSubjects.map(s => s.code));
+      const matched = [];
+      const extras = [];
+      codes.forEach(code => {
+        if(degreePlanCodes.has(code)) matched.push(code);
+        else extras.push({code, grade:'-', status:'pass'});
+      });
+      localStorage.setItem(getStorageKey(), JSON.stringify([...new Set(matched)]));
+      renderTranscriptExtraSubjects(extras);
+      renderMajor(majorSelect.value);
+      updateShareURL();
+    }
+
+    function showTranscriptConfirm(codes){
+      pendingTranscriptCodes = [...codes];
+      document.getElementById('confirmList').innerHTML = codes.map(code => `<div class="confirm-chip">${code}</div>`).join('');
+      document.getElementById('confirmOverlay').style.display = 'flex';
+    }
+
+    function cancelTranscriptApply(){
+      pendingTranscriptCodes = [];
+      document.getElementById('confirmOverlay').style.display = 'none';
+      uploadStatus.innerText = 'ยกเลิกการติ๊กอัตโนมัติ';
+    }
+
+    function confirmTranscriptApply(){
+      if(!pendingTranscriptCodes.length) return;
+      applyTranscriptCodes(pendingTranscriptCodes);
+      document.getElementById('confirmOverlay').style.display = 'none';
+      uploadStatus.innerText = `ติ๊กอัตโนมัติสำเร็จ ✓ จำนวน ${pendingTranscriptCodes.length} วิชา`;
+      pendingTranscriptCodes = [];
+    }
+
     async function analyzePDF(){
       const input = document.getElementById('pdfUpload');
       const file = input.files[0];
@@ -768,16 +821,13 @@
       uploadStatus.innerText = 'กำลังวิเคราะห์ PDF...';
       try{
         const text = await extractPDFText(file);
-        const records = parseTranscriptRecords(text);
-        if(records.length){
-          applyTranscriptCourses(records);
-          const passed = records.filter(item => item.status === 'pass').length;
-          uploadStatus.innerText = `วิเคราะห์สำเร็จ ✓ พบรายการ ${records.length} วิชา (ผ่าน ${passed} วิชา)`;
-        }else{
-          const fallback = extractCourseCodes(text).map(code => ({code, grade:'P', term:'-', status:'pass'}));
-          applyTranscriptCourses(fallback);
-          uploadStatus.innerText = `วิเคราะห์สำเร็จ ✓ (โหมดรหัสวิชา) พบ ${fallback.length} วิชา`;
+        const codes = extractCourseCodes(text);
+        if(!codes.length){
+          uploadStatus.innerText = 'ไม่พบรหัสวิชาในไฟล์ PDF';
+          return;
         }
+        uploadStatus.innerText = `วิเคราะห์สำเร็จ ✓ พบ ${codes.length} วิชา กรุณายืนยันก่อนติ๊กอัตโนมัติ`;
+        showTranscriptConfirm(codes);
       }catch(error){
         console.error(error);
         uploadStatus.innerText = 'วิเคราะห์ไม่สำเร็จ กรุณาลองใหม่หรือตรวจสอบไฟล์ PDF';
