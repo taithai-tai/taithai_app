@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bangkok Doctor Plan Viewer</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 0; background: #f7f7fb; color: #1f2430; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 24px; }
+    .card { background: #fff; border: 1px solid #e7e8f0; border-radius: 14px; padding: 16px; box-shadow: 0 4px 18px rgba(0,0,0,.04); margin-bottom: 14px; }
+    h1 { margin: 0 0 8px; font-size: 1.6rem; }
+    .muted { color: #667085; font-size: .95rem; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    input[type="text"], input[type="date"] { padding: 10px 12px; border: 1px solid #d6d9e6; border-radius: 10px; min-width: 220px; }
+    input[type="file"] { padding: 8px; }
+    button { padding: 10px 14px; border: none; border-radius: 10px; background: #e85d75; color: #fff; cursor: pointer; }
+    button.secondary { background: #4f7cff; }
+    #results .item { padding: 10px; border: 1px solid #eceef5; border-radius: 10px; margin: 8px 0; background: #fafbff; }
+    .pill { display: inline-block; background: #eef2ff; color: #3b4cca; border-radius: 999px; padding: 3px 10px; font-size: .8rem; margin-right: 6px; }
+    pre { white-space: pre-wrap; background: #0f172a; color: #e2e8f0; padding: 12px; border-radius: 10px; max-height: 300px; overflow: auto; }
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.5.136/pdf.min.mjs" type="module"></script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>ตัวช่วยดู Duty Plan หมอกรุงเทพฯ</h1>
+      <p class="muted">อัปโหลดไฟล์ PDF แล้วค้นหาชื่อแพทย์/คำที่ต้องการได้ทันที ไม่ต้องเลื่อนหาใน PDF ยาว ๆ</p>
+      <div class="row">
+        <input id="pdfFile" type="file" accept="application/pdf" />
+        <button id="loadBtn">อ่าน PDF</button>
+        <span id="status" class="muted"></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <input id="searchInput" type="text" placeholder="พิมพ์ชื่อหมอ / แผนก / keyword" />
+        <input id="dateInput" type="date" />
+        <button class="secondary" id="searchBtn">ค้นหา</button>
+      </div>
+    </div>
+
+    <div class="card" id="results"></div>
+    <div class="card">
+      <div class="muted">Raw text (ช่วย debug เวลา PDF format แปลก)</div>
+      <pre id="rawText"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    const statusEl = document.getElementById('status');
+    const rawTextEl = document.getElementById('rawText');
+    const resultsEl = document.getElementById('results');
+    let lines = [];
+
+    async function extractTextFromPdf(file) {
+      const { getDocument } = globalThis.pdfjsLib;
+      const buffer = await file.arrayBuffer();
+      const pdf = await getDocument({ data: buffer }).promise;
+      let allText = '';
+      for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        allText += `\n[PAGE ${pageNum}]\n${pageText}\n`;
+      }
+      return allText;
+    }
+
+    function doSearch() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const date = document.getElementById('dateInput').value;
+      const dateToken = date ? new Date(date).toLocaleDateString('th-TH') : '';
+
+      const filtered = lines.filter(line => {
+        const l = line.toLowerCase();
+        const passQ = !q || l.includes(q);
+        const passDate = !dateToken || line.includes(dateToken) || line.includes(date);
+        return passQ && passDate;
+      });
+
+      resultsEl.innerHTML = `<div class="muted">ผลลัพธ์ ${filtered.length} รายการ</div>`;
+      if (!filtered.length) {
+        resultsEl.innerHTML += '<div class="item">ไม่พบข้อมูลตามเงื่อนไข</div>';
+        return;
+      }
+
+      filtered.slice(0, 300).forEach((line, idx) => {
+        const div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = `<span class="pill">#${idx + 1}</span>${line}`;
+        resultsEl.appendChild(div);
+      });
+    }
+
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      const file = document.getElementById('pdfFile').files[0];
+      if (!file) return alert('กรุณาเลือกไฟล์ PDF ก่อน');
+
+      statusEl.textContent = 'กำลังอ่านไฟล์...';
+      try {
+        const text = await extractTextFromPdf(file);
+        rawTextEl.textContent = text;
+        lines = text.split(/\n+/).map(x => x.trim()).filter(Boolean);
+        statusEl.textContent = `อ่านสำเร็จ ${lines.length} บรรทัด`;
+        doSearch();
+      } catch (err) {
+        console.error(err);
+        statusEl.textContent = 'อ่าน PDF ไม่สำเร็จ';
+        alert('เกิดข้อผิดพลาดในการอ่าน PDF');
+      }
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', doSearch);
+    document.getElementById('searchInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') doSearch();
+    });
+  </script>
+</body>
+</html>
