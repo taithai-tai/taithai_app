@@ -415,6 +415,60 @@
       }
     };
 
+    const supplementalCourses = [
+      subject('MK325','Fashion Marketing','Major Electives','สอบได้ MK101 หรือได้รับอนุมัติจากคณบดี','แฟชั่นมาร์เก็ตติ้ง'),
+      subject('MK326','Advertising and Agency Management','Major Electives','สอบได้ MK101','โฆษณาและเอเจนซี่'),
+      subject('MK327','Purchasing and Negotiations','Major Electives','สอบได้ MK101','การจัดซื้อและการเจรจา'),
+      subject('MK328','Services Marketing','Major Electives','สอบได้ MK101','การตลาดบริการ'),
+      subject('MK335','Brand Management','Major Electives','สอบได้ MK101','การจัดการแบรนด์'),
+      subject('MK336','Creative Selling and Sales Management','Major Electives','สอบได้ MK101','การขายเชิงสร้างสรรค์'),
+      subject('MK337','New Business Model Creation','Major Electives','-','การสร้างโมเดลธุรกิจใหม่'),
+      subject('MK338','Creative and Critical Thinking for Marketer','Major Electives','-','คิดสร้างสรรค์และวิพากษ์'),
+      subject('MK339','Sustainable and Green Marketing','Major Electives','-','การตลาดยั่งยืน'),
+      subject('MK340','UX & UI Introduction for Marketer','Major Electives','-','พื้นฐาน UX/UI สำหรับนักการตลาด'),
+      subject('MK341','Marketing for E-Sports','Major Electives','-','การตลาดอีสปอร์ต'),
+      subject('MK411','International and Global Marketing','Major Electives','สอบได้ MK101','การตลาดระหว่างประเทศ'),
+      subject('MK412','Event Marketing and Public Relations','Major Electives','สอบได้ MK101','การตลาดอีเวนต์และ PR'),
+      subject('MK413','Direct Marketing','Major Electives','สอบได้ MK101','การตลาดทางตรง'),
+      subject('MK415','Current Issues in Marketing','Major Electives','สอบได้ MK101','ประเด็นร่วมสมัยทางการตลาด'),
+      subject('MK416','Sports Marketing','Major Electives','สอบได้ MK101','การตลาดกีฬา'),
+      subject('MK417','Retailing Management','Major Electives','สอบได้ MK101','การจัดการค้าปลีก'),
+      subject('MK419','Quantitative Analysis in Marketing','Major Electives','สอบได้ MK101','วิเคราะห์เชิงปริมาณการตลาด'),
+      subject('MK422','Sales Promotion Strategies','Major Electives','สอบได้ MK101','กลยุทธ์ส่งเสริมการขาย'),
+      subject('MK425','Independent Study','Major Electives','สอบได้ MK101','ศึกษาค้นคว้าอิสระ'),
+      subject('MK426','Entertainment Marketing','Major Electives','สอบได้ MK101 หรือได้รับอนุมัติจากคณบดี','การตลาดบันเทิง'),
+      subject('MK429','Marketing for Hospitality Business','Major Electives','สอบได้ MK101','การตลาดธุรกิจบริการ'),
+      subject('MK431','Art and Design in Branding','Major Electives','-','ศิลปะและดีไซน์ในแบรนด์'),
+      subject('MK432','Creative Content Marketing','Major Electives','-','คอนเทนต์การตลาดเชิงสร้างสรรค์'),
+      subject('MK434','Marketing for Innovation','Major Electives','สอบได้ MK101','การตลาดนวัตกรรม'),
+      subject('MK440','Marketing for Game Business','Major Electives','สอบได้ MK101','การตลาดธุรกิจเกม'),
+      subject('MK441','Sales Strategy','Major Electives','สอบได้ MK101','กลยุทธ์การขาย'),
+      subject('BA325','Entrepreneurial Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานผู้ประกอบการ'),
+      subject('CA021','Consumer Psychology & Behavior','Major Electives','-','จิตวิทยาผู้บริโภค'),
+      subject('BD031','Creative Brand Storytelling','Major Electives','-','การเล่าเรื่องแบรนด์'),
+      subject('MG224','Business Ethics','Major Electives','-','จริยธรรมทางธุรกิจ'),
+      subject('MG313','Motivation Techniques','Major Electives','สอบได้ MG111','เทคนิคการจูงใจ'),
+      subject('MG316','Service Operations Management','Major Electives','สอบได้ MG111','การปฏิบัติการบริการ'),
+      subject('MG324','Family Business Management','Major Electives','สอบได้ MG111','การจัดการธุรกิจครอบครัว'),
+      subject('MG333','Risk and Change Management','Major Electives','สอบได้ MG111','การจัดการความเสี่ยงและการเปลี่ยนแปลง'),
+      subject('MG351','Organization Management and Behavior','Major Electives','สอบได้ MG111','พฤติกรรมองค์การ'),
+      subject('MG352','Knowledge Management for Business','Major Electives','สอบได้ MG111','การจัดการความรู้'),
+      subject('MG353','Information Technopreneurship','Major Electives','สอบได้ MG111','เทคโนพรินเนอร์'),
+      subject('MG354','Management for Aging Society','Major Electives','สอบได้ MG111','การจัดการสังคมสูงวัย'),
+      subject('MG355','Social Enterprise Management','Major Electives','สอบได้ MG111 และ MG222','การจัดการวิสาหกิจเพื่อสังคม'),
+      subject('MG357','Business Communication and Negotiation','Major Electives','สอบได้ MG111','การสื่อสารและเจรจาธุรกิจ'),
+      subject('MG418','Business Experience','Major Electives','สอบได้ MG111','ประสบการณ์ทางธุรกิจ'),
+      subject('MG423','Management Information Systems','Major Electives','สอบได้ MG111','ระบบสารสนเทศเพื่อการจัดการ'),
+      subject('MG425','Independent Study','Major Electives','สอบได้ MG111','ศึกษาค้นคว้าอิสระ'),
+      subject('MG432','E-Business Transaction Law','Major Electives','-','กฎหมายธุรกรรมอิเล็กทรอนิกส์'),
+      subject('MG433','E-Commerce Marketing Management','Major Electives','สอบได้ MG111 และ MK101','การตลาดอีคอมเมิร์ซ'),
+      subject('MG434','E-Logistics and Supply Chain Management','Major Electives','สอบได้ MG212','โลจิสติกส์อิเล็กทรอนิกส์'),
+      subject('MG435','E-Commerce Payment System','Major Electives','สอบได้ MG111 และ FI212','ระบบชำระเงินอีคอมเมิร์ซ'),
+      subject('MG437','Introduction to Data Analysis for Management','Major Electives','สอบได้ MG111','พื้นฐานวิเคราะห์ข้อมูล'),
+      subject('MG438','Human Resource Management in Digital Era','Major Electives','สอบได้ MG111','HR ดิจิทัล'),
+      subject('MG439','E-Sport and Recreation Business Management','Major Electives','สอบได้ MG111','ธุรกิจอีสปอร์ต')
+    ];
+
     const planner = document.getElementById('planner');
     const majorSelect = document.getElementById('majorSelect');
     const searchInput = document.getElementById('courseSearch');
@@ -622,9 +676,16 @@
             const key = safeId(sub.code);
             if(seen.has(key)) return;
             seen.add(key);
-            subjects.push({...sub, semester: sem.semester, major: major.name, codeId: key});
+            subjects.push({...sub, semester: sem.semester, major: major.name, codeId: key, inPlan:true});
           });
         });
+      });
+
+      supplementalCourses.forEach(sub => {
+        const key = safeId(sub.code);
+        if(seen.has(key)) return;
+        seen.add(key);
+        subjects.push({...sub, semester:'นอกแผนหลักสูตร', major:'รายวิชาเพิ่มเติม', codeId:key, inPlan:false});
       });
 
       return subjects;
@@ -669,6 +730,18 @@
     }
 
     function openSubjectFromSearch(codeId){
+      const searchSub = getAllSubjects().find(sub => sub.codeId === codeId);
+      if(searchSub && searchSub.inPlan === false){
+        document.getElementById('subjectModal').style.display = 'flex';
+        document.getElementById('modalName').innerText = searchSub.name;
+        document.getElementById('modalCode').innerText = searchSub.code;
+        document.getElementById('modalDescription').innerText = searchSub.description;
+        document.getElementById('modalCredit').innerText = searchSub.credit;
+        document.getElementById('modalType').innerText = searchSub.type;
+        document.getElementById('modalFull').innerText = `${searchSub.full} · รายวิชาเพิ่มเติม`;
+        document.getElementById('modalPrereq').innerText = searchSub.prereq;
+        return;
+      }
       const foundInCurrentMajor = findSubjectByCode(codeId);
       if(foundInCurrentMajor){
         openModalByCode(codeId);
