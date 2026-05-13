@@ -276,7 +276,7 @@
         {semester:'ปี 1 · ซัมเมอร์',subjects:[c('GE105')]},
         {semester:'ปี 2 · เทอม 1',subjects:[c('EN103'),c('GE106'),c('EC203'),c('BA207'),c('FI212')]},
         {semester:'ปี 2 · เทอม 2',subjects:[c('GE107'),c('FI222'),c('LA102'),c('MG212'),majorSubjects[0]]},
-        {semester:'ปี 2 · ซัมเมอร์',subjects:[majorSubjects[1] || c('LA301')]},
+        {semester:'ปี 2 · ซัมเมอร์',subjects:[c('LA301'), ...(majorSubjects[1] ? [majorSubjects[1]] : [])]},
         {semester:'ปี 3 · เทอม 1',subjects:[c('EN014'),c('MG222'),majorSubjects[2],majorSubjects[3],majorSubjects[4]]},
         {semester:'ปี 3 · เทอม 2',subjects:[c('EN331'),c('EN332'),majorSubjects[5],majorSubjects[6],majorSubjects[7]]},
         {semester:'ปี 3 · ซัมเมอร์',subjects:[majorSubjects[8] || subject('INTERNSHIP','Internship','ฝึกงาน','ตามเงื่อนไขสาขา','ฝึกงานกับองค์กรจริง')]},
