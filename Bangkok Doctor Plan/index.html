@@ -551,6 +551,7 @@
         required:{name:'หมวดวิชาเอก-บังคับ', earned:0, total:27},
         elective:{name:'หมวดวิชาเอก-เลือก', earned:0, total:24},
         free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6},
+        coop:{name:'หมวดสหกิจ / ฝึกงาน', earned:0, total:12},
         extra:{name:'หน่วยกิตนอกดีกรีแพลน/ลงเกิน', earned:0, total:0}
       };
 
@@ -569,6 +570,8 @@
             if(done) categories.elective.earned += credit;
           } else if(sub.type.includes('Free')){
             if(done) categories.free.earned += credit;
+          } else if(sub.type.includes('Co-op') || sub.type.includes('ฝึกงาน')){
+            if(done) categories.coop.earned += credit;
           }
         });
       });
