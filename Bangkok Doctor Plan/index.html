@@ -42,6 +42,7 @@
     .section-title h2{font-size:34px;margin-bottom:6px}
     .muted{color:#666}
     .progress-bar{height:16px;background:#ececec;border-radius:999px;overflow:hidden;margin-top:14px}
+    .reset-btn{margin-top:14px;padding:10px 16px;border:none;border-radius:12px;background:#b31624;color:#fff;font-weight:700;cursor:pointer}
     .progress-fill{height:100%;background:linear-gradient(90deg,#2d8a45,#57c26f);width:0%;transition:.3s}
     .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:28px}
     .semester-card{position:relative;background:#fff;border-radius:28px;padding:25px;box-shadow:0 12px 35px rgba(0,0,0,.05)}
@@ -134,6 +135,7 @@
       <h3 style="margin-bottom:6px">ความคืบหน้าการเรียน</h3>
       <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว</p>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <button class="reset-btn" type="button" onclick="resetCheckedCourses()">รีเซ็ตการติ๊กวิชา</button>
     </div>
 
     <div class="search-box">
@@ -537,6 +539,15 @@
       let completed = getCompleted();
       completed = completed.includes(code) ? completed.filter(item => item !== code) : [...completed, code];
       localStorage.setItem(getStorageKey(), JSON.stringify(completed));
+      updateShareURL();
+      renderMajor(majorSelect.value);
+    }
+
+    function resetCheckedCourses(){
+      const ok = window.confirm('ต้องการรีเซ็ตการติ๊กวิชาทั้งหมดของสาขานี้ใช่ไหม?');
+      if(!ok) return;
+      localStorage.setItem(getStorageKey(), JSON.stringify([]));
+      localStorage.removeItem(getTranscriptStorageKey());
       updateShareURL();
       renderMajor(majorSelect.value);
     }
