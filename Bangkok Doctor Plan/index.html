@@ -522,7 +522,7 @@
         return;
       }
       extraList.innerHTML = extra.map(item => `
-        <div class="extra-item">
+        <div class="extra-item" draggable="true" ondragstart="onExtraDragStart(event,'${escapeAttr(item.code)}')">
           <div>
             <strong>${item.code}</strong> · ${item.name}<br>
             <small class="muted">${item.major}</small>
@@ -688,6 +688,12 @@
       const arrangement = getArrangement();
       const subjectByCode = new Map();
       originalSemesters.forEach((sem, idx) => sem.subjects.forEach(sub => subjectByCode.set(sub.code, {sub, originalIdx: idx})));
+      getExtraSubjects().forEach(item => {
+        if(subjectByCode.has(item.code)) return;
+        const catalog = getAllSubjects().find(sub => sub.code === item.code);
+        const sub = catalog || subject(item.code, item.name || item.code, item.type || 'Major Electives', '-', 'วิชานอกดีกรีแพลน', item.credit || '3 หน่วยกิต');
+        subjectByCode.set(item.code, {sub, originalIdx: 0});
+      });
       const rebuilt = originalSemesters.map(sem => ({semester: sem.semester, subjects: []}));
       subjectByCode.forEach(({sub, originalIdx}, code) => {
         const targetIdx = Number.isInteger(arrangement[code]) ? arrangement[code] : originalIdx;
@@ -698,6 +704,11 @@
     }
 
     function onSubjectDragStart(event, code){
+      event.dataTransfer.setData('text/plain', code);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onExtraDragStart(event, code){
       event.dataTransfer.setData('text/plain', code);
       event.dataTransfer.effectAllowed = 'move';
     }
