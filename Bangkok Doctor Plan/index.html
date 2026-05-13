@@ -134,7 +134,7 @@
 
     <div class="progress-box">
       <h3 style="margin-bottom:6px">ความคืบหน้าการเรียน</h3>
-      <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว</p>
+      <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว · เหลืออีก <span id="remainingCount">0</span> วิชา</p>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
       <button class="reset-btn" type="button" onclick="resetCheckedCourses()">รีเซ็ตการติ๊กวิชา</button>
     </div>
@@ -619,8 +619,10 @@
     function updateProgress(){
       const totalSubjects = document.querySelectorAll('.subject').length;
       const completedSubjects = document.querySelectorAll('.subject.completed').length;
+      const remainingSubjects = Math.max(totalSubjects - completedSubjects, 0);
       document.getElementById('completedCount').innerText = completedSubjects;
       document.getElementById('totalCount').innerText = totalSubjects;
+      document.getElementById('remainingCount').innerText = remainingSubjects;
       document.getElementById('progressFill').style.width = totalSubjects ? `${(completedSubjects / totalSubjects) * 100}%` : '0%';
     }
 
