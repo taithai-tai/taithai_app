@@ -688,6 +688,13 @@
         subjects.push({...sub, semester:'นอกแผนหลักสูตร', major:'รายวิชาเพิ่มเติม', codeId:key, inPlan:false});
       });
 
+      Object.values(commonCourses).forEach(sub => {
+        const key = safeId(sub.code);
+        if(seen.has(key)) return;
+        seen.add(key);
+        subjects.push({...sub, semester:'หมวดวิชาพื้นฐาน', major:'วิชาพื้นฐานหลักสูตร', codeId:key, inPlan:false});
+      });
+
       return subjects;
     }
 
