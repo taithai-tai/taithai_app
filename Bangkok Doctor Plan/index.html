@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BU Business Curriculum Planner 2568</title>
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     body{font-family:'Prompt',sans-serif;background:#f4f5f7;color:#1b1b1b;line-height:1.65}
@@ -12,7 +13,28 @@
     .hero h1{font-size:clamp(40px,6vw,78px);line-height:1.08;margin-bottom:18px}
     .hero p{max-width:900px;font-size:20px;opacity:.92}
     .container{padding:45px 7%}
-    .selector-box,.progress-box{background:#fff;border-radius:30px;padding:28px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-bottom:30px}
+    .selector-box,.progress-box,.search-box{background:#fff;border-radius:30px;padding:28px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-bottom:30px}
+    .search-wrap{display:grid;grid-template-columns:1fr auto;gap:12px;margin-top:14px}
+    .search-input{width:100%;padding:15px 16px;border-radius:16px;border:1px solid #ddd;font-size:16px;font-family:'Prompt',sans-serif}
+    .search-btn{padding:14px 20px;border:none;border-radius:16px;background:#b31624;color:#fff;font-weight:700;cursor:pointer}
+    .search-result{margin-top:16px}
+    .search-item{padding:12px 14px;border:1px solid #ececec;border-radius:14px;background:#fafafa;cursor:pointer;margin-bottom:10px}
+    .search-item:hover{background:#fff}
+    .extra-box{background:#fff;border-radius:30px;padding:28px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-bottom:30px}
+    .extra-list{margin-top:14px}
+    .extra-item{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 14px;border:1px solid #ececec;border-radius:14px;background:#fafafa;margin-bottom:10px}
+    .extra-empty{color:#777}
+    .upload-box{background:#fff;border-radius:30px;padding:30px;box-shadow:0 15px 40px rgba(0,0,0,.06);margin-top:40px}
+    .upload-row{display:flex;gap:14px;margin-top:20px;flex-wrap:wrap}
+    .upload-row input{flex:1;min-width:240px;padding:14px;border-radius:16px;border:1px solid #ddd}
+    .upload-row button{padding:14px 24px;border:none;border-radius:16px;background:#111;color:#fff;font-weight:700;cursor:pointer}
+    .grade-badge{display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:#2d8a45;color:#fff;font-size:12px;font-weight:700;margin-left:8px}
+    .upload-status{margin-top:12px;font-weight:600}
+    .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:20px;z-index:1000}
+    .confirm-card{background:#fff;width:min(760px,100%);max-height:85vh;overflow:auto;border-radius:24px;padding:24px}
+    .confirm-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    .confirm-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+    .confirm-chip{background:#f3f3f3;border-radius:999px;padding:8px 12px;font-weight:600;text-align:center}
     .selector-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:22px}
     label{display:block;margin-bottom:8px;font-weight:600;color:#333}
     select{width:100%;padding:16px;border-radius:18px;border:1px solid #ddd;font-family:'Prompt',sans-serif;font-size:16px;background:#fafafa}
@@ -20,9 +42,11 @@
     .section-title h2{font-size:34px;margin-bottom:6px}
     .muted{color:#666}
     .progress-bar{height:16px;background:#ececec;border-radius:999px;overflow:hidden;margin-top:14px}
+    .reset-btn{margin-top:14px;padding:10px 16px;border:none;border-radius:12px;background:#b31624;color:#fff;font-weight:700;cursor:pointer}
     .progress-fill{height:100%;background:linear-gradient(90deg,#2d8a45,#57c26f);width:0%;transition:.3s}
     .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:28px}
     .semester-card{position:relative;background:#fff;border-radius:28px;padding:25px;box-shadow:0 12px 35px rgba(0,0,0,.05)}
+    .semester-card.drag-over{outline:2px dashed #b31624;outline-offset:4px}
     .semester-card h3{margin-bottom:18px;font-size:24px;color:#b31624}
     .semester-card.summer-card{grid-column:span 2;background:linear-gradient(135deg,#fff6d9,#ffe89a);border:2px dashed #e0b400}
     .summer-card::before{content:'SUMMER TERM';position:absolute;top:-12px;right:22px;background:#111;color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;letter-spacing:1px;font-weight:700}
@@ -110,11 +134,40 @@
 
     <div class="progress-box">
       <h3 style="margin-bottom:6px">ความคืบหน้าการเรียน</h3>
-      <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว</p>
+      <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว · เหลืออีก <span id="remainingCount">0</span> วิชา</p>
       <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <button class="reset-btn" type="button" onclick="resetCheckedCourses()">รีเซ็ตการติ๊กวิชา</button>
+    </div>
+
+    <div class="search-box">
+      <h3 style="margin-bottom:6px">ค้นหารายวิชา</h3>
+      <p class="muted">พิมพ์รหัสวิชา หรือชื่อวิชา แล้วคลิกผลลัพธ์เพื่อเปิดรายละเอียดทันที (ค้นหาได้ทุกวิชาทุกสาขา)</p>
+      <div class="search-wrap">
+        <input type="text" id="courseSearch" class="search-input" placeholder="เช่น MK101, Marketing, การตลาด" autocomplete="off">
+        <button class="search-btn" type="button" onclick="searchCourses()">ค้นหา</button>
+      </div>
+      <div id="searchResult" class="search-result muted">ยังไม่ได้ค้นหา</div>
+    </div>
+
+    <div class="extra-box">
+      <h3 style="margin-bottom:6px">วิชานอกดีกรีแพลน / ลงเกิน</h3>
+      <p class="muted">ติ๊กเพิ่มจากผลการค้นหา เพื่อเก็บรายการวิชาที่ลงเพิ่มนอกแผนหลัก</p>
+      <div id="extraList" class="extra-list"></div>
     </div>
 
     <div id="planner"></div>
+
+    <div class="upload-box">
+      <h2>วิเคราะห์ Transcript PDF</h2>
+      <p class="muted">อัปโหลด Grade Report PDF เพื่อให้ระบบติ๊กวิชาที่เรียนแล้วอัตโนมัติ</p>
+      <div class="upload-row">
+        <input type="file" id="pdfUpload" accept=".pdf">
+        <button onclick="analyzePDF()">วิเคราะห์ PDF</button>
+      </div>
+      <div id="uploadStatus" class="upload-status muted">ยังไม่ได้วิเคราะห์ไฟล์</div>
+    </div>
+
+    <div id="extraSubjects"></div>
 
     <div class="legend-box">
       <div class="legend-item"><span class="legend-dot" style="background:#4f8cff"></span>วิชาศึกษาทั่วไป</div>
@@ -172,6 +225,18 @@
     <p>Interactive Curriculum Planner สำหรับดูแผนการเรียนและรายละเอียดรายวิชา</p>
   </footer>
 
+  <div class="confirm-overlay" id="confirmOverlay">
+    <div class="confirm-card">
+      <h3>ตรวจสอบรายวิชาจาก Transcript</h3>
+      <p class="muted">ระบบเจอรายวิชาต่อไปนี้ กรุณาตรวจสอบก่อนติ๊กอัตโนมัติ</p>
+      <div id="confirmList" class="confirm-list"></div>
+      <div class="confirm-actions">
+        <button class="share-btn" type="button" onclick="cancelTranscriptApply()" style="background:#666">ยกเลิก</button>
+        <button class="share-btn" type="button" onclick="confirmTranscriptApply()">ติ๊กอัตโนมัติ</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const commonCourses = {
       EN101:{code:'EN101',name:'Everyday English',credit:'3 หน่วยกิต',full:'Everyday English',type:'ศึกษาทั่วไป',prereq:'-',description:'ภาษาอังกฤษเพื่อการใช้ในชีวิตประจำวัน'},
@@ -214,7 +279,7 @@
         {semester:'ปี 1 · ซัมเมอร์',subjects:[c('GE105')]},
         {semester:'ปี 2 · เทอม 1',subjects:[c('EN103'),c('GE106'),c('EC203'),c('BA207'),c('FI212')]},
         {semester:'ปี 2 · เทอม 2',subjects:[c('GE107'),c('FI222'),c('LA102'),c('MG212'),majorSubjects[0]]},
-        {semester:'ปี 2 · ซัมเมอร์',subjects:[majorSubjects[1] || c('LA301')]},
+        {semester:'ปี 2 · ซัมเมอร์',subjects:[c('LA301'), ...(majorSubjects[1] ? [majorSubjects[1]] : [])]},
         {semester:'ปี 3 · เทอม 1',subjects:[c('EN014'),c('MG222'),majorSubjects[2],majorSubjects[3],majorSubjects[4]]},
         {semester:'ปี 3 · เทอม 2',subjects:[c('EN331'),c('EN332'),majorSubjects[5],majorSubjects[6],majorSubjects[7]]},
         {semester:'ปี 3 · ซัมเมอร์',subjects:[majorSubjects[8] || subject('INTERNSHIP','Internship','ฝึกงาน','ตามเงื่อนไขสาขา','ฝึกงานกับองค์กรจริง')]},
@@ -353,12 +418,74 @@
       }
     };
 
+    const supplementalCourses = [
+      subject('MK325','Fashion Marketing','Major Electives','สอบได้ MK101 หรือได้รับอนุมัติจากคณบดี','แฟชั่นมาร์เก็ตติ้ง'),
+      subject('MK326','Advertising and Agency Management','Major Electives','สอบได้ MK101','โฆษณาและเอเจนซี่'),
+      subject('MK327','Purchasing and Negotiations','Major Electives','สอบได้ MK101','การจัดซื้อและการเจรจา'),
+      subject('MK328','Services Marketing','Major Electives','สอบได้ MK101','การตลาดบริการ'),
+      subject('MK335','Brand Management','Major Electives','สอบได้ MK101','การจัดการแบรนด์'),
+      subject('MK336','Creative Selling and Sales Management','Major Electives','สอบได้ MK101','การขายเชิงสร้างสรรค์'),
+      subject('MK337','New Business Model Creation','Major Electives','-','การสร้างโมเดลธุรกิจใหม่'),
+      subject('MK338','Creative and Critical Thinking for Marketer','Major Electives','-','คิดสร้างสรรค์และวิพากษ์'),
+      subject('MK339','Sustainable and Green Marketing','Major Electives','-','การตลาดยั่งยืน'),
+      subject('MK340','UX & UI Introduction for Marketer','Major Electives','-','พื้นฐาน UX/UI สำหรับนักการตลาด'),
+      subject('MK341','Marketing for E-Sports','Major Electives','-','การตลาดอีสปอร์ต'),
+      subject('MK411','International and Global Marketing','Major Electives','สอบได้ MK101','การตลาดระหว่างประเทศ'),
+      subject('MK412','Event Marketing and Public Relations','Major Electives','สอบได้ MK101','การตลาดอีเวนต์และ PR'),
+      subject('MK413','Direct Marketing','Major Electives','สอบได้ MK101','การตลาดทางตรง'),
+      subject('MK415','Current Issues in Marketing','Major Electives','สอบได้ MK101','ประเด็นร่วมสมัยทางการตลาด'),
+      subject('MK416','Sports Marketing','Major Electives','สอบได้ MK101','การตลาดกีฬา'),
+      subject('MK417','Retailing Management','Major Electives','สอบได้ MK101','การจัดการค้าปลีก'),
+      subject('MK419','Quantitative Analysis in Marketing','Major Electives','สอบได้ MK101','วิเคราะห์เชิงปริมาณการตลาด'),
+      subject('MK422','Sales Promotion Strategies','Major Electives','สอบได้ MK101','กลยุทธ์ส่งเสริมการขาย'),
+      subject('MK425','Independent Study','Major Electives','สอบได้ MK101','ศึกษาค้นคว้าอิสระ'),
+      subject('MK426','Entertainment Marketing','Major Electives','สอบได้ MK101 หรือได้รับอนุมัติจากคณบดี','การตลาดบันเทิง'),
+      subject('MK429','Marketing for Hospitality Business','Major Electives','สอบได้ MK101','การตลาดธุรกิจบริการ'),
+      subject('MK431','Art and Design in Branding','Major Electives','-','ศิลปะและดีไซน์ในแบรนด์'),
+      subject('MK432','Creative Content Marketing','Major Electives','-','คอนเทนต์การตลาดเชิงสร้างสรรค์'),
+      subject('MK434','Marketing for Innovation','Major Electives','สอบได้ MK101','การตลาดนวัตกรรม'),
+      subject('MK440','Marketing for Game Business','Major Electives','สอบได้ MK101','การตลาดธุรกิจเกม'),
+      subject('MK441','Sales Strategy','Major Electives','สอบได้ MK101','กลยุทธ์การขาย'),
+      subject('BA325','Entrepreneurial Internship','Major Electives','สอบได้วิชาเฉพาะด้านบังคับอย่างน้อย 2 วิชา','ฝึกงานผู้ประกอบการ'),
+      subject('CA021','Consumer Psychology & Behavior','Major Electives','-','จิตวิทยาผู้บริโภค'),
+      subject('BD031','Creative Brand Storytelling','Major Electives','-','การเล่าเรื่องแบรนด์'),
+      subject('MG224','Business Ethics','Major Electives','-','จริยธรรมทางธุรกิจ'),
+      subject('MG313','Motivation Techniques','Major Electives','สอบได้ MG111','เทคนิคการจูงใจ'),
+      subject('MG316','Service Operations Management','Major Electives','สอบได้ MG111','การปฏิบัติการบริการ'),
+      subject('MG324','Family Business Management','Major Electives','สอบได้ MG111','การจัดการธุรกิจครอบครัว'),
+      subject('MG333','Risk and Change Management','Major Electives','สอบได้ MG111','การจัดการความเสี่ยงและการเปลี่ยนแปลง'),
+      subject('MG351','Organization Management and Behavior','Major Electives','สอบได้ MG111','พฤติกรรมองค์การ'),
+      subject('MG352','Knowledge Management for Business','Major Electives','สอบได้ MG111','การจัดการความรู้'),
+      subject('MG353','Information Technopreneurship','Major Electives','สอบได้ MG111','เทคโนพรินเนอร์'),
+      subject('MG354','Management for Aging Society','Major Electives','สอบได้ MG111','การจัดการสังคมสูงวัย'),
+      subject('MG355','Social Enterprise Management','Major Electives','สอบได้ MG111 และ MG222','การจัดการวิสาหกิจเพื่อสังคม'),
+      subject('MG357','Business Communication and Negotiation','Major Electives','สอบได้ MG111','การสื่อสารและเจรจาธุรกิจ'),
+      subject('MG418','Business Experience','Major Electives','สอบได้ MG111','ประสบการณ์ทางธุรกิจ'),
+      subject('MG423','Management Information Systems','Major Electives','สอบได้ MG111','ระบบสารสนเทศเพื่อการจัดการ'),
+      subject('MG425','Independent Study','Major Electives','สอบได้ MG111','ศึกษาค้นคว้าอิสระ'),
+      subject('MG432','E-Business Transaction Law','Major Electives','-','กฎหมายธุรกรรมอิเล็กทรอนิกส์'),
+      subject('MG433','E-Commerce Marketing Management','Major Electives','สอบได้ MG111 และ MK101','การตลาดอีคอมเมิร์ซ'),
+      subject('MG434','E-Logistics and Supply Chain Management','Major Electives','สอบได้ MG212','โลจิสติกส์อิเล็กทรอนิกส์'),
+      subject('MG435','E-Commerce Payment System','Major Electives','สอบได้ MG111 และ FI212','ระบบชำระเงินอีคอมเมิร์ซ'),
+      subject('MG437','Introduction to Data Analysis for Management','Major Electives','สอบได้ MG111','พื้นฐานวิเคราะห์ข้อมูล'),
+      subject('MG438','Human Resource Management in Digital Era','Major Electives','สอบได้ MG111','HR ดิจิทัล'),
+      subject('MG439','E-Sport and Recreation Business Management','Major Electives','สอบได้ MG111','ธุรกิจอีสปอร์ต')
+    ];
+
     const planner = document.getElementById('planner');
     const majorSelect = document.getElementById('majorSelect');
+    const searchInput = document.getElementById('courseSearch');
+    const searchResult = document.getElementById('searchResult');
+    const extraList = document.getElementById('extraList');
+    const transcriptExtraContainer = document.getElementById('extraSubjects');
+    const uploadStatus = document.getElementById('uploadStatus');
+    let pendingTranscriptCodes = [];
 
     function safeId(value){return String(value).replace(/[^a-zA-Z0-9_-]/g,'_')}
 
     function getStorageKey(){return 'completedSubjects_' + majorSelect.value}
+    function getExtraStorageKey(){return 'extraSubjects'}
+    function getTranscriptStorageKey(){return 'transcriptGrades_' + majorSelect.value}
 
     function getCompleted(){
       try{return JSON.parse(localStorage.getItem(getStorageKey()) || '[]')}
@@ -366,12 +493,62 @@
     }
 
     function isCompleted(code){return getCompleted().includes(code)}
+    function getExtraSubjects(){
+      try{return JSON.parse(localStorage.getItem(getExtraStorageKey()) || '[]')}
+      catch(error){return []}
+    }
+    function getTranscriptGrades(){
+      try{return JSON.parse(localStorage.getItem(getTranscriptStorageKey()) || '{}')}
+      catch(error){return {}}
+    }
+
+    function isExtraCompleted(code){return getExtraSubjects().some(item => item.code === code)}
+
+    function toggleExtraComplete(course){
+      let extra = getExtraSubjects();
+      const hasCourse = extra.some(item => item.code === course.code);
+      extra = hasCourse
+        ? extra.filter(item => item.code !== course.code)
+        : [...extra, {code: course.code, name: course.name, major: course.major, credit: course.credit, type: course.type || 'Major Electives'}];
+      localStorage.setItem(getExtraStorageKey(), JSON.stringify(extra));
+      renderExtraSubjects();
+      searchCourses();
+    }
+
+    function renderExtraSubjects(){
+      const extra = getExtraSubjects();
+      if(!extra.length){
+        extraList.innerHTML = '<div class="extra-empty">ยังไม่มีวิชานอกดีกรีแพลนที่เลือก</div>';
+        return;
+      }
+      extraList.innerHTML = extra.map(item => `
+        <div class="extra-item" draggable="true" ondragstart="onExtraDragStart(event,'${escapeAttr(item.code)}')">
+          <div>
+            <strong>${item.code}</strong> · ${item.name}<br>
+            <small class="muted">${item.major}</small>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span class="credit ${getTypeClass(item.type || 'Major Electives')}">${item.credit}</span>
+            <button type="button" class="check-btn active" onclick="toggleExtraComplete({code:'${escapeAttr(item.code)}',name:'${escapeAttr(item.name)}',major:'${escapeAttr(item.major)}',credit:'${escapeAttr(item.credit)}',type:'${escapeAttr(item.type || 'Major Electives')}'})">✓</button>
+          </div>
+        </div>
+      `).join('');
+    }
 
     function toggleComplete(event, code){
       event.stopPropagation();
       let completed = getCompleted();
       completed = completed.includes(code) ? completed.filter(item => item !== code) : [...completed, code];
       localStorage.setItem(getStorageKey(), JSON.stringify(completed));
+      updateShareURL();
+      renderMajor(majorSelect.value);
+    }
+
+    function resetCheckedCourses(){
+      const ok = window.confirm('ต้องการรีเซ็ตการติ๊กวิชาทั้งหมดของสาขานี้ใช่ไหม?');
+      if(!ok) return;
+      localStorage.setItem(getStorageKey(), JSON.stringify([]));
+      localStorage.removeItem(getTranscriptStorageKey());
       updateShareURL();
       renderMajor(majorSelect.value);
     }
@@ -385,7 +562,9 @@
         core:{name:'หมวดวิชาเฉพาะ/แกน', earned:0, total:48},
         required:{name:'หมวดวิชาเอก-บังคับ', earned:0, total:27},
         elective:{name:'หมวดวิชาเอก-เลือก', earned:0, total:24},
-        free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6}
+        free:{name:'หมวดวิชาเลือกเสรี', earned:0, total:6},
+        coop:{name:'หมวดสหกิจ / ฝึกงาน', earned:0, total:12},
+        extra:{name:'หน่วยกิตนอกดีกรีแพลน/ลงเกิน', earned:0, total:0}
       };
 
       data.semesters.forEach(sem => {
@@ -403,8 +582,14 @@
             if(done) categories.elective.earned += credit;
           } else if(sub.type.includes('Free')){
             if(done) categories.free.earned += credit;
+          } else if(sub.type.includes('Co-op') || sub.type.includes('ฝึกงาน')){
+            if(done) categories.coop.earned += credit;
           }
         });
+      });
+
+      getExtraSubjects().forEach(sub => {
+        categories.extra.earned += parseInt(sub.credit) || 3;
       });
 
       return categories;
@@ -415,7 +600,7 @@
       const rows = Object.values(categories).map(cat => `
         <tr>
           <td>${cat.name}</td>
-          <td style="text-align:center"><span class="summary-badge">${cat.earned} / ${cat.total}</span></td>
+          <td style="text-align:center"><span class="summary-badge">${cat.total === 0 ? `${cat.earned} / -` : `${cat.earned} / ${cat.total}`}</span></td>
         </tr>
       `).join('');
 
@@ -434,8 +619,10 @@
     function updateProgress(){
       const totalSubjects = document.querySelectorAll('.subject').length;
       const completedSubjects = document.querySelectorAll('.subject.completed').length;
+      const remainingSubjects = Math.max(totalSubjects - completedSubjects, 0);
       document.getElementById('completedCount').innerText = completedSubjects;
       document.getElementById('totalCount').innerText = totalSubjects;
+      document.getElementById('remainingCount').innerText = remainingSubjects;
       document.getElementById('progressFill').style.width = totalSubjects ? `${(completedSubjects / totalSubjects) * 100}%` : '0%';
     }
 
@@ -451,10 +638,10 @@
       return 'type-core';
     }
 
-    function renderSubject(sub){
+    function renderSubject(sub, semIndex){
       const completed = isCompleted(sub.code);
       return `
-        <div class="subject ${completed ? 'completed' : ''}" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')" data-code="${escapeAttr(safeId(sub.code))}">
+        <div class="subject ${completed ? 'completed' : ''}" draggable="true" ondragstart="onSubjectDragStart(event,'${escapeAttr(sub.code)}')" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')" data-code="${escapeAttr(safeId(sub.code))}" data-sem-index="${semIndex}">
           <div class="subject-top">
             <div class="check-wrap">
               <button type="button" class="check-btn ${completed ? 'active' : ''}" onclick="toggleComplete(event,'${escapeAttr(sub.code)}')" aria-label="ติ๊กวิชา ${escapeAttr(sub.code)}">${completed ? '✓' : ''}</button>
@@ -470,11 +657,12 @@
 
     function renderMajor(key){
       const data = database[key] || database.marketing;
-      const termHtml = data.semesters.map(sem => {
+      const arrangedSemesters = getArrangedSemesters(data.semesters);
+      const termHtml = arrangedSemesters.map((sem, semIndex) => {
         const isSummer = sem.semester.includes('ซัมเมอร์');
         const divider = isSummer ? '<div class="summer-divider">✦ ช่วง Summer ระหว่างปีการศึกษา ✦</div>' : '';
         const cardClass = isSummer ? 'semester-card summer-card' : 'semester-card';
-        return `${divider}<div class="${cardClass}"><h3>${sem.semester}</h3>${sem.subjects.map(renderSubject).join('')}</div>`;
+        return `${divider}<div class="${cardClass}" ondragover="onSemesterDragOver(event)" ondragleave="onSemesterDragLeave(event)" ondrop="onSemesterDrop(event,${semIndex})"><h3>${sem.semester}</h3>${sem.subjects.map(sub => renderSubject(sub, semIndex)).join('')}</div>`;
       }).join('');
 
       planner.innerHTML = `
@@ -487,6 +675,66 @@
       renderSummary();
     }
 
+    function getArrangementKey(){return 'semesterArrangement_' + majorSelect.value}
+
+    function getArrangement(){
+      try{return JSON.parse(localStorage.getItem(getArrangementKey()) || '{}')}
+      catch(error){return {}}
+    }
+
+    function saveArrangement(map){
+      localStorage.setItem(getArrangementKey(), JSON.stringify(map));
+    }
+
+    function getArrangedSemesters(originalSemesters){
+      const arrangement = getArrangement();
+      const subjectByCode = new Map();
+      originalSemesters.forEach((sem, idx) => sem.subjects.forEach(sub => subjectByCode.set(sub.code, {sub, originalIdx: idx})));
+      getExtraSubjects().forEach(item => {
+        if(subjectByCode.has(item.code)) return;
+        const catalog = getAllSubjects().find(sub => sub.code === item.code);
+        const sub = catalog || subject(item.code, item.name || item.code, item.type || 'Major Electives', '-', 'วิชานอกดีกรีแพลน', item.credit || '3 หน่วยกิต');
+        subjectByCode.set(item.code, {sub, originalIdx: 0});
+      });
+      const rebuilt = originalSemesters.map(sem => ({semester: sem.semester, subjects: []}));
+      subjectByCode.forEach(({sub, originalIdx}, code) => {
+        const targetIdx = Number.isInteger(arrangement[code]) ? arrangement[code] : originalIdx;
+        const safeIdx = (targetIdx >=0 && targetIdx < rebuilt.length) ? targetIdx : originalIdx;
+        rebuilt[safeIdx].subjects.push(sub);
+      });
+      return rebuilt;
+    }
+
+    function onSubjectDragStart(event, code){
+      event.dataTransfer.setData('text/plain', code);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onExtraDragStart(event, code){
+      event.dataTransfer.setData('text/plain', code);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onSemesterDragOver(event){
+      event.preventDefault();
+      event.currentTarget.classList.add('drag-over');
+    }
+
+    function onSemesterDragLeave(event){
+      event.currentTarget.classList.remove('drag-over');
+    }
+
+    function onSemesterDrop(event, semIndex){
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      const code = event.dataTransfer.getData('text/plain');
+      if(!code) return;
+      const arrangement = getArrangement();
+      arrangement[code] = semIndex;
+      saveArrangement(arrangement);
+      renderMajor(majorSelect.value);
+    }
+
     function findSubjectByCode(code){
       const data = database[majorSelect.value] || database.marketing;
       for(const sem of data.semesters){
@@ -496,17 +744,293 @@
       return null;
     }
 
+    function getAllSubjects(){
+      const seen = new Set();
+      const subjects = [];
+
+      Object.entries(database).forEach(([majorKey, major]) => {
+        major.semesters.forEach(sem => {
+          sem.subjects.forEach(sub => {
+            const key = safeId(sub.code);
+            if(seen.has(key)) return;
+            seen.add(key);
+            subjects.push({...sub, semester: sem.semester, major: major.name, codeId: key, inPlan:true});
+          });
+        });
+      });
+
+      supplementalCourses.forEach(sub => {
+        const key = safeId(sub.code);
+        if(seen.has(key)) return;
+        seen.add(key);
+        subjects.push({...sub, semester:'นอกแผนหลักสูตร', major:'รายวิชาเพิ่มเติม', codeId:key, inPlan:false});
+      });
+
+      Object.values(commonCourses).forEach(sub => {
+        const key = safeId(sub.code);
+        if(seen.has(key)) return;
+        seen.add(key);
+        subjects.push({...sub, semester:'หมวดวิชาพื้นฐาน', major:'วิชาพื้นฐานหลักสูตร', codeId:key, inPlan:false});
+      });
+
+      return subjects;
+    }
+
+    function getCurrentMajorSubjects(){
+      const data = database[majorSelect.value] || database.marketing;
+      return data.semesters.flatMap(sem => sem.subjects);
+    }
+
+    function searchCourses(){
+      const keyword = (searchInput.value || '').trim().toLowerCase();
+      if(!keyword){
+        searchResult.innerHTML = '<span class="muted">กรุณาพิมพ์คำค้นก่อน</span>';
+        return;
+      }
+
+      const matches = getAllSubjects().filter(sub => {
+        const haystack = `${sub.code} ${sub.name} ${sub.description} ${sub.full}`.toLowerCase();
+        return haystack.includes(keyword);
+      });
+
+      if(!matches.length){
+        searchResult.innerHTML = '<span class="muted">ไม่พบรายวิชาที่ค้นหาในทุกสาขา</span>';
+        return;
+      }
+
+      searchResult.innerHTML = `
+        <div class="muted" style="margin-bottom:10px">พบทั้งหมด ${matches.length} วิชา</div>
+      ` + matches.map(sub => `
+        <div class="search-item">
+          <div onclick="openSubjectFromSearch('${escapeAttr(sub.codeId)}')">
+            <strong>${sub.code}</strong> · ${sub.name}<br>
+            <small class="muted">${sub.major} • ${sub.semester} • ${sub.credit}</small>
+          </div>
+          <div style="margin-top:8px">
+            <button type="button" class="check-btn ${isExtraCompleted(sub.code) ? 'active' : ''}" onclick="toggleExtraComplete({code:'${escapeAttr(sub.code)}',name:'${escapeAttr(sub.name)}',major:'${escapeAttr(sub.major)}',credit:'${escapeAttr(sub.credit)}',type:'${escapeAttr(sub.type)}'})" aria-label="ติ๊กวิชานอกแผน ${escapeAttr(sub.code)}">${isExtraCompleted(sub.code) ? '✓' : '+'}</button>
+            <small class="muted" style="margin-left:8px">${isExtraCompleted(sub.code) ? 'เลือกแล้ว' : 'เพิ่มไปวิชานอกแผน'}</small>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function openSubjectFromSearch(codeId){
+      const searchSub = getAllSubjects().find(sub => sub.codeId === codeId);
+      if(searchSub && searchSub.inPlan === false){
+        document.getElementById('subjectModal').style.display = 'flex';
+        document.getElementById('modalName').innerText = searchSub.name;
+        document.getElementById('modalCode').innerText = searchSub.code;
+        document.getElementById('modalDescription').innerText = searchSub.description;
+        document.getElementById('modalCredit').innerText = searchSub.credit;
+        document.getElementById('modalType').innerText = searchSub.type;
+        document.getElementById('modalFull').innerText = `${searchSub.full} · รายวิชาเพิ่มเติม`;
+        document.getElementById('modalPrereq').innerText = searchSub.prereq;
+        return;
+      }
+      const foundInCurrentMajor = findSubjectByCode(codeId);
+      if(foundInCurrentMajor){
+        openModalByCode(codeId);
+        return;
+      }
+
+      const matchedMajorEntry = Object.entries(database).find(([,major]) =>
+        major.semesters.some(sem => sem.subjects.some(sub => safeId(sub.code) === codeId))
+      );
+
+      if(!matchedMajorEntry) return;
+      const [majorKey] = matchedMajorEntry;
+      majorSelect.value = majorKey;
+      renderMajor(majorKey);
+      updateShareURL();
+      openModalByCode(codeId);
+    }
+
     function openModalByCode(code){
       const sub = findSubjectByCode(code);
       if(!sub) return;
+      const transcript = getTranscriptGrades();
+      const transcriptMeta = transcript[sub.code];
       document.getElementById('subjectModal').style.display = 'flex';
       document.getElementById('modalName').innerText = sub.name;
       document.getElementById('modalCode').innerText = sub.code;
       document.getElementById('modalDescription').innerText = sub.description;
-      document.getElementById('modalCredit').innerText = sub.credit;
+      document.getElementById('modalCredit').innerHTML = transcriptMeta ? `${sub.credit} <span class="grade-badge">Grade ${transcriptMeta.grade}</span>` : sub.credit;
       document.getElementById('modalType').innerText = sub.type;
-      document.getElementById('modalFull').innerText = sub.full;
-      document.getElementById('modalPrereq').innerText = sub.prereq;
+      document.getElementById('modalFull').innerText = transcriptMeta ? `${sub.full} · เรียนแล้ว (${transcriptMeta.term})` : sub.full;
+      document.getElementById('modalPrereq').innerText = transcriptMeta ? `${sub.prereq} · สถานะ: เรียนแล้ว` : sub.prereq;
+    }
+
+    async function extractPDFText(file){
+      await ensurePdfJsLoaded();
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.worker.min.js';
+      const arrayBuffer = await file.arrayBuffer();
+      const pdf = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+      let fullText = '';
+      for(let pageNum = 1; pageNum <= pdf.numPages; pageNum++){
+        const page = await pdf.getPage(pageNum);
+        const content = await page.getTextContent();
+        fullText += content.items.map(item => item.str).join(' ') + '\n';
+      }
+      return fullText;
+    }
+
+    async function loadScript(src){
+      return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = true;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+      });
+    }
+
+    async function ensurePdfJsLoaded(){
+      if(typeof pdfjsLib !== 'undefined') return;
+      const sources = [
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.0.379/pdf.min.js',
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js',
+        'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.min.js'
+      ];
+
+      for(const src of sources){
+        try{
+          await loadScript(src);
+          if(typeof pdfjsLib !== 'undefined') return;
+        }catch(error){
+          // try next source
+        }
+      }
+
+      throw new Error('PDF.js โหลดไม่สำเร็จ (ทุก CDN)');
+    }
+
+    function extractCourseCodes(text){
+      const normalized = text
+        .replace(/[\u2013\u2014]/g,'-')
+        .replace(/\s+/g,' ')
+        .toUpperCase();
+      const regex = /\b([A-Z]{2,4})\s*-?\s*(\d{3})\b/g;
+      const found = [];
+      let match;
+      while((match = regex.exec(normalized)) !== null){
+        found.push(`${match[1]}${match[2]}`);
+      }
+      return [...new Set(found)];
+    }
+
+    function parseTranscriptRecords(text){
+      const passGrades = new Set(['A','B+','B','C+','C','D+','D','P','S']);
+      const failGrades = new Set(['R','W','I','F','U']);
+      const lines = text.split('\n').map(line => line.trim()).filter(Boolean);
+      const records = [];
+      for(let i=0;i<lines.length;i++){
+        const row = lines[i];
+        const match = row.match(/\b([A-Z]{2,4}\d{3})\b.*Credits?\s*\d+/i);
+        if(!match) continue;
+        const code = match[1].toUpperCase();
+        const detail = lines[i+1] || '';
+        const gradeMatch = detail.match(/\b(A|B\+|B|C\+|C|D\+|D|P|S|R|W|I|F|U)\b$/i);
+        if(!gradeMatch) continue;
+        const grade = gradeMatch[1].toUpperCase();
+        const termMatch = row.match(/\b([123]\/\d{4})\b/);
+        const status = passGrades.has(grade) ? 'pass' : (failGrades.has(grade) ? 'fail' : 'other');
+        records.push({code, grade, term: termMatch ? termMatch[1] : '-' , status});
+      }
+      return records;
+    }
+
+    function renderTranscriptExtraSubjects(extras){
+      if(!extras.length){
+        transcriptExtraContainer.innerHTML = '';
+        return;
+      }
+      transcriptExtraContainer.innerHTML = `
+        <div class="summary-box">
+          <h2>วิชานอกดีกรีแพลน / ลงเกิน (จาก Transcript)</h2>
+          ${extras.map(item => `<div class="subject"><div class="subject-code">${item.code}</div><div class="subject-name">Grade: ${item.grade}</div></div>`).join('')}
+        </div>
+      `;
+    }
+
+    function applyTranscriptCourses(records){
+      const allSubjects = getCurrentMajorSubjects();
+      const degreePlanCodes = new Set(allSubjects.map(s => s.code));
+      const matched = [];
+      const extras = [];
+      const transcriptGrades = {};
+
+      records.forEach(item => {
+        if(item.status !== 'pass') return;
+        transcriptGrades[item.code] = {grade:item.grade, term:item.term};
+        if(degreePlanCodes.has(item.code)) matched.push(item.code);
+        else extras.push(item);
+      });
+
+      localStorage.setItem(getStorageKey(), JSON.stringify([...new Set(matched)]));
+      localStorage.setItem(getTranscriptStorageKey(), JSON.stringify(transcriptGrades));
+      renderTranscriptExtraSubjects(extras);
+      renderMajor(majorSelect.value);
+      updateShareURL();
+    }
+
+    function applyTranscriptCodes(codes){
+      const allSubjects = getCurrentMajorSubjects();
+      const degreePlanCodes = new Set(allSubjects.map(s => s.code));
+      const matched = [];
+      const extras = [];
+      codes.forEach(code => {
+        if(degreePlanCodes.has(code)) matched.push(code);
+        else extras.push({code, grade:'-', status:'pass'});
+      });
+      localStorage.setItem(getStorageKey(), JSON.stringify([...new Set(matched)]));
+      renderTranscriptExtraSubjects(extras);
+      renderMajor(majorSelect.value);
+      updateShareURL();
+    }
+
+    function showTranscriptConfirm(codes){
+      pendingTranscriptCodes = [...codes];
+      document.getElementById('confirmList').innerHTML = codes.map(code => `<div class="confirm-chip">${code}</div>`).join('');
+      document.getElementById('confirmOverlay').style.display = 'flex';
+    }
+
+    function cancelTranscriptApply(){
+      pendingTranscriptCodes = [];
+      document.getElementById('confirmOverlay').style.display = 'none';
+      uploadStatus.innerText = 'ยกเลิกการติ๊กอัตโนมัติ';
+    }
+
+    function confirmTranscriptApply(){
+      if(!pendingTranscriptCodes.length) return;
+      applyTranscriptCodes(pendingTranscriptCodes);
+      document.getElementById('confirmOverlay').style.display = 'none';
+      uploadStatus.innerText = `ติ๊กอัตโนมัติสำเร็จ ✓ จำนวน ${pendingTranscriptCodes.length} วิชา`;
+      pendingTranscriptCodes = [];
+    }
+
+    async function analyzePDF(){
+      const input = document.getElementById('pdfUpload');
+      const file = input.files[0];
+      if(!file){
+        alert('กรุณาเลือก PDF');
+        return;
+      }
+      uploadStatus.innerText = 'กำลังวิเคราะห์ PDF...';
+      try{
+        const text = await extractPDFText(file);
+        const codes = extractCourseCodes(text);
+        if(!codes.length){
+          uploadStatus.innerText = 'ไม่พบรหัสวิชาในไฟล์ PDF';
+          return;
+        }
+        uploadStatus.innerText = `วิเคราะห์สำเร็จ ✓ พบ ${codes.length} วิชา กรุณายืนยันก่อนติ๊กอัตโนมัติ`;
+        showTranscriptConfirm(codes);
+      }catch(error){
+        console.error(error);
+        uploadStatus.innerText = 'วิเคราะห์ไม่สำเร็จ กรุณาลองใหม่หรือตรวจสอบไฟล์ PDF';
+        alert('วิเคราะห์ไม่สำเร็จ: ' + (error.message || 'ไม่ทราบสาเหตุ'));
+      }
     }
 
     function closeModal(){document.getElementById('subjectModal').style.display = 'none'}
@@ -522,6 +1046,11 @@
     majorSelect.addEventListener('change', event => {
       renderMajor(event.target.value);
       updateShareURL();
+      searchResult.innerHTML = '<span class="muted">เลือกสาขาใหม่แล้ว ลองค้นหารายวิชาได้เลย</span>';
+    });
+
+    searchInput.addEventListener('keydown', event => {
+      if(event.key === 'Enter') searchCourses();
     });
 
     function encodeState(){
@@ -588,12 +1117,16 @@
       console.assert(Object.values(database).every(major => major.semesters.some(sem => sem.semester.includes('ซัมเมอร์'))), 'ทุกสาขาต้องมีซัมเมอร์');
       console.assert(typeof renderMajor === 'function', 'renderMajor ต้องมีอยู่');
       console.assert(typeof toggleComplete === 'function', 'toggleComplete ต้องมีอยู่');
+      console.assert(typeof analyzePDF === 'function', 'analyzePDF ต้องมีอยู่');
+      console.assert(typeof extractPDFText === 'function', 'extractPDFText ต้องมีอยู่');
+      console.assert(typeof extractCourseCodes === 'function', 'extractCourseCodes ต้องมีอยู่');
       console.assert(document.getElementById('majorSelect').options.length === 7, 'dropdown ต้องมี 7 สาขา');
       console.info('Curriculum Planner tests passed');
     }
 
     loadStateFromURL();
     renderMajor(majorSelect.value);
+    renderExtraSubjects();
     updateShareURL();
     runTests();
   </script>
