@@ -46,6 +46,7 @@
     .progress-fill{height:100%;background:linear-gradient(90deg,#2d8a45,#57c26f);width:0%;transition:.3s}
     .plan-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:22px;margin-top:28px}
     .semester-card{position:relative;background:#fff;border-radius:28px;padding:25px;box-shadow:0 12px 35px rgba(0,0,0,.05)}
+    .semester-card.drag-over{outline:2px dashed #b31624;outline-offset:4px}
     .semester-card h3{margin-bottom:18px;font-size:24px;color:#b31624}
     .semester-card.summer-card{grid-column:span 2;background:linear-gradient(135deg,#fff6d9,#ffe89a);border:2px dashed #e0b400}
     .summer-card::before{content:'SUMMER TERM';position:absolute;top:-12px;right:22px;background:#111;color:#fff;padding:7px 14px;border-radius:999px;font-size:12px;letter-spacing:1px;font-weight:700}
@@ -635,10 +636,10 @@
       return 'type-core';
     }
 
-    function renderSubject(sub){
+    function renderSubject(sub, semIndex){
       const completed = isCompleted(sub.code);
       return `
-        <div class="subject ${completed ? 'completed' : ''}" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')" data-code="${escapeAttr(safeId(sub.code))}">
+        <div class="subject ${completed ? 'completed' : ''}" draggable="true" ondragstart="onSubjectDragStart(event,'${escapeAttr(sub.code)}')" onclick="openModalByCode('${escapeAttr(safeId(sub.code))}')" data-code="${escapeAttr(safeId(sub.code))}" data-sem-index="${semIndex}">
           <div class="subject-top">
             <div class="check-wrap">
               <button type="button" class="check-btn ${completed ? 'active' : ''}" onclick="toggleComplete(event,'${escapeAttr(sub.code)}')" aria-label="ติ๊กวิชา ${escapeAttr(sub.code)}">${completed ? '✓' : ''}</button>
@@ -654,11 +655,12 @@
 
     function renderMajor(key){
       const data = database[key] || database.marketing;
-      const termHtml = data.semesters.map(sem => {
+      const arrangedSemesters = getArrangedSemesters(data.semesters);
+      const termHtml = arrangedSemesters.map((sem, semIndex) => {
         const isSummer = sem.semester.includes('ซัมเมอร์');
         const divider = isSummer ? '<div class="summer-divider">✦ ช่วง Summer ระหว่างปีการศึกษา ✦</div>' : '';
         const cardClass = isSummer ? 'semester-card summer-card' : 'semester-card';
-        return `${divider}<div class="${cardClass}"><h3>${sem.semester}</h3>${sem.subjects.map(renderSubject).join('')}</div>`;
+        return `${divider}<div class="${cardClass}" ondragover="onSemesterDragOver(event)" ondragleave="onSemesterDragLeave(event)" ondrop="onSemesterDrop(event,${semIndex})"><h3>${sem.semester}</h3>${sem.subjects.map(sub => renderSubject(sub, semIndex)).join('')}</div>`;
       }).join('');
 
       planner.innerHTML = `
@@ -669,6 +671,55 @@
         <div class="plan-grid">${termHtml}</div>`;
       updateProgress();
       renderSummary();
+    }
+
+    function getArrangementKey(){return 'semesterArrangement_' + majorSelect.value}
+
+    function getArrangement(){
+      try{return JSON.parse(localStorage.getItem(getArrangementKey()) || '{}')}
+      catch(error){return {}}
+    }
+
+    function saveArrangement(map){
+      localStorage.setItem(getArrangementKey(), JSON.stringify(map));
+    }
+
+    function getArrangedSemesters(originalSemesters){
+      const arrangement = getArrangement();
+      const subjectByCode = new Map();
+      originalSemesters.forEach((sem, idx) => sem.subjects.forEach(sub => subjectByCode.set(sub.code, {sub, originalIdx: idx})));
+      const rebuilt = originalSemesters.map(sem => ({semester: sem.semester, subjects: []}));
+      subjectByCode.forEach(({sub, originalIdx}, code) => {
+        const targetIdx = Number.isInteger(arrangement[code]) ? arrangement[code] : originalIdx;
+        const safeIdx = (targetIdx >=0 && targetIdx < rebuilt.length) ? targetIdx : originalIdx;
+        rebuilt[safeIdx].subjects.push(sub);
+      });
+      return rebuilt;
+    }
+
+    function onSubjectDragStart(event, code){
+      event.dataTransfer.setData('text/plain', code);
+      event.dataTransfer.effectAllowed = 'move';
+    }
+
+    function onSemesterDragOver(event){
+      event.preventDefault();
+      event.currentTarget.classList.add('drag-over');
+    }
+
+    function onSemesterDragLeave(event){
+      event.currentTarget.classList.remove('drag-over');
+    }
+
+    function onSemesterDrop(event, semIndex){
+      event.preventDefault();
+      event.currentTarget.classList.remove('drag-over');
+      const code = event.dataTransfer.getData('text/plain');
+      if(!code) return;
+      const arrangement = getArrangement();
+      arrangement[code] = semIndex;
+      saveArrangement(arrangement);
+      renderMajor(majorSelect.value);
     }
 
     function findSubjectByCode(code){
