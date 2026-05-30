@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BU Curriculum Planner 2568</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@400;500;600&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f6f0ff;
+      --bg-2: #fff7ec;
+      --ink: #231a36;
+      --muted: #705f83;
+      --soft: #9486a4;
+      --line: rgba(84, 61, 120, 0.14);
+      --card: rgba(255, 255, 255, 0.78);
+      --card-solid: #fffaf7;
+      --primary: #6f49d8;
+      --primary-2: #9f73ff;
+      --accent: #ff9f68;
+      --accent-2: #ffd166;
+      --green: #36a77a;
+      --red: #de6a76;
+      --shadow: 0 24px 70px rgba(50, 32, 86, 0.14);
+      --radius-xl: 34px;
+      --radius-lg: 24px;
+      --radius-md: 16px;
+      --max: 1180px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Noto Sans Thai', 'Mitr', system-ui, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 10%, rgba(159, 115, 255, 0.28), transparent 30%),
+        radial-gradient(circle at 92% 4%, rgba(255, 159, 104, 0.30), transparent 28%),
+        linear-gradient(135deg, var(--bg), var(--bg-2));
+      overflow-x: hidden;
+    }
+
+    body::before,
+    body::after {
+      content: '';
+      position: fixed;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      filter: blur(70px);
+      opacity: 0.32;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    body::before { left: -120px; bottom: 8%; background: #8ee4c1; }
+    body::after { right: -110px; bottom: 18%; background: #ffb3c7; }
+
+    a { color: inherit; }
+
+    .shell {
+      position: relative;
+      z-index: 1;
+      width: min(var(--max), calc(100% - 40px));
+      margin: 0 auto;
+      padding: 22px 0 36px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 14px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px;
+      margin-bottom: 26px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.72);
+      backdrop-filter: blur(18px);
+      box-shadow: 0 14px 36px rgba(50, 32, 86, 0.08);
+    }
+
+    .brand,
+    .top-actions,
+    .pill-link {
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .brand {
+      min-width: 0;
+      gap: 10px;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      flex: 0 0 42px;
+      width: 42px;
+      height: 42px;
+      border-radius: 16px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      box-shadow: 0 12px 26px rgba(111, 73, 216, 0.28);
+    }
+
+    .brand-text {
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .brand-text small {
+      display: block;
+      margin-top: -3px;
+      color: var(--soft);
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .top-actions { gap: 8px; }
+
+    .pill-link {
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.66);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.92rem;
+      font-weight: 700;
+      transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .pill-link:hover { transform: translateY(-2px); background: #fff; color: var(--primary); }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(330px, 0.95fr);
+      gap: 22px;
+      align-items: stretch;
+      margin-bottom: 22px;
+    }
+
+    .hero-panel,
+    .summary-card,
+    .semester-card,
+    .course-panel {
+      border: 1px solid var(--line);
+      background: var(--card);
+      backdrop-filter: blur(22px);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-panel {
+      position: relative;
+      overflow: hidden;
+      min-height: 430px;
+      padding: clamp(26px, 4vw, 48px);
+      border-radius: var(--radius-xl);
+    }
+
+    .hero-panel::after {
+      content: '';
+      position: absolute;
+      right: -64px;
+      bottom: -94px;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(111, 73, 216, 0.18), rgba(255, 159, 104, 0.24));
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 8px 13px;
+      border: 1px solid rgba(111, 73, 216, 0.18);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--primary);
+      font-size: 0.86rem;
+      font-weight: 800;
+    }
+
+    h1 {
+      max-width: 760px;
+      margin: 0;
+      font-family: 'Mitr', 'Noto Sans Thai', sans-serif;
+      font-size: clamp(2.2rem, 6vw, 5.4rem);
+      line-height: 0.98;
+      letter-spacing: -0.055em;
+    }
+
+    .hero-sub {
+      max-width: 680px;
+      margin: 20px 0 28px;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.18rem);
+      line-height: 1.8;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 48px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 16px;
+      font-family: inherit;
+      font-weight: 800;
+      text-decoration: none;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, var(--primary), var(--primary-2));
+      box-shadow: 0 16px 32px rgba(111, 73, 216, 0.24);
+    }
+
+    .btn-soft {
+      color: var(--primary);
+      background: rgba(255, 255, 255, 0.74);
+      border: 1px solid rgba(111, 73, 216, 0.18);
+    }
+
+    .summary-card {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      padding: 22px;
+      border-radius: var(--radius-xl);
+    }
+
+    .status-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .status-top h2,
+    .section-title h2 { margin: 0; font-family: 'Mitr', sans-serif; line-height: 1.2; }
+    .status-top p,
+    .section-title p { margin: 6px 0 0; color: var(--muted); line-height: 1.7; }
+
+    .year-badge {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      border-radius: 14px;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      font-weight: 900;
+    }
+
+    .progress-wrap {
+      padding: 18px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.62);
+      border: 1px solid var(--line);
+    }
+
+    .progress-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .progress-track {
+      height: 13px;
+      overflow: hidden;
+      border-radius: 999px;
+      background: rgba(111, 73, 216, 0.12);
+    }
+
+    .progress-fill {
+      width: 68%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+    }
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .mini-stat {
+      padding: 14px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.66);
+      border: 1px solid var(--line);
+    }
+
+    .mini-stat strong {
+      display: block;
+      font-size: 1.45rem;
+      line-height: 1;
+    }
+
+    .mini-stat span {
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 700;
+    }
+
+    .advisor-note {
+      margin: auto 0 0;
+      padding: 16px;
+      border-radius: 22px;
+      color: #57412c;
+      background: rgba(255, 209, 102, 0.23);
+      border: 1px solid rgba(255, 159, 104, 0.22);
+      line-height: 1.7;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 28px 0 16px;
+    }
+
+    .legend {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      min-height: 34px;
+      padding: 0 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.68);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--primary);
+    }
+
+    .dot.core { background: var(--primary); }
+    .dot.major { background: var(--accent); }
+    .dot.free { background: var(--green); }
+
+    .semester-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .semester-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .semester-card:hover { transform: translateY(-4px); border-color: rgba(111, 73, 216, 0.32); }
+
+    .semester-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .semester-head h3 { margin: 0; font-family: 'Mitr', sans-serif; font-size: 1.05rem; }
+    .credit { color: var(--primary); font-weight: 900; }
+
+    .course-list {
+      display: grid;
+      gap: 9px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .course-list li {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid rgba(84, 61, 120, 0.10);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    .course-list b { display: block; color: var(--ink); font-size: 0.88rem; }
+    .type { flex: 0 0 auto; width: 10px; height: 10px; margin-top: 5px; border-radius: 50%; background: var(--primary); }
+    .type.major { background: var(--accent); }
+    .type.free { background: var(--green); }
+
+    .course-panel {
+      margin-top: 28px;
+      padding: 22px;
+      border-radius: var(--radius-xl);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .toolbar h2 { margin: 0; font-family: 'Mitr', sans-serif; }
+
+    .search {
+      width: min(360px, 100%);
+      min-height: 44px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--ink);
+      font: inherit;
+      outline: none;
+    }
+
+    .search:focus { border-color: rgba(111, 73, 216, 0.42); box-shadow: 0 0 0 4px rgba(111, 73, 216, 0.10); }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.58);
+    }
+
+    table {
+      width: 100%;
+      min-width: 720px;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid rgba(84, 61, 120, 0.10);
+      vertical-align: top;
+    }
+
+    th {
+      color: var(--muted);
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    tr:last-child td { border-bottom: 0; }
+    td strong { display: block; color: var(--ink); }
+    td small { color: var(--soft); }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 900;
+      color: #fff;
+      background: var(--primary);
+    }
+
+    .tag.major { background: var(--accent); }
+    .tag.free { background: var(--green); }
+
+    footer {
+      padding: 26px 0 6px;
+      color: var(--soft);
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 980px) {
+      .hero { grid-template-columns: 1fr; }
+      .hero-panel { min-height: auto; }
+      .semester-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 680px) {
+      .shell {
+        width: min(100% - 28px, var(--max));
+        padding-top: 12px;
+      }
+
+      .topbar {
+        top: 8px;
+        align-items: stretch;
+        border-radius: 24px;
+      }
+
+      .brand-text small { display: none; }
+      .top-actions { margin-left: auto; }
+      .pill-link { min-height: 40px; padding: 0 12px; font-size: 0.84rem; }
+
+      .hero-panel,
+      .summary-card,
+      .course-panel { border-radius: 26px; }
+
+      .hero-panel { padding: 24px 20px; }
+      h1 { font-size: clamp(2rem, 12vw, 3.3rem); letter-spacing: -0.045em; }
+      .hero-sub { margin: 16px 0 22px; font-size: 0.98rem; }
+      .btn { width: 100%; }
+
+      .quick-stats { grid-template-columns: 1fr; }
+      .section-title { display: block; }
+      .legend { justify-content: flex-start; margin-top: 12px; }
+      .semester-grid { grid-template-columns: 1fr; }
+      .toolbar { display: block; }
+      .search { width: 100%; margin-top: 12px; }
+    }
+
+    @media (hover: none) {
+      .pill-link:hover,
+      .btn:hover,
+      .semester-card:hover { transform: none; }
+      .pill-link:active,
+      .btn:active,
+      .semester-card:active { transform: scale(0.99); }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="topbar" aria-label="เมนูหลัก">
+      <a class="brand" href="https://taithai.app/">
+        <span class="brand-mark">BU</span>
+        <span class="brand-text">Curriculum Planner <small>ปีการศึกษา 2568</small></span>
+      </a>
+      <div class="top-actions">
+        <a class="pill-link" href="#plan">แผนเรียน</a>
+        <a class="pill-link" href="#courses">รายวิชา</a>
+      </div>
+    </nav>
+
+    <main>
+      <section class="hero" aria-labelledby="pageTitle">
+        <div class="hero-panel">
+          <span class="eyebrow">✨ Bangkok University · Planner 2568</span>
+          <h1 id="pageTitle">วางแผนเรียน<br>ให้เห็นภาพง่ายขึ้น</h1>
+          <p class="hero-sub">หน้ารวมแผนหลักสูตรแบบ responsive สำหรับคอมพิวเตอร์ แท็บเล็ต และมือถือ ช่วยดูเทอม หน่วยกิต และกลุ่มรายวิชาได้เร็วขึ้นในหน้าเดียว</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="#plan">ดูแผน 4 ปี</a>
+            <a class="btn btn-soft" href="#courses">ค้นหารายวิชา</a>
+          </div>
+        </div>
+
+        <aside class="summary-card" aria-label="สรุปหลักสูตร">
+          <div class="status-top">
+            <div>
+              <h2>ภาพรวมหลักสูตร</h2>
+              <p>ออกแบบเป็น dashboard อ่านง่าย ใช้ได้ทั้งแนวนอนและแนวตั้ง</p>
+            </div>
+            <span class="year-badge">2568</span>
+          </div>
+
+          <div class="progress-wrap">
+            <div class="progress-meta">
+              <span>ตัวอย่างความคืบหน้า</span>
+              <span>88 / 129 หน่วยกิต</span>
+            </div>
+            <div class="progress-track" aria-hidden="true"><div class="progress-fill"></div></div>
+          </div>
+
+          <div class="quick-stats">
+            <div class="mini-stat"><strong>8</strong><span>เทอมหลัก</span></div>
+            <div class="mini-stat"><strong>129</strong><span>หน่วยกิต</span></div>
+            <div class="mini-stat"><strong>3</strong><span>กลุ่มวิชา</span></div>
+          </div>
+
+          <p class="advisor-note">หมายเหตุ: หน้านี้เป็น UI สำหรับจัดระเบียบแผนเรียน ควรตรวจสอบข้อมูลจริงกับประกาศหลักสูตร/อาจารย์ที่ปรึกษาก่อนลงทะเบียน</p>
+        </aside>
+      </section>
+
+      <section id="plan" aria-labelledby="planTitle">
+        <div class="section-title">
+          <div>
+            <h2 id="planTitle">แผนเรียน 4 ปี</h2>
+            <p>แบ่งเป็นการ์ดรายเทอมเพื่อให้ดูหน่วยกิตและประเภทวิชาได้ทันที</p>
+          </div>
+          <div class="legend" aria-label="คำอธิบายสี">
+            <span class="chip"><span class="dot core"></span>หมวดทั่วไป</span>
+            <span class="chip"><span class="dot major"></span>วิชาเอก</span>
+            <span class="chip"><span class="dot free"></span>เลือกเสรี</span>
+          </div>
+        </div>
+
+        <div class="semester-grid">
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 1 · เทอม 1</h3><span class="credit">16 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>GE101</b>ทักษะชีวิตมหาวิทยาลัย</span><i class="type core"></i></li>
+              <li><span><b>BU101</b>Digital Literacy</span><i class="type major"></i></li>
+              <li><span><b>MA101</b>คณิตศาสตร์พื้นฐาน</span><i class="type major"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 1 · เทอม 2</h3><span class="credit">17 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>EN102</b>English Communication</span><i class="type core"></i></li>
+              <li><span><b>CS102</b>Programming Foundation</span><i class="type major"></i></li>
+              <li><span><b>DS101</b>Data Thinking</span><i class="type major"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 2 · เทอม 1</h3><span class="credit">16 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>CS201</b>Web Application</span><i class="type major"></i></li>
+              <li><span><b>UX201</b>User Experience Design</span><i class="type major"></i></li>
+              <li><span><b>GE203</b>สังคมและความยั่งยืน</span><i class="type core"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 2 · เทอม 2</h3><span class="credit">15 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>CS222</b>Database Systems</span><i class="type major"></i></li>
+              <li><span><b>BA210</b>Business Model</span><i class="type core"></i></li>
+              <li><span><b>FREE1</b>วิชาเลือกเสรี</span><i class="type free"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 3 · เทอม 1</h3><span class="credit">16 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>CS310</b>Mobile App Design</span><i class="type major"></i></li>
+              <li><span><b>AI301</b>AI for Product</span><i class="type major"></i></li>
+              <li><span><b>GE305</b>Creative Citizen</span><i class="type core"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 3 · เทอม 2</h3><span class="credit">15 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>PM320</b>Product Management</span><i class="type major"></i></li>
+              <li><span><b>CS330</b>Cloud & API</span><i class="type major"></i></li>
+              <li><span><b>FREE2</b>วิชาเลือกเสรี</span><i class="type free"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 4 · เทอม 1</h3><span class="credit">17 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>CP401</b>Capstone Project I</span><i class="type major"></i></li>
+              <li><span><b>IN401</b>Internship Prep</span><i class="type major"></i></li>
+              <li><span><b>EL401</b>Major Elective</span><i class="type free"></i></li>
+            </ul>
+          </article>
+
+          <article class="semester-card">
+            <div class="semester-head"><h3>ปี 4 · เทอม 2</h3><span class="credit">17 cr.</span></div>
+            <ul class="course-list">
+              <li><span><b>CP402</b>Capstone Project II</span><i class="type major"></i></li>
+              <li><span><b>IN402</b>Co-operative Education</span><i class="type major"></i></li>
+              <li><span><b>FREE3</b>วิชาเลือกเสรี</span><i class="type free"></i></li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section id="courses" class="course-panel" aria-labelledby="courseTitle">
+        <div class="toolbar">
+          <div>
+            <h2 id="courseTitle">ค้นหารายวิชา</h2>
+            <p style="margin: 4px 0 0; color: var(--muted);">พิมพ์รหัส ชื่อวิชา หรือกลุ่มวิชาเพื่อกรองตาราง</p>
+          </div>
+          <input class="search" id="courseSearch" type="search" placeholder="ค้นหา เช่น CS, UX, เลือกเสรี" aria-label="ค้นหารายวิชา">
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>รหัส</th>
+                <th>รายวิชา</th>
+                <th>กลุ่ม</th>
+                <th>หน่วยกิต</th>
+                <th>แนะนำ</th>
+              </tr>
+            </thead>
+            <tbody id="courseRows">
+              <tr><td><strong>BU101</strong><small>Foundation</small></td><td>Digital Literacy</td><td><span class="tag major">วิชาเอก</span></td><td>3</td><td>ปี 1 เทอม 1</td></tr>
+              <tr><td><strong>CS102</strong><small>Programming</small></td><td>Programming Foundation</td><td><span class="tag major">วิชาเอก</span></td><td>3</td><td>ปี 1 เทอม 2</td></tr>
+              <tr><td><strong>UX201</strong><small>Design</small></td><td>User Experience Design</td><td><span class="tag major">วิชาเอก</span></td><td>3</td><td>ปี 2 เทอม 1</td></tr>
+              <tr><td><strong>GE203</strong><small>General</small></td><td>สังคมและความยั่งยืน</td><td><span class="tag">หมวดทั่วไป</span></td><td>3</td><td>ปี 2 เทอม 1</td></tr>
+              <tr><td><strong>FREE1</strong><small>Elective</small></td><td>วิชาเลือกเสรี</td><td><span class="tag free">เลือกเสรี</span></td><td>3</td><td>ปี 2 เทอม 2</td></tr>
+              <tr><td><strong>CP402</strong><small>Project</small></td><td>Capstone Project II</td><td><span class="tag major">วิชาเอก</span></td><td>6</td><td>ปี 4 เทอม 2</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>BU Curriculum Planner 2568 · Designed for desktop, tablet and mobile</footer>
+  </div>
+
+  <script>
+    const searchInput = document.getElementById('courseSearch');
+    const rows = Array.from(document.querySelectorAll('#courseRows tr'));
+
+    searchInput.addEventListener('input', () => {
+      const query = searchInput.value.trim().toLowerCase();
+      rows.forEach((row) => {
+        row.style.display = row.textContent.toLowerCase().includes(query) ? '' : 'none';
+      });
+    });
+  </script>
+</body>
+</html>
