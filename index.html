@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">2</span>
+          <span class="stat-num">3</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -579,6 +579,15 @@
           </div>
           <span class="app-tag" id="appTag2"></span>
         </a>
+
+        <a class="app-card" href="javascript:void(0)" onclick="goToTaitalk()">
+          <div class="app-icon">🗣️</div>
+          <div>
+            <div class="app-name" id="appName3"></div>
+            <div class="app-desc" id="appDesc3"></div>
+          </div>
+          <span class="app-tag" id="appTag3"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -593,6 +602,7 @@
   <script>
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
     const QR_GENERATOR_URL = "javascript:void(0)"; // ใส่ลิงก์จริงของ QR Code Generator ตรงนี้
+    const TAITALK_URL = "https://taitalk-v1-production.up.railway.app";
 
     const i18n = {
       en: {
@@ -613,10 +623,15 @@
         appDesc2: "Create QR codes easily for links, text, or shared content with a simple and fast generator interface.",
         appTag2: "🔳 QR Tool",
 
+        appName3: "Taitalk",
+        appDesc3: "A new Taitalk app for opening the latest conversation experience quickly from the Taithai apps hub.",
+        appTag3: "🗣️ New App",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
         openingText1: "Opening Taithai Temporary Chat… 🌸",
         openingText2: "Opening QR Code Generator… 🌸",
+        openingText3: "Opening Taitalk… 🌸",
         noLinkYet2: "No link added yet for QR Code Generator"
       },
       th: {
@@ -637,10 +652,15 @@
         appDesc2: "สร้างคิวอาร์โค้ดได้อย่างง่ายดายสำหรับลิงก์ ข้อความ หรือคอนเทนต์ที่ต้องการแชร์ ด้วยหน้าใช้งานที่เรียบง่ายและรวดเร็ว",
         appTag2: "🔳 เครื่องมือ QR",
 
+        appName3: "Taitalk",
+        appDesc3: "แอป Taitalk ตัวใหม่ สำหรับเปิดประสบการณ์พูดคุยล่าสุดได้รวดเร็วจากหน้า Taithai Apps",
+        appTag3: "🗣️ แอปใหม่",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
         openingText1: "กำลังเปิด Taithai Temporary Chat… 🌸",
         openingText2: "กำลังเปิด ตัวสร้างคิวอาร์โค้ด… 🌸",
+        openingText3: "กำลังเปิด Taitalk… 🌸",
         noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด"
       }
     };
@@ -674,6 +694,10 @@
       document.getElementById("appDesc2").textContent = t.appDesc2;
       document.getElementById("appTag2").textContent = t.appTag2;
 
+      document.getElementById("appName3").textContent = t.appName3;
+      document.getElementById("appDesc3").textContent = t.appDesc3;
+      document.getElementById("appTag3").textContent = t.appTag3;
+
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
       document.getElementById("langEnBtn").classList.toggle("active", currentLang === "en");
@@ -706,6 +730,13 @@
       showToast(i18n[currentLang].openingText2);
       setTimeout(() => {
         window.location.href = QR_GENERATOR_URL;
+      }, 250);
+    }
+
+    function goToTaitalk() {
+      showToast(i18n[currentLang].openingText3);
+      setTimeout(() => {
+        window.location.href = TAITALK_URL;
       }, 250);
     }
 
