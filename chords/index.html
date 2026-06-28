@@ -143,7 +143,7 @@
       <div>
         <span class="badge">🎸 เว็บคอร์ดอ่านง่ายสำหรับนักดนตรี</span>
         <h1>หาเพลง กดคีย์ แล้วเล่นได้ทันที</h1>
-        <p class="lead">รวมตัวอย่างคอร์ดเพลงไทยและสากล พร้อมระบบค้นหา แยกแนวเพลง เปลี่ยนคีย์ขึ้น-ลง และปรับขนาดตัวอักษรให้เหมาะกับมือถือ แท็บเล็ต หรือจอซ้อมวง</p>
+        <p class="lead">รวมแค็ตตาล็อกเพลงจริงกว่า 100 เพลงทั้งไทยและสากล พร้อมเดโมคอร์ดสำหรับทดลอง ระบบค้นหา แยกแนวเพลง เปลี่ยนคีย์ขึ้น-ลง และปรับขนาดตัวอักษรให้เหมาะกับมือถือ แท็บเล็ต หรือจอซ้อมวง</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#library">เริ่มดูคอร์ด</a>
           <button class="btn btn-secondary" id="randomSong" type="button">สุ่มเพลงให้เล่น</button>
@@ -216,7 +216,7 @@
 
     <section id="tips" class="shell tips">
       <div class="tips-grid">
-        <article class="panel tip"><h3>ค้นหาเร็ว</h3><p>พิมพ์ชื่อเพลง ศิลปิน หรือแนวเพลงเพื่อกรองรายการแบบทันที รองรับทั้งภาษาไทยและอังกฤษ</p></article>
+        <article class="panel tip"><h3>เพลงจริง 100+</h3><p>เพิ่มแค็ตตาล็อกเพลงไทยและสากลชื่อจริงจำนวนมากสำหรับค้นหาและเตรียมต่อยอดกับฐานข้อมูลคอร์ดที่มีสิทธิ์ใช้งาน</p></article>
         <article class="panel tip"><h3>เปลี่ยนคีย์ได้</h3><p>กดคีย์ + / - เพื่อ transpose คอร์ดทั้งหมด เหมาะกับเสียงร้องหรือเครื่องดนตรีของคุณ</p></article>
         <article class="panel tip"><h3>อ่านง่ายบนทุกจอ</h3><p>ปรับขนาดตัวอักษรได้ และใช้ฟอนต์ monospace เพื่อให้คอร์ดตรงกับเนื้อร้อง</p></article>
       </div>
@@ -227,8 +227,9 @@
     <div class="shell">© 2026 TaiThai Chords • Static demo ready for GitHub Pages</div>
   </footer>
 
+  <script src="./song-catalog.js"></script>
   <script>
-    const songs = [
+    const demoSongs = [
       {
         id: 'thai-summer', title: 'ลมร้อนตอนเย็น', artist: 'TaiThai Demo Band', language: 'thai', genre: 'Rock', key: 'G', capo: 'ไม่ใช้',
         sheet: `[Intro]\nG Em C D\n\n[Verse]\nG          Em\nแดดร้อนในวันเก่า ๆ\nC             D\nยังมีเสียงเพลงของเราในใจ\nG          Em\nลมพัดให้คิดถึงใคร\nC             D\nคนที่เคยยิ้มให้กันเสมอ\n\n[Chorus]\nC        D        G     Em\nฤดูร้อนทำให้ฉันคิดถึงเธอ\nC        D        G\nแม้เวลาจะพาเราไกล\nC        D        G     Em\nจับกีตาร์ร้องเพลงเดิมอีกครั้ง\nC        D        G\nให้หัวใจกลับไปวันนั้น`
@@ -254,6 +255,23 @@
         sheet: `[Intro]\nC G Am F C G F C\n\n[Verse]\nC              G\nWhen the morning train is leaving\nAm             F\nI will carry one guitar\nC              G\nEvery station keeps a memory\nF      C\nEvery mile a star\n\n[Chorus]\nAm        G          F          C\nRide with me, ride with me\nC              G\nThrough the sunrise melody\nF      C\nRide with me`
       }
     ];
+
+    const realSongs = (window.TAITHAI_REAL_SONGS || []).map(song => ({
+      ...song,
+      sheet: `[Real Song]
+${song.key}  ${song.key === 'C' ? 'G' : 'C'}  ${song.key === 'Am' ? 'F' : 'Am'}  ${song.key === 'G' ? 'D' : 'G'}
+
+เพลงนี้เป็นเพลงจริงในแค็ตตาล็อก TaiThai Chords
+เพื่อหลีกเลี่ยงการคัดลอกเนื้อเพลงหรือแท็บคอร์ดที่มีลิขสิทธิ์
+หน้านี้จะแสดงข้อมูลเพลงจริง คีย์ แนวเพลง และลิงก์ช่วยค้นหาแหล่งคอร์ดที่ถูกต้องแทน
+
+[Practice]
+ลองกดคีย์ + / - เพื่อซ้อม transpose กับ progression ตัวอย่างนี้
+หรือเพิ่ม/เชื่อมต่อฐานข้อมูลคอร์ดที่คุณมีสิทธิ์ใช้งานภายหลังได้`,
+      isRealCatalogSong: true
+    }));
+
+    const songs = [...realSongs, ...demoSongs];
 
     const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
     const flats = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
@@ -291,6 +309,18 @@
       document.querySelector('#originalKey').textContent = state.selected.key;
       document.querySelector('#currentKey').textContent = transposeKey(state.selected.key);
       document.querySelector('#capo').textContent = state.selected.capo;
+      const existingLink = document.querySelector('#legalSearchLink');
+      if (existingLink) existingLink.remove();
+      if (state.selected.isRealCatalogSong) {
+        const link = document.createElement('a');
+        link.id = 'legalSearchLink';
+        link.className = 'chip';
+        link.href = `https://www.google.com/search?q=${encodeURIComponent(state.selected.title + ' ' + state.selected.artist + ' chords')}`;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.textContent = 'ค้นหาแหล่งคอร์ดที่ถูกต้อง';
+        document.querySelector('.controls').appendChild(link);
+      }
     }
 
     function matchesFilters(song) {
