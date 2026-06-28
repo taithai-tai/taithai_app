@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TaiThai Chords | คอร์ดเพลงไทยและสากล</title>
+  <meta name="description" content="เว็บดูคอร์ดเพลงไทยและสากล พร้อมค้นหา เปลี่ยนคีย์ ปรับขนาดตัวอักษร และแสดงเนื้อเพลงแบบอ่านง่าย" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff7ef;
+      --surface: #fffdf9;
+      --surface-strong: #ffffff;
+      --ink: #312216;
+      --muted: #7b6552;
+      --soft: #a98e78;
+      --line: #eed8c6;
+      --accent: #e8794f;
+      --accent-2: #7d5fff;
+      --accent-soft: #fff0e8;
+      --green: #2f9e74;
+      --shadow: 0 24px 80px rgba(99, 62, 35, 0.14);
+      --radius: 24px;
+      --mono-size: 16px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: 'Noto Sans Thai', system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(232, 121, 79, 0.22), transparent 34rem),
+        radial-gradient(circle at 85% 15%, rgba(125, 95, 255, 0.14), transparent 30rem),
+        linear-gradient(180deg, #fff7ef 0%, #fffaf5 45%, #f7efe8 100%);
+      color: var(--ink);
+    }
+
+    button, input, select { font: inherit; }
+    a { color: inherit; }
+
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; }
+    .topbar {
+      position: sticky; top: 0; z-index: 20;
+      border-bottom: 1px solid rgba(238, 216, 198, 0.8);
+      backdrop-filter: blur(18px);
+      background: rgba(255, 247, 239, 0.82);
+    }
+    .nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; text-decoration: none; }
+    .brand-mark { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 16px; background: linear-gradient(135deg, var(--accent), #ffba7b); color: white; box-shadow: 0 14px 34px rgba(232, 121, 79, 0.34); }
+    .brand small { display: block; color: var(--muted); font-weight: 500; margin-top: -3px; }
+    .nav-links { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-links a { text-decoration: none; color: var(--muted); font-weight: 700; padding: 9px 13px; border-radius: 999px; }
+    .nav-links a:hover { background: var(--accent-soft); color: var(--accent); }
+
+    .hero { padding: 58px 0 34px; display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 34px; align-items: center; }
+    .badge { display: inline-flex; gap: 8px; align-items: center; padding: 8px 14px; border-radius: 999px; background: rgba(255,255,255,0.78); border: 1px solid var(--line); color: var(--accent); font-weight: 800; }
+    h1 { margin: 18px 0 12px; font-size: clamp(2.35rem, 6vw, 5.3rem); line-height: 0.98; letter-spacing: -0.06em; }
+    .lead { color: var(--muted); font-size: clamp(1rem, 2vw, 1.22rem); max-width: 680px; }
+    .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 26px; }
+    .btn { border: 0; cursor: pointer; border-radius: 999px; padding: 13px 19px; font-weight: 800; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: transform .18s ease, box-shadow .18s ease; }
+    .btn:hover { transform: translateY(-2px); }
+    .btn-primary { color: white; background: linear-gradient(135deg, var(--accent), #f6a04f); box-shadow: 0 16px 38px rgba(232, 121, 79, 0.30); }
+    .btn-secondary { background: white; color: var(--ink); border: 1px solid var(--line); }
+    .hero-card { background: rgba(255,255,255,0.78); border: 1px solid rgba(238,216,198,0.9); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+    .mini-player { border-radius: 20px; background: #20150f; color: #fff6ee; padding: 22px; overflow: hidden; position: relative; }
+    .mini-player:before { content: ''; position: absolute; width: 160px; height: 160px; border-radius: 999px; background: rgba(232,121,79,.34); right: -60px; top: -60px; filter: blur(6px); }
+    .mini-title { position: relative; display: flex; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .equalizer { display: flex; align-items: end; gap: 4px; height: 28px; }
+    .equalizer i { display: block; width: 5px; border-radius: 99px; background: #ffba7b; animation: wave 1.2s infinite ease-in-out alternate; }
+    .equalizer i:nth-child(2) { height: 22px; animation-delay: .2s; }
+    .equalizer i:nth-child(3) { height: 14px; animation-delay: .4s; }
+    .equalizer i:nth-child(4) { height: 27px; animation-delay: .1s; }
+    @keyframes wave { from { height: 8px; } to { height: 28px; } }
+    .preview-line { position: relative; font-family: 'Fira Code', monospace; white-space: pre-wrap; line-height: 1.95; color: #ffe1c7; }
+    .preview-line strong { color: #75f0bd; }
+
+    .toolbar { margin: 26px 0; background: rgba(255,255,255,0.82); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: 0 12px 44px rgba(99,62,35,.08); display: grid; grid-template-columns: 1.4fr .8fr .8fr; gap: 12px; }
+    .field { display: grid; gap: 7px; }
+    label { color: var(--muted); font-size: .88rem; font-weight: 800; }
+    input, select { width: 100%; border: 1px solid var(--line); border-radius: 16px; background: white; color: var(--ink); padding: 13px 14px; outline: none; }
+    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(232,121,79,.12); }
+
+    .layout { display: grid; grid-template-columns: 370px 1fr; gap: 22px; align-items: start; padding-bottom: 56px; }
+    .panel { background: rgba(255,255,255,0.86); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: 0 16px 54px rgba(99,62,35,.09); }
+    .song-list { padding: 12px; display: grid; gap: 10px; max-height: 760px; overflow: auto; }
+    .song-card { text-align: left; width: 100%; border: 1px solid transparent; background: white; border-radius: 18px; padding: 14px; cursor: pointer; display: grid; gap: 6px; }
+    .song-card:hover, .song-card.active { border-color: var(--accent); background: var(--accent-soft); }
+    .song-card strong { font-size: 1.03rem; }
+    .meta { display: flex; gap: 7px; flex-wrap: wrap; color: var(--muted); font-size: .88rem; }
+    .pill { display: inline-flex; border-radius: 999px; padding: 4px 9px; background: #f4eadf; color: var(--muted); font-weight: 800; font-size: .78rem; }
+    .viewer { overflow: hidden; }
+    .viewer-head { padding: 22px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 18px; align-items: start; flex-wrap: wrap; }
+    .viewer h2 { margin: 0; font-size: clamp(1.7rem, 4vw, 2.6rem); letter-spacing: -.04em; }
+    .viewer-head p { margin: 4px 0 0; color: var(--muted); }
+    .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .chip { border: 1px solid var(--line); background: white; border-radius: 999px; padding: 9px 12px; cursor: pointer; font-weight: 800; color: var(--muted); }
+    .chip:hover { color: var(--accent); border-color: var(--accent); }
+    .keyline { padding: 14px 22px; background: #fffaf4; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--muted); }
+    .keyline strong { color: var(--ink); }
+    .chordsheet { padding: 24px; font-family: 'Fira Code', 'Noto Sans Thai', monospace; font-size: var(--mono-size); line-height: 1.85; white-space: pre-wrap; overflow-x: auto; background: linear-gradient(180deg, #fffdf9, #fff9f2); }
+    .chord { color: var(--green); font-weight: 800; }
+    .section-title { color: var(--accent-2); font-weight: 800; }
+    .empty { padding: 36px; color: var(--muted); text-align: center; }
+    .tips { padding: 20px 0 60px; }
+    .tips-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .tip { padding: 20px; }
+    .tip h3 { margin: 0 0 8px; }
+    .tip p { margin: 0; color: var(--muted); }
+    footer { border-top: 1px solid var(--line); padding: 26px 0; color: var(--muted); text-align: center; }
+
+    @media (max-width: 900px) {
+      .hero, .layout, .toolbar { grid-template-columns: 1fr; }
+      .tips-grid { grid-template-columns: 1fr; }
+      .song-list { max-height: none; }
+      .nav { align-items: flex-start; padding: 14px 0; flex-direction: column; }
+      .nav-links { justify-content: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <nav class="shell nav" aria-label="เมนูหลัก">
+      <a class="brand" href="#top" aria-label="TaiThai Chords">
+        <span class="brand-mark">♬</span>
+        <span>TaiThai Chords<small>คอร์ดเพลงไทย / International</small></span>
+      </a>
+      <div class="nav-links">
+        <a href="#library">คลังเพลง</a>
+        <a href="#viewer">ดูคอร์ด</a>
+        <a href="#tips">ฟีเจอร์</a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="top">
+    <section class="shell hero">
+      <div>
+        <span class="badge">🎸 เว็บคอร์ดอ่านง่ายสำหรับนักดนตรี</span>
+        <h1>หาเพลง กดคีย์ แล้วเล่นได้ทันที</h1>
+        <p class="lead">รวมตัวอย่างคอร์ดเพลงไทยและสากล พร้อมระบบค้นหา แยกแนวเพลง เปลี่ยนคีย์ขึ้น-ลง และปรับขนาดตัวอักษรให้เหมาะกับมือถือ แท็บเล็ต หรือจอซ้อมวง</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#library">เริ่มดูคอร์ด</a>
+          <button class="btn btn-secondary" id="randomSong" type="button">สุ่มเพลงให้เล่น</button>
+        </div>
+      </div>
+      <aside class="hero-card" aria-label="ตัวอย่างหน้าคอร์ด">
+        <div class="mini-player">
+          <div class="mini-title">
+            <div><strong>Now practicing</strong><br><span>Thai Pop • Key G</span></div>
+            <div class="equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          </div>
+          <div class="preview-line"><strong>G</strong>      <strong>Em</strong>        <strong>C</strong>      <strong>D</strong>
+เพียงแค่เปิดคอร์ด แล้วร้องไปพร้อมกัน
+<strong>C</strong>      <strong>D</strong>        <strong>G</strong>
+เพลงโปรดของคุณอยู่ตรงนี้</div>
+        </div>
+      </aside>
+    </section>
+
+    <section id="library" class="shell toolbar" aria-label="เครื่องมือค้นหาเพลง">
+      <div class="field">
+        <label for="search">ค้นหาเพลงหรือศิลปิน</label>
+        <input id="search" type="search" placeholder="เช่น ลมร้อนตอนเย็น, City Lights, TaiThai Demo" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="languageFilter">ภาษา</label>
+        <select id="languageFilter">
+          <option value="all">ทั้งหมด</option>
+          <option value="thai">เพลงไทย</option>
+          <option value="international">เพลงสากล</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="genreFilter">แนวเพลง</label>
+        <select id="genreFilter">
+          <option value="all">ทุกแนว</option>
+          <option value="Pop">Pop</option>
+          <option value="Rock">Rock</option>
+          <option value="Indie">Indie</option>
+          <option value="Folk">Folk</option>
+        </select>
+      </div>
+    </section>
+
+    <section class="shell layout">
+      <aside class="panel song-list" id="songList" aria-label="รายการเพลง"></aside>
+
+      <article class="panel viewer" id="viewer" aria-live="polite">
+        <div class="viewer-head">
+          <div>
+            <h2 id="songTitle">เลือกเพลงจากคลัง</h2>
+            <p id="songArtist">ค้นหาเพลงไทยหรือสากล แล้วกดเพื่อดูคอร์ด</p>
+          </div>
+          <div class="controls" aria-label="ตัวควบคุมคอร์ด">
+            <button class="chip" id="transposeDown" type="button">คีย์ -</button>
+            <button class="chip" id="transposeReset" type="button">รีเซ็ต</button>
+            <button class="chip" id="transposeUp" type="button">คีย์ +</button>
+            <button class="chip" id="fontDown" type="button">A-</button>
+            <button class="chip" id="fontUp" type="button">A+</button>
+          </div>
+        </div>
+        <div class="keyline">
+          <span>คีย์ต้นฉบับ: <strong id="originalKey">-</strong></span>
+          <span>คีย์ที่แสดง: <strong id="currentKey">-</strong></span>
+          <span>คาโป้: <strong id="capo">-</strong></span>
+        </div>
+        <div class="chordsheet" id="chordSheet"><div class="empty">ยังไม่ได้เลือกเพลง</div></div>
+      </article>
+    </section>
+
+    <section id="tips" class="shell tips">
+      <div class="tips-grid">
+        <article class="panel tip"><h3>ค้นหาเร็ว</h3><p>พิมพ์ชื่อเพลง ศิลปิน หรือแนวเพลงเพื่อกรองรายการแบบทันที รองรับทั้งภาษาไทยและอังกฤษ</p></article>
+        <article class="panel tip"><h3>เปลี่ยนคีย์ได้</h3><p>กดคีย์ + / - เพื่อ transpose คอร์ดทั้งหมด เหมาะกับเสียงร้องหรือเครื่องดนตรีของคุณ</p></article>
+        <article class="panel tip"><h3>อ่านง่ายบนทุกจอ</h3><p>ปรับขนาดตัวอักษรได้ และใช้ฟอนต์ monospace เพื่อให้คอร์ดตรงกับเนื้อร้อง</p></article>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="shell">© 2026 TaiThai Chords • Static demo ready for GitHub Pages</div>
+  </footer>
+
+  <script>
+    const songs = [
+      {
+        id: 'thai-summer', title: 'ลมร้อนตอนเย็น', artist: 'TaiThai Demo Band', language: 'thai', genre: 'Rock', key: 'G', capo: 'ไม่ใช้',
+        sheet: `[Intro]\nG Em C D\n\n[Verse]\nG          Em\nแดดร้อนในวันเก่า ๆ\nC             D\nยังมีเสียงเพลงของเราในใจ\nG          Em\nลมพัดให้คิดถึงใคร\nC             D\nคนที่เคยยิ้มให้กันเสมอ\n\n[Chorus]\nC        D        G     Em\nฤดูร้อนทำให้ฉันคิดถึงเธอ\nC        D        G\nแม้เวลาจะพาเราไกล\nC        D        G     Em\nจับกีตาร์ร้องเพลงเดิมอีกครั้ง\nC        D        G\nให้หัวใจกลับไปวันนั้น`
+      },
+      {
+        id: 'thai-safe', title: 'คำตอบในดาว', artist: 'Indie Home Session', language: 'thai', genre: 'Indie', key: 'D', capo: 'เฟรต 2',
+        sheet: `[Intro]\nD A Bm G\n\n[Verse]\nD           A\nมองฟ้าที่ค่อย ๆ เปลี่ยนสี\nBm          G\nเหมือนคำถามที่ยังค้างในใจ\nD           A\nทุกถนนพาเราไปแสนไกล\nBm          G\nแต่คำตอบยังอยู่ตรงนี้\n\n[Chorus]\nG       A       D    Bm\nเธอคือคำตอบที่ฉันตามหา\nG       A       D\nในวันที่โลกเงียบงัน\nG       A       D    Bm\nแค่มีเสียงเธอข้าง ๆ กัน\nG       A       D\nก็พอให้ใจเดินต่อ`
+      },
+      {
+        id: 'thai-folk', title: 'บ้านของใจ', artist: 'TaiThai Session', language: 'thai', genre: 'Folk', key: 'C', capo: 'ไม่ใช้',
+        sheet: `[Intro]\nC G Am F\n\n[Verse]\nC        G\nบนทางยาวที่เดินผ่านมา\nAm       F\nมีบางเวลาที่ใจอ่อนล้า\nC        G\nแต่เสียงเพลงจากบ้านหลังเก่า\nAm       F\nยังคอยบอกเราให้กลับมา\n\n[Chorus]\nF       G       C     Am\nบ้านของใจไม่ไกลจากฝัน\nF       G       C\nมีคนรอรับในทุกวัน\nF       G       C     Am\nวางกีตาร์แล้วร้องด้วยกัน\nF       G       C\nให้คืนนี้อบอุ่นเหมือนเดิม`
+      },
+      {
+        id: 'intl-wonder', title: 'City Lights', artist: 'International Demo', language: 'international', genre: 'Rock', key: 'Em', capo: 'เฟรต 2',
+        sheet: `[Intro]\nEm7 G Dsus4 A7sus4\n\n[Verse]\nEm7        G\nWalking down the avenue\nDsus4      A7sus4\nWith a melody in my shoes\nEm7        G\nEvery window hums a tune\nDsus4      A7sus4\nAnd the midnight turns to blue\n\n[Chorus]\nCadd9    Dsus4   Em7\nCity lights are shining\nCadd9        Em7     Dsus4\nWe keep our hearts in time\nCadd9 Dsus4 Em7\nSing it louder\nCadd9 Dsus4 Em7\nTonight the stage is mine`
+      },
+      {
+        id: 'intl-counting', title: 'Counting Roads', artist: 'Global Pop Demo', language: 'international', genre: 'Pop', key: 'Am', capo: 'เฟรต 4',
+        sheet: `[Intro]\nAm C G F\n\n[Verse]\nAm          C\nLately I have been chasing dreams\nG              F\nDrawing maps across the sea\nAm          C\nEvery road becomes a song\nG              F\nWhen your voice is next to me\n\n[Chorus]\nAm       C\nWe'll be counting roads\nG        F\nEvery turn is gold\nAm       C\nPack the night and start again\nG        F\nWith a chorus for the cold`
+      },
+      {
+        id: 'intl-folk', title: 'Morning Train', artist: 'Acoustic Demo', language: 'international', genre: 'Folk', key: 'C', capo: 'ไม่ใช้',
+        sheet: `[Intro]\nC G Am F C G F C\n\n[Verse]\nC              G\nWhen the morning train is leaving\nAm             F\nI will carry one guitar\nC              G\nEvery station keeps a memory\nF      C\nEvery mile a star\n\n[Chorus]\nAm        G          F          C\nRide with me, ride with me\nC              G\nThrough the sunrise melody\nF      C\nRide with me`
+      }
+    ];
+
+    const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const flats = { Db: 'C#', Eb: 'D#', Gb: 'F#', Ab: 'G#', Bb: 'A#' };
+    const state = { selected: songs[0], transpose: 0, fontSize: 16 };
+
+    const songList = document.querySelector('#songList');
+    const search = document.querySelector('#search');
+    const languageFilter = document.querySelector('#languageFilter');
+    const genreFilter = document.querySelector('#genreFilter');
+    const chordSheet = document.querySelector('#chordSheet');
+
+    function normalizeChord(chord) {
+      return chord.replace(/^([A-G])b/, (_, n) => flats[n + 'b'] || n + 'b');
+    }
+
+    function transposeChord(chord, amount) {
+      return chord.replace(/^([A-G](?:#|b)?)(.*)$/g, (_, root, suffix) => {
+        const normalized = normalizeChord(root);
+        const index = notes.indexOf(normalized);
+        if (index === -1) return chord;
+        return notes[(index + amount + notes.length) % notes.length] + suffix;
+      });
+    }
+
+    function transposeKey(key) { return transposeChord(key, state.transpose); }
+
+    function renderSheet() {
+      const html = state.selected.sheet
+        .replace(/\[(.*?)\]/g, '<span class="section-title">[$1]</span>')
+        .replace(/\b([A-G](?:#|b)?(?:m|maj|min|dim|aug|sus|add)?\d*(?:\/[A-G](?:#|b)?)?)\b/g, match => `<span class="chord">${transposeChord(match, state.transpose)}</span>`);
+      chordSheet.innerHTML = html;
+      document.documentElement.style.setProperty('--mono-size', `${state.fontSize}px`);
+      document.querySelector('#songTitle').textContent = state.selected.title;
+      document.querySelector('#songArtist').textContent = `${state.selected.artist} • ${state.selected.genre} • ${state.selected.language === 'thai' ? 'เพลงไทย' : 'International'}`;
+      document.querySelector('#originalKey').textContent = state.selected.key;
+      document.querySelector('#currentKey').textContent = transposeKey(state.selected.key);
+      document.querySelector('#capo').textContent = state.selected.capo;
+    }
+
+    function matchesFilters(song) {
+      const query = search.value.trim().toLowerCase();
+      const byText = !query || [song.title, song.artist, song.genre].some(value => value.toLowerCase().includes(query));
+      const byLang = languageFilter.value === 'all' || song.language === languageFilter.value;
+      const byGenre = genreFilter.value === 'all' || song.genre === genreFilter.value;
+      return byText && byLang && byGenre;
+    }
+
+    function renderList() {
+      const filtered = songs.filter(matchesFilters);
+      songList.innerHTML = filtered.length ? filtered.map(song => `
+        <button class="song-card ${song.id === state.selected.id ? 'active' : ''}" type="button" data-id="${song.id}">
+          <strong>${song.title}</strong>
+          <span>${song.artist}</span>
+          <span class="meta"><span class="pill">${song.language === 'thai' ? 'เพลงไทย' : 'International'}</span><span class="pill">${song.genre}</span><span class="pill">Key ${song.key}</span></span>
+        </button>`).join('') : '<div class="empty">ไม่พบเพลงที่ค้นหา ลองเปลี่ยนคำค้นหรือฟิลเตอร์ดูนะ</div>';
+    }
+
+    songList.addEventListener('click', event => {
+      const card = event.target.closest('[data-id]');
+      if (!card) return;
+      state.selected = songs.find(song => song.id === card.dataset.id);
+      state.transpose = 0;
+      renderList();
+      renderSheet();
+      document.querySelector('#viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    [search, languageFilter, genreFilter].forEach(input => input.addEventListener('input', renderList));
+    document.querySelector('#transposeDown').addEventListener('click', () => { state.transpose -= 1; renderSheet(); });
+    document.querySelector('#transposeUp').addEventListener('click', () => { state.transpose += 1; renderSheet(); });
+    document.querySelector('#transposeReset').addEventListener('click', () => { state.transpose = 0; renderSheet(); });
+    document.querySelector('#fontDown').addEventListener('click', () => { state.fontSize = Math.max(13, state.fontSize - 1); renderSheet(); });
+    document.querySelector('#fontUp').addEventListener('click', () => { state.fontSize = Math.min(24, state.fontSize + 1); renderSheet(); });
+    document.querySelector('#randomSong').addEventListener('click', () => {
+      state.selected = songs[Math.floor(Math.random() * songs.length)];
+      state.transpose = 0;
+      renderList();
+      renderSheet();
+      document.querySelector('#viewer').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    renderList();
+    renderSheet();
+  </script>
+</body>
+</html>
