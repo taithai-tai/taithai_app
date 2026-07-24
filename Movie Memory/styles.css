@@ -579,7 +579,7 @@
     /* Responsive Queries */
     @media (max-width: 860px) {
       .shell { width: min(100% - 24px, 1200px); }
-      header { padding: 10px 0; }
+      header { padding: max(9px, env(safe-area-inset-top)) 0 9px; }
       nav { align-items: flex-start; }
       .nav-actions { flex: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
       .brand-logo { width: 40px; height: 40px; }
@@ -590,16 +590,17 @@
       .people-result { min-height: 58px; }
       .google-login-btn { padding: 9px 12px; }
       .google-login-btn span { display: none; }
-      .hero { padding-top: 34px; }
-      .hero { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+      .hero { padding: 28px 2px 12px; grid-template-columns: 1fr; gap: 20px; text-align: left; }
       .quote-box { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
-      .toolbar { padding: 12px; border-radius: 20px; gap: 8px; }
+      .toolbar { padding: 10px; border-radius: 18px; gap: 8px; margin-bottom: 22px; }
       .search-wrap { flex-basis: 100%; }
+      .search-wrap .control { min-height: 48px; font-size: 16px; }
       .toolbar > select.control { flex: 1; min-width: 0; width: calc(50% - 4px); }
       .view-toggle { width: 100%; }
       .view-btn { flex: 1; justify-content: center; }
       .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .collection-grid.ticket-view { grid-template-columns: 1fr; }
       .movie-card { height: 340px; border-radius: 20px; }
       .card-content { padding: 16px 14px 14px; }
       .movie-card h3 { font-size: 17px; }
@@ -617,6 +618,7 @@
         align-items: center; justify-content: center; gap: 8px; color: #1a0f05; font: inherit;
         font-weight: 700; background: linear-gradient(135deg, var(--gold), var(--orange));
         box-shadow: 0 14px 40px rgba(244,119,59,.42); cursor: pointer;
+        min-height: 58px; touch-action: manipulation;
       }
       .toast { bottom: 88px; width: max-content; max-width: calc(100% - 28px); text-align: center; }
       .modal-footer { padding: 12px 16px; gap: 8px; }
@@ -627,6 +629,8 @@
       #profileModal { position:fixed; inset:0; width:100vw; height:100dvh; max-height:100dvh; margin:0; border:0; border-radius:0; }
       #profileModal .modal-header { padding-top:max(16px,env(safe-area-inset-top)); }
       .social-movies { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .social-profile-head { position:sticky; top:-18px; z-index:3; margin:-18px -16px 18px; padding:18px 16px 14px; background:linear-gradient(#14100c 82%,transparent); }
+      .social-avatar { width:58px; height:58px; }
       #addEditModal {
         position: fixed; inset: 0; width: 100vw; height: 100dvh; max-height: 100dvh;
         margin: 0; border: 0; border-radius: 0;
@@ -640,17 +644,43 @@
     @media (max-width: 480px) {
       .shell { width: min(100% - 18px, 1200px); }
       .brand-title { display: none; }
+      nav { gap:9px; }
       .nav-actions { gap: 7px; }
+      .brand-logo { width:38px; height:38px; border-radius:12px; }
       .user-profile-bar { padding-right: 7px; }
       .logout-btn { padding: 7px 9px; font-size: 10px; }
       .people-results { top: 106px; left: 9px; right: 9px; }
-      .hero h1 { font-size: 36px; }
-      .hero-copy { font-size: 14px; }
-      .stat-card { padding: 14px; }
-      .stat-val { font-size: 25px; }
+      .hero { padding-top:22px; }
+      .eyebrow { margin-bottom:9px; padding:4px 10px; font-size:9px; }
+      .hero h1 { font-size: 34px; margin-bottom:10px; }
+      .hero-copy { font-size: 13px; line-height:1.55; }
+      .stats-grid { gap:8px; margin:18px 0; }
+      .stat-card { padding: 12px; border-radius:15px; }
+      .stat-val { font-size: 23px; }
+      .stat-lbl { font-size:10px; line-height:1.35; }
+      .toolbar > select.control { min-height:44px; padding-left:12px; font-size:12px; }
+      .view-toggle { min-height:44px; }
+      .view-btn { min-height:38px; padding:7px 8px; font-size:11px; }
+      .collection-head { margin:2px 2px 13px; align-items:center; }
+      .collection-head h2 { font-size:18px; }
+      .collection-head p { font-size:10px; }
       .collection-grid { grid-template-columns: 1fr 1fr; }
-      .movie-card { height: 310px; }
+      .collection-grid { gap:9px; padding-bottom:110px; }
+      .movie-card { height: 300px; border-radius:16px; }
+      .card-header { padding:10px; }
+      .badge-format { padding:3px 7px; font-size:8px; }
+      .card-content { padding:12px 10px 11px; }
+      .movie-card h3 { font-size:14px; margin-bottom:5px; }
       .watch-date-chip { font-size: 9px; }
+      .card-stars { font-size:11px; letter-spacing:1px; }
+      .collection-grid.list-view .movie-card { height:116px; border-radius:15px; }
+      .collection-grid.list-view .poster-bg { width:82px; }
+      .collection-grid.list-view .card-content { padding:12px 13px; }
+      .collection-grid.list-view .card-header { right:8px; top:8px; }
+      .ticket-stub-top { padding:13px 15px; }
+      .ticket-stub-body { padding:15px; }
+      .ticket-thumb { width:68px; }
+      .mobile-add-btn { right:12px; bottom:calc(12px + env(safe-area-inset-bottom)); height:56px; min-height:56px; padding:0 17px; }
       .choice-container { padding: 22px 16px; }
       .choice-card-btn { min-height: 175px; padding: 20px; }
       .wizard-steps { padding: 10px 16px; }
@@ -661,6 +691,11 @@
       .modal-header h2 { font-size: 18px; }
       dialog:not(#addEditModal) { width: calc(100% - 12px); max-height: calc(100dvh - 12px); border-radius: 20px; }
       .poster-picker-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+      .social-movie { border-radius:12px; }
+      .social-movie-info { padding:9px; }
+      .social-movie-info strong { font-size:12px; }
+      .social-movie-info small { font-size:10px; }
+      .toast { font-size:12px; padding:10px 16px; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
