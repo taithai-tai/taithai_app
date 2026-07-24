@@ -51,7 +51,7 @@
     </section>
   </main>
   <script type="module">
-    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-5";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-6";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const stars=value=>"★".repeat(Number(value)||0)+"☆".repeat(5-(Number(value)||0));

@@ -20,7 +20,6 @@ import {
   startAt,
   endAt,
   limit,
-  writeBatch,
   runTransaction,
   setDoc, 
   serverTimestamp 
@@ -192,10 +191,23 @@ export async function searchPublicProfiles(searchText) {
 export async function getPublicProfile(uid) {
   const profileSnap = await getDoc(doc(db, "publicProfiles", uid));
   if (!profileSnap.exists()) throw new Error("PROFILE_NOT_FOUND");
-  const movieSnap = await getDocs(query(collection(db, "users", uid, "publicMovies"), orderBy("watchDate", "desc"), limit(200)));
+  const profile = profileSnap.data();
+  if (Array.isArray(profile.publicMovies)) {
+    return {
+      profile,
+      movies: profile.publicMovies.slice(0, 200).sort((a, b) => String(b.watchDate || "").localeCompare(String(a.watchDate || "")))
+    };
+  }
+  let movies = [];
+  try {
+    const movieSnap = await getDocs(query(collection(db, "users", uid, "publicMovies"), orderBy("watchDate", "desc"), limit(200)));
+    movies = movieSnap.docs.map(item => item.data());
+  } catch (error) {
+    console.warn("Legacy public movie collection is not readable:", error);
+  }
   return {
-    profile: profileSnap.data(),
-    movies: movieSnap.docs.map(item => item.data())
+    profile,
+    movies
   };
 }
 
@@ -216,24 +228,25 @@ export async function getPublicProfileByUsername(username) {
 
 export async function publishMovieCollection(user, movies) {
   if (!user) return;
-  const movieCollection = collection(db, "users", user.uid, "publicMovies");
-  const existing = await getDocs(movieCollection);
-  const batch = writeBatch(db);
-  existing.forEach(item => batch.delete(item.ref));
-  (Array.isArray(movies) ? movies : []).slice(0, 200).forEach(movie => {
-    const id = String(movie.id || crypto.randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
-    batch.set(doc(movieCollection, id || crypto.randomUUID()), {
-      id,
-      title: String(movie.title || "").slice(0, 100),
-      tmdbId: Number(movie.tmdbId) || null,
-      watchDate: String(movie.watchDate || "").slice(0, 10),
-      releaseDate: String(movie.releaseDate || "").slice(0, 10),
-      format: String(movie.format || "").slice(0, 40),
-      cinema: String(movie.cinema || "").slice(0, 80),
-      rating: Math.min(5, Math.max(0, Number(movie.rating) || 0)),
-      posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
-      updatedAt: serverTimestamp()
-    });
-  });
-  await batch.commit();
+  const publicMovies = (Array.isArray(movies) ? movies : []).slice(0, 200).map(movie => ({
+    id: String(movie.id || crypto.randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80),
+    title: String(movie.title || "").slice(0, 100),
+    tmdbId: Number(movie.tmdbId) || null,
+    watchDate: String(movie.watchDate || "").slice(0, 10),
+    releaseDate: String(movie.releaseDate || "").slice(0, 10),
+    format: String(movie.format || "").slice(0, 40),
+    cinema: String(movie.cinema || "").slice(0, 80),
+    rating: Math.min(5, Math.max(0, Number(movie.rating) || 0)),
+    posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : ""
+  }));
+
+  await setDoc(doc(db, "publicProfiles", user.uid), {
+    uid: user.uid,
+    displayName: user.displayName || "",
+    photoURL: user.photoURL || "",
+    publicMovies,
+    publicMovieCount: publicMovies.length,
+    publicMoviesUpdatedAt: serverTimestamp()
+  }, { merge: true });
+
 }

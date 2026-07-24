@@ -25,7 +25,7 @@
     let peopleSearchTimer = null;
     let movieSyncTimer = null;
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
-    const movieSyncKey = uid => `movie_memory_public_sync_${uid}`;
+    const movieSyncKey = uid => `movie_memory_public_sync_v2_${uid}`;
 
     function publicMovieFingerprint(collection) {
       return JSON.stringify((Array.isArray(collection) ? collection : []).map(movie => [
