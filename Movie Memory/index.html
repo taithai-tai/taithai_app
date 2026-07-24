@@ -113,6 +113,29 @@
     .user-info-text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
     .user-name { font-size: 12px; font-weight: 600; color: var(--cream); max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-email { font-size: 10px; color: var(--muted); max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .account-id { color: var(--gold); }
+    .people-search { position: relative; width: min(360px, 32vw); }
+    .people-search input { width: 100%; padding: 10px 14px 10px 38px; }
+    .people-search .search-icon { left: 13px; }
+    .people-results { position:absolute; z-index:50; top:calc(100% + 8px); left:0; right:0; padding:8px; border:1px solid var(--line); border-radius:16px; background:#171716; box-shadow:0 20px 50px #000b; max-height:320px; overflow:auto; }
+    .people-result { width:100%; display:flex; align-items:center; gap:10px; border:0; background:transparent; color:var(--cream); padding:10px; border-radius:11px; text-align:left; cursor:pointer; }
+    .people-result:hover, .people-result:focus-visible { background:#ffffff0b; }
+    .people-result img, .social-avatar { width:38px; height:38px; border-radius:50%; object-fit:cover; background:#292826; }
+    .people-result strong { display:block; }
+    .people-result small { color:var(--gold); }
+    .profile-dialog-body { padding:22px 26px 28px; overflow:auto; }
+    .social-profile-head { display:flex; align-items:center; gap:14px; margin-bottom:22px; }
+    .social-avatar { width:64px; height:64px; }
+    .social-profile-head h3 { margin:0 0 4px; font-size:22px; }
+    .social-profile-head p { margin:0; color:var(--gold); }
+    .social-movies { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:14px; }
+    .social-movie { overflow:hidden; border:1px solid var(--line); border-radius:14px; background:#1c1b19; }
+    .social-movie img, .social-movie-placeholder { width:100%; aspect-ratio:2/3; object-fit:cover; display:grid; place-items:center; font-size:36px; background:#262421; }
+    .social-movie-info { padding:11px; }
+    .social-movie-info strong { display:block; font-size:13px; line-height:1.35; }
+    .social-movie-info small { color:var(--muted); }
+    .profile-form { display:flex; gap:10px; }
+    .profile-form .control { flex:1; }
     .logout-btn {
       border: none; background: rgba(231, 101, 90, 0.15); color: var(--danger);
       font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
@@ -563,6 +586,7 @@
       header { padding: 10px 0; }
       .brand-logo { width: 40px; height: 40px; }
       .brand-title small, .user-info-text, #openAddModalBtn { display: none; }
+      .people-search { order:3; width:100%; }
       .google-login-btn { padding: 9px 12px; }
       .google-login-btn span { display: none; }
       .hero { padding-top: 34px; }
@@ -641,6 +665,11 @@
         </a>
 
         <div class="nav-actions">
+          <div class="people-search" id="peopleSearchWrap" style="display:none">
+            <span class="search-icon">⌕</span>
+            <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดีของเพื่อน..." autocomplete="off">
+            <div class="people-results" id="peopleSearchResults" hidden></div>
+          </div>
           <button id="googleLoginBtn" class="google-login-btn">
             <svg viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -655,7 +684,7 @@
             <img id="userAvatar" class="user-avatar" src="" alt="Profile" />
             <div class="user-info-text">
               <span id="userName" class="user-name">...</span>
-              <span id="userEmail" class="user-email">...</span>
+              <span id="userEmail" class="user-email account-id">ตั้งไอดีของคุณ</span>
             </div>
             <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
           </div>
@@ -750,6 +779,29 @@
   <button class="mobile-add-btn" id="mobileAddBtn" type="button" aria-label="เพิ่มบันทึกหนัง">
     <span>＋</span><span>เพิ่มหนัง</span>
   </button>
+
+  <dialog id="profileModal">
+    <div class="modal-header">
+      <h2 id="profileModalTitle">โปรไฟล์</h2>
+      <button class="close-modal-btn" id="closeProfileBtn" type="button" title="ปิดหน้าต่าง">×</button>
+    </div>
+    <div class="profile-dialog-body">
+      <div id="profileSetup" hidden>
+        <p style="color:var(--muted);margin-top:0">ตั้งไอดีสำหรับให้เพื่อนค้นหาคุณ ใช้ตัวอักษร ตัวเลข จุด หรือขีดล่าง 3–24 ตัว</p>
+        <div class="profile-form">
+          <input class="control" id="usernameInput" maxlength="24" placeholder="เช่น taithai.movie">
+          <button class="btn btn-primary" id="saveUsernameBtn" type="button">บันทึกไอดี</button>
+        </div>
+      </div>
+      <div id="publicProfileView" hidden>
+        <div class="social-profile-head">
+          <img class="social-avatar" id="socialAvatar" alt="">
+          <div><h3 id="socialName"></h3><p id="socialUsername"></p></div>
+        </div>
+        <div class="social-movies" id="socialMovies"></div>
+      </div>
+    </div>
+  </dialog>
 
   <!-- Add/Edit Movie Dialog (Wizard Flow) -->
   <dialog id="addEditModal">
@@ -1077,6 +1129,7 @@
     function saveMoviesToStorage() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+        window.dispatchEvent(new CustomEvent('movie-memory:changed', { detail: movies }));
       } catch (e) {
         showToast('⚠️ พื้นที่จัดเก็บเต็ม! ลองลดขนาดรูปภาพ');
       }
@@ -1780,7 +1833,16 @@
 
   <script src="../local-auth-bridge.js"></script>
   <script type="module">
-    import { loginWithGoogle, logout, subscribeAuth } from "../firebase-auth.js?v=20260725-2";
+    import {
+      loginWithGoogle,
+      logout,
+      subscribeAuth,
+      getMyPublicProfile,
+      claimUsername,
+      searchPublicProfiles,
+      getPublicProfile,
+      publishMovieCollection
+    } from "../firebase-auth.js?v=20260725-3";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -1788,6 +1850,116 @@
     const userAvatar = document.getElementById("userAvatar");
     const userName = document.getElementById("userName");
     const userEmail = document.getElementById("userEmail");
+    const peopleSearchWrap = document.getElementById("peopleSearchWrap");
+    const peopleSearchInput = document.getElementById("peopleSearchInput");
+    const peopleSearchResults = document.getElementById("peopleSearchResults");
+    const profileModal = document.getElementById("profileModal");
+    const profileSetup = document.getElementById("profileSetup");
+    const publicProfileView = document.getElementById("publicProfileView");
+    let signedInUser = null;
+    let myProfile = null;
+    let peopleSearchTimer = null;
+
+    function openUsernameSetup() {
+      if (!signedInUser) return;
+      document.getElementById("profileModalTitle").textContent = "ตั้งไอดีของคุณ";
+      profileSetup.hidden = false;
+      publicProfileView.hidden = true;
+      document.getElementById("usernameInput").value = myProfile?.username || "";
+      profileModal.showModal();
+    }
+
+    async function openPublicProfile(uid) {
+      peopleSearchResults.hidden = true;
+      peopleSearchInput.value = "";
+      document.getElementById("profileModalTitle").textContent = "Movie Memory ของเพื่อน";
+      profileSetup.hidden = true;
+      publicProfileView.hidden = false;
+      document.getElementById("socialMovies").innerHTML = '<div class="empty-state"><p>กำลังโหลด...</p></div>';
+      profileModal.showModal();
+      try {
+        const { profile, movies: publicMovies } = await getPublicProfile(uid);
+        document.getElementById("socialAvatar").src = profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`;
+        document.getElementById("socialName").textContent = profile.displayName || profile.username;
+        document.getElementById("socialUsername").textContent = `@${profile.username}`;
+        document.getElementById("socialMovies").innerHTML = publicMovies.length ? publicMovies.map(movie => `
+          <article class="social-movie">
+            ${movie.posterImg
+              ? `<img src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}">`
+              : '<div class="social-movie-placeholder">🎬</div>'}
+            <div class="social-movie-info">
+              <strong>${escapeHtml(movie.title || "ไม่มีชื่อหนัง")}</strong>
+              <small>${formatDate(movie.watchDate)} · ${formatStars(movie.rating)}</small>
+            </div>
+          </article>
+        `).join("") : '<div class="empty-state"><h3>ยังไม่มีหนัง</h3><p>บัญชีนี้ยังไม่ได้บันทึกภาพยนตร์</p></div>';
+      } catch (error) {
+        document.getElementById("socialMovies").innerHTML = '<div class="empty-state"><h3>เปิดโปรไฟล์ไม่ได้</h3><p>ลองใหม่อีกครั้งในภายหลัง</p></div>';
+      }
+    }
+
+    document.getElementById("closeProfileBtn").addEventListener("click", () => profileModal.close());
+    userProfileBar.addEventListener("click", event => {
+      if (event.target.closest("#logoutBtn")) return;
+      openUsernameSetup();
+    });
+    userProfileBar.style.cursor = "pointer";
+
+    document.getElementById("saveUsernameBtn").addEventListener("click", async () => {
+      const button = document.getElementById("saveUsernameBtn");
+      try {
+        button.disabled = true;
+        const username = await claimUsername(signedInUser, document.getElementById("usernameInput").value);
+        myProfile = { ...(myProfile || {}), username };
+        userEmail.textContent = `@${username}`;
+        profileModal.close();
+        showToast("✓ ตั้งไอดีเรียบร้อยแล้ว");
+      } catch (error) {
+        const message = error.message === "USERNAME_TAKEN"
+          ? "ไอดีนี้มีคนใช้แล้ว"
+          : "ไอดีต้องยาว 3–24 ตัว และใช้ตัวอักษร ตัวเลข จุด หรือขีดล่าง";
+        showToast(message);
+      } finally {
+        button.disabled = false;
+      }
+    });
+
+    peopleSearchInput.addEventListener("input", () => {
+      clearTimeout(peopleSearchTimer);
+      peopleSearchTimer = setTimeout(async () => {
+        const term = peopleSearchInput.value.trim();
+        if (!term) {
+          peopleSearchResults.hidden = true;
+          return;
+        }
+        try {
+          const profiles = await searchPublicProfiles(term);
+          peopleSearchResults.innerHTML = profiles.length ? profiles.map(profile => `
+            <button class="people-result" type="button" data-profile-uid="${escapeHtml(profile.uid)}">
+              <img src="${escapeHtml(profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="">
+              <span><strong>${escapeHtml(profile.displayName || profile.username)}</strong><small>@${escapeHtml(profile.username)}</small></span>
+            </button>
+          `).join("") : '<div style="padding:14px;color:var(--muted)">ไม่พบบัญชีนี้</div>';
+          peopleSearchResults.hidden = false;
+        } catch {
+          peopleSearchResults.innerHTML = '<div style="padding:14px;color:var(--muted)">ค้นหาไม่สำเร็จ ลองใหม่อีกครั้ง</div>';
+          peopleSearchResults.hidden = false;
+        }
+      }, 350);
+    });
+    peopleSearchResults.addEventListener("click", event => {
+      const result = event.target.closest("[data-profile-uid]");
+      if (result) openPublicProfile(result.dataset.profileUid);
+    });
+    document.addEventListener("click", event => {
+      if (!peopleSearchWrap.contains(event.target)) peopleSearchResults.hidden = true;
+    });
+
+    window.addEventListener("movie-memory:changed", event => {
+      if (signedInUser) publishMovieCollection(signedInUser, event.detail).catch(() => {
+        showToast("บันทึกในเครื่องแล้ว แต่ซิงก์โปรไฟล์ไม่สำเร็จ");
+      });
+    });
 
     if (loginBtn) {
       loginBtn.addEventListener("click", async () => {
@@ -1816,21 +1988,32 @@
       });
     }
 
-    subscribeAuth((user) => {
+    subscribeAuth(async (user) => {
+      signedInUser = user;
       if (user) {
         if (loginBtn) loginBtn.style.display = "none";
         if (userProfileBar) userProfileBar.style.display = "inline-flex";
 
         const name = user.displayName || user.email || "User";
-        const email = user.email || "";
         const photo = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
 
         if (userAvatar) userAvatar.src = photo;
         if (userName) userName.textContent = name;
-        if (userEmail) userEmail.textContent = email;
+        if (peopleSearchWrap) peopleSearchWrap.style.display = "block";
+        try {
+          myProfile = await getMyPublicProfile(user);
+          if (userEmail) userEmail.textContent = myProfile?.username ? `@${myProfile.username}` : "ตั้งไอดีของคุณ";
+          await publishMovieCollection(user, movies);
+          if (!myProfile?.username) setTimeout(openUsernameSetup, 350);
+        } catch (error) {
+          console.warn("Profile sync failed:", error);
+          if (userEmail) userEmail.textContent = "ตั้งไอดีของคุณ";
+        }
       } else {
+        myProfile = null;
         if (loginBtn) loginBtn.style.display = "inline-flex";
         if (userProfileBar) userProfileBar.style.display = "none";
+        if (peopleSearchWrap) peopleSearchWrap.style.display = "none";
       }
     });
   </script>

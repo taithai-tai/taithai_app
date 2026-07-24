@@ -19,6 +19,8 @@ const excluded = new Set([
   'vercel.json',
   'README.md',
   'firebase-blueprint.json',
+  'firebase.json',
+  '.firebaserc',
   'firestore.rules'
 ]);
 

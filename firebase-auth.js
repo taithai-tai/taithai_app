@@ -11,7 +11,17 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { 
   getFirestore, 
+  collection,
   doc, 
+  getDoc,
+  getDocs,
+  query,
+  orderBy,
+  startAt,
+  endAt,
+  limit,
+  writeBatch,
+  runTransaction,
   setDoc, 
   serverTimestamp 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
@@ -59,6 +69,12 @@ async function saveUserProfile(user) {
       lastLoginAt: new Date().toISOString(),
       updatedAt: serverTimestamp()
     }, { merge: true });
+    await setDoc(doc(db, "publicProfiles", user.uid), {
+      uid: user.uid,
+      displayName: user.displayName || "",
+      photoURL: user.photoURL || "",
+      updatedAt: serverTimestamp()
+    }, { merge: true });
   } catch (err) {
     console.warn("Could not save user profile to Firestore:", err);
   }
@@ -101,4 +117,102 @@ export function subscribeAuth(callback) {
     });
   }).catch(() => callback(null));
   return () => unsubscribe();
+}
+
+function normalizeUsername(value) {
+  return String(value || "").trim().toLowerCase().replace(/\s+/g, "").slice(0, 24);
+}
+
+export async function getMyPublicProfile(user) {
+  if (!user) return null;
+  const snapshot = await getDoc(doc(db, "publicProfiles", user.uid));
+  return snapshot.exists() ? snapshot.data() : null;
+}
+
+export async function claimUsername(user, requestedUsername) {
+  if (!user) throw new Error("LOGIN_REQUIRED");
+  const username = normalizeUsername(requestedUsername);
+  if (!/^[a-z0-9._ก-๙]{3,24}$/u.test(username)) throw new Error("INVALID_USERNAME");
+
+  await runTransaction(db, async transaction => {
+    const userRef = doc(db, "users", user.uid);
+    const userSnap = await transaction.get(userRef);
+    const oldUsername = normalizeUsername(userSnap.data()?.username);
+    const usernameRef = doc(db, "usernames", username);
+    const usernameSnap = await transaction.get(usernameRef);
+    const publicProfileRef = doc(db, "publicProfiles", user.uid);
+    if (usernameSnap.exists() && usernameSnap.data()?.uid !== user.uid) {
+      throw new Error("USERNAME_TAKEN");
+    }
+
+    transaction.set(usernameRef, { uid: user.uid, username, updatedAt: serverTimestamp() });
+    transaction.set(userRef, {
+      uid: user.uid,
+      username,
+      usernameLower: username,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    transaction.set(publicProfileRef, {
+      uid: user.uid,
+      username,
+      usernameLower: username,
+      displayName: user.displayName || "",
+      photoURL: user.photoURL || "",
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+    if (oldUsername && oldUsername !== username) {
+      transaction.delete(doc(db, "usernames", oldUsername));
+    }
+  });
+  return username;
+}
+
+export async function searchPublicProfiles(searchText) {
+  const term = normalizeUsername(searchText);
+  if (!term) return [];
+  const profilesQuery = query(
+    collection(db, "publicProfiles"),
+    orderBy("usernameLower"),
+    startAt(term),
+    endAt(`${term}\uf8ff`),
+    limit(12)
+  );
+  const snapshot = await getDocs(profilesQuery);
+  return snapshot.docs
+    .map(item => item.data())
+    .filter(profile => profile.username && profile.uid);
+}
+
+export async function getPublicProfile(uid) {
+  const profileSnap = await getDoc(doc(db, "publicProfiles", uid));
+  if (!profileSnap.exists()) throw new Error("PROFILE_NOT_FOUND");
+  const movieSnap = await getDocs(query(collection(db, "users", uid, "publicMovies"), orderBy("watchDate", "desc"), limit(200)));
+  return {
+    profile: profileSnap.data(),
+    movies: movieSnap.docs.map(item => item.data())
+  };
+}
+
+export async function publishMovieCollection(user, movies) {
+  if (!user) return;
+  const movieCollection = collection(db, "users", user.uid, "publicMovies");
+  const existing = await getDocs(movieCollection);
+  const batch = writeBatch(db);
+  existing.forEach(item => batch.delete(item.ref));
+  (Array.isArray(movies) ? movies : []).slice(0, 200).forEach(movie => {
+    const id = String(movie.id || crypto.randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80);
+    batch.set(doc(movieCollection, id || crypto.randomUUID()), {
+      id,
+      title: String(movie.title || "").slice(0, 100),
+      tmdbId: Number(movie.tmdbId) || null,
+      watchDate: String(movie.watchDate || "").slice(0, 10),
+      releaseDate: String(movie.releaseDate || "").slice(0, 10),
+      format: String(movie.format || "").slice(0, 40),
+      cinema: String(movie.cinema || "").slice(0, 80),
+      rating: Math.min(5, Math.max(0, Number(movie.rating) || 0)),
+      posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
+      updatedAt: serverTimestamp()
+    });
+  });
+  await batch.commit();
 }
