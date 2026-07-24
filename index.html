@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">5</span>
+          <span class="stat-num">6</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -604,6 +604,14 @@
           </div>
           <span class="app-tag" id="appTag5"></span>
         </a>
+        <a class="app-card" href="javascript:void(0)" onclick="goToMovieMemory()">
+          <div class="app-icon">🎞️</div>
+          <div>
+            <div class="app-name" id="appName6"></div>
+            <div class="app-desc" id="appDesc6"></div>
+          </div>
+          <span class="app-tag" id="appTag6"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -621,6 +629,7 @@
     const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
     const URL_SHORTENER_URL = "https://taithai.app/S/";
     const DOCTOR_PLAN_URL = "https://taithai.app/Bangkok%20Doctor%20Plan/";
+    const MOVIE_MEMORY_URL = "https://taithai.app/Movie%20Memory/";
 
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
@@ -670,6 +679,9 @@
         appName5: "BU Degree Plan Explorer",
         appDesc5: "Loads degree-plan PDFs from degreeplan.bu.ac.th and organizes them into readable categories.",
         appTag5: "🩺 Smart Catalog",
+        appName6: "Movie Memory",
+        appDesc6: "Keep your movie tickets, ratings, cinema details, and little memories from every film you have watched.",
+        appTag6: "🎞️ Movie Journal",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -681,7 +693,8 @@
         openingText4: "Opening URL Shortener… 🌸",
         noLinkYet4: "No link added yet for URL Shortener",
         openingText5: "Opening BU Degree Plan Explorer… 🌸",
-        noLinkYet5: "No link added yet for BU Degree Plan Explorer"
+        noLinkYet5: "No link added yet for BU Degree Plan Explorer",
+        openingText6: "Opening Movie Memory… 🎞️"
       },
       th: {
         htmlLang: "th",
@@ -711,6 +724,9 @@
         appName5: "ตัวอ่าน Degree Plan BU",
         appDesc5: "ดึงรายการ PDF จาก degreeplan.bu.ac.th แล้วจัดหมวดหมู่ให้อ่านง่าย ค้นหาไว",
         appTag5: "🩺 แคตตาล็อกอัจฉริยะ",
+        appName6: "Movie Memory",
+        appDesc6: "เก็บตั๋วหนัง คะแนน โรงภาพยนตร์ และความทรงจำเล็ก ๆ จากหนังทุกเรื่องที่เคยดู",
+        appTag6: "🎞️ สมุดบันทึกหนัง",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -722,7 +738,8 @@
         openingText4: "กำลังเปิด URL Shortener… 🌸",
         noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ URL Shortener",
         openingText5: "กำลังเปิด ตัวอ่าน Degree Plan BU… 🌸",
-        noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่าน Degree Plan BU"
+        noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่าน Degree Plan BU",
+        openingText6: "กำลังเปิด Movie Memory… 🎞️"
       }
     };
 
@@ -765,6 +782,9 @@
       document.getElementById("appName5").textContent = t.appName5;
       document.getElementById("appDesc5").textContent = t.appDesc5;
       document.getElementById("appTag5").textContent = t.appTag5;
+      document.getElementById("appName6").textContent = t.appName6;
+      document.getElementById("appDesc6").textContent = t.appDesc6;
+      document.getElementById("appTag6").textContent = t.appTag6;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -835,6 +855,13 @@
       showToast(i18n[currentLang].openingText5);
       setTimeout(() => {
         window.location.href = DOCTOR_PLAN_URL;
+      }, 250);
+    }
+
+    function goToMovieMemory() {
+      showToast(i18n[currentLang].openingText6);
+      setTimeout(() => {
+        window.location.href = MOVIE_MEMORY_URL;
       }, 250);
     }
 

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#17120f">
+  <title>Movie Memory — สมุดเก็บตั๋วหนัง</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#f8f1e7;--muted:#a99d90;--bg:#100d0b;--surface:#191411;--surface-2:#211a16;
+      --line:#302720;--gold:#ffb547;--orange:#f4773b;--cream:#f5e5cc;--danger:#e7655a;
+      --shadow:0 24px 70px rgba(0,0,0,.35);--radius:24px
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai','DM Sans',sans-serif;min-height:100vh;line-height:1.55}
+    button,input,select,textarea{font:inherit}
+    button{cursor:pointer}
+    .grain{position:fixed;inset:0;pointer-events:none;opacity:.035;z-index:20;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+    .glow{position:fixed;width:520px;height:520px;border-radius:50%;filter:blur(120px);opacity:.12;pointer-events:none}
+    .glow.one{background:#ff7a36;right:-200px;top:-180px}.glow.two{background:#d69b40;left:-280px;bottom:-260px}
+    .shell{width:min(1180px,calc(100% - 40px));margin:auto;position:relative}
+    header{height:76px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;position:sticky;top:0;background:rgba(16,13,11,.82);backdrop-filter:blur(18px);z-index:10}
+    nav{display:flex;align-items:center;justify-content:space-between;gap:20px}
+    .brand{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:-.02em}
+    .brand-mark{width:42px;height:42px;border:1px solid #5e432d;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#2f2219,#18120e);box-shadow:inset 0 1px rgba(255,255,255,.08)}
+    .brand small{display:block;color:var(--muted);font-weight:400;font-size:10px;letter-spacing:.15em;text-transform:uppercase}
+    .nav-actions{display:flex;align-items:center;gap:10px}
+    .btn{border:0;border-radius:999px;padding:11px 18px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+    .btn:hover{transform:translateY(-2px)}.btn-primary{color:#241409;background:linear-gradient(135deg,var(--gold),#ff8c44);box-shadow:0 8px 26px rgba(244,119,59,.22)}
+    .btn-ghost{color:var(--ink);background:#211a16;border:1px solid var(--line)}
+    .hero{padding:70px 0 38px;display:grid;grid-template-columns:1.35fr .65fr;gap:44px;align-items:end}
+    .eyebrow{font-family:'DM Sans';color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:15px}
+    h1{font-size:clamp(42px,7vw,84px);letter-spacing:-.065em;line-height:.98;margin:0 0 20px;max-width:780px}
+    h1 em{font-style:normal;color:var(--gold)}
+    .hero-copy{color:var(--muted);font-size:17px;max-width:610px;margin:0}
+    .quote{border-left:1px solid #6c4b30;padding:5px 0 5px 20px;color:#c9b9aa;font-weight:300}
+    .quote strong{display:block;color:var(--ink);font-size:13px;margin-top:10px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 38px}
+    .stat{padding:20px;background:linear-gradient(145deg,#1d1713,#16110e);border:1px solid var(--line);border-radius:20px}
+    .stat b{display:block;font-family:'DM Sans';font-size:30px;line-height:1.1}.stat span{font-size:12px;color:var(--muted)}
+    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
+    .search{position:relative;flex:1;min-width:240px}
+    .search span{position:absolute;left:17px;top:50%;transform:translateY(-50%);opacity:.55}
+    .control{width:100%;color:var(--ink);background:#17120f;border:1px solid var(--line);border-radius:15px;padding:13px 15px;outline:none;transition:.2s}
+    .search .control{padding-left:46px}.control:focus{border-color:#9b653a;box-shadow:0 0 0 3px rgba(255,181,71,.08)}
+    select.control{width:auto;min-width:150px}
+    .view-switch{display:flex;padding:4px;border:1px solid var(--line);border-radius:14px;background:#17120f}
+    .view-switch button{width:38px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted)}
+    .view-switch button.active{background:#31251e;color:var(--gold)}
+    .collection{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding-bottom:90px}
+    .movie-card{position:relative;min-height:380px;border-radius:var(--radius);overflow:hidden;background:var(--surface);border:1px solid var(--line);isolation:isolate;box-shadow:0 10px 40px rgba(0,0,0,.18);transition:.25s}
+    .movie-card:hover{transform:translateY(-5px);border-color:#5b4434;box-shadow:var(--shadow)}
+    .poster{position:absolute;inset:0;background:linear-gradient(150deg,#39271d,#17110e);z-index:-2}
+    .poster img{width:100%;height:100%;object-fit:cover;display:block}
+    .poster::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,5,3,.03) 18%,rgba(8,5,3,.38) 50%,#110d0a 96%)}
+    .no-poster{width:100%;height:100%;display:grid;place-items:center;color:#6c5342;font-size:70px;background:radial-gradient(circle at 70% 25%,#49301f,#1b1410 60%)}
+    .card-top{display:flex;justify-content:space-between;padding:16px;align-items:flex-start}
+    .format{font-family:'DM Sans';font-size:10px;font-weight:700;letter-spacing:.12em;padding:7px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(18,13,10,.68);backdrop-filter:blur(8px)}
+    .more{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(18,13,10,.68);color:white;opacity:0;transition:.2s}
+    .movie-card:hover .more,.more:focus{opacity:1}
+    .card-body{position:absolute;left:0;right:0;bottom:0;padding:26px 23px 23px}
+    .watch-date{font-family:'DM Sans';font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .movie-card h3{font-size:24px;line-height:1.2;margin:6px 0 8px;letter-spacing:-.025em}
+    .meta{font-size:12px;color:#c2b4a8;display:flex;gap:8px;flex-wrap:wrap}
+    .stars{color:var(--gold);letter-spacing:1px;margin-top:12px;font-size:14px}
+    .collection.list{grid-template-columns:1fr}
+    .collection.list .movie-card{min-height:170px}
+    .collection.list .poster{width:180px;right:auto}
+    .collection.list .poster::after{background:linear-gradient(90deg,rgba(8,5,3,.05),#191411 94%)}
+    .collection.list .card-top{margin-left:180px}
+    .collection.list .card-body{left:180px;top:34px;bottom:auto}
+    .empty{grid-column:1/-1;text-align:center;padding:70px 20px;border:1px dashed #46372d;border-radius:28px;color:var(--muted)}
+    .empty-icon{font-size:52px;filter:grayscale(.35);margin-bottom:8px}
+    dialog{width:min(780px,calc(100% - 30px));max-height:92vh;border:1px solid #4a392e;border-radius:28px;background:#17120f;color:var(--ink);padding:0;box-shadow:0 30px 100px #000;overflow:auto}
+    dialog::backdrop{background:rgba(4,3,2,.76);backdrop-filter:blur(8px)}
+    [hidden]{display:none!important}
+    .modal-head{display:flex;justify-content:space-between;align-items:start;padding:28px 30px 14px;position:sticky;top:0;background:rgba(23,18,15,.94);backdrop-filter:blur(16px);z-index:5}
+    .modal-head h2{margin:0;font-size:26px}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
+    .icon-btn{border:1px solid var(--line);color:var(--ink);background:#221a16;width:38px;height:38px;border-radius:50%;font-size:18px}
+    .steps{display:flex;align-items:center;padding:0 30px 20px;gap:8px;color:#66594f;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+    .step{display:flex;align-items:center;gap:7px;white-space:nowrap}.step-dot{width:22px;height:22px;border:1px solid #44372e;border-radius:50%;display:grid;place-items:center;font-family:'DM Sans'}
+    .step.active{color:var(--cream)}.step.active .step-dot{background:var(--gold);border-color:var(--gold);color:#27170c}.step.done{color:#9e8e7e}.step.done .step-dot{background:#382b22;color:var(--gold)}
+    .step-line{height:1px;flex:1;background:#362b24;min-width:18px}
+    .add-choice{padding:10px 30px 32px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    .choice-card{min-height:210px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#211a16,#15100d);color:var(--ink);padding:24px;text-align:left;transition:.22s}
+    .choice-card:hover{transform:translateY(-3px);border-color:#8a5d39;background:linear-gradient(145deg,#2a201a,#18110e)}
+    .choice-icon{width:54px;height:54px;border-radius:17px;background:#32241b;display:grid;place-items:center;font-size:27px;margin-bottom:28px}
+    .choice-card strong{display:block;font-size:19px;margin-bottom:6px}.choice-card span{display:block;color:var(--muted);font-size:13px}
+    .choice-card small{display:block;color:var(--gold);margin-top:14px;font-weight:600}
+    .catalog{padding:6px 30px 30px}
+    .tmdb-bar{margin-bottom:12px;color:var(--muted);font-size:11px}
+    .tmdb-bar strong{color:#90cea1;letter-spacing:.08em}
+    .catalog-search{position:sticky;top:0;background:#17120f;padding:4px 0 14px;z-index:2}
+    .catalog-search .control{padding-left:42px}.catalog-search>span{position:absolute;left:16px;top:17px;color:var(--muted)}
+    .catalog-heading{display:flex;align-items:end;justify-content:space-between;margin:4px 0 12px}.catalog-heading strong{font-size:14px}.catalog-heading span{color:var(--muted);font-size:10px}
+    .catalog-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:500px;overflow:auto;padding:1px 6px 8px 1px;scrollbar-color:#4d3a2e transparent}
+    .catalog-item{border:1px solid var(--line);border-radius:16px;background:#1d1713;color:var(--ink);padding:10px;display:flex;align-items:center;gap:12px;text-align:left;transition:.18s;min-height:86px}
+    .catalog-item:hover{border-color:#835a3b;background:#261d17}
+    .catalog-cover{width:52px;height:68px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;font-family:'DM Sans';font-size:18px;font-weight:700;color:#fff;background:#2a211b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
+    .catalog-info{min-width:0;flex:1}.catalog-info strong{display:block;font-size:13px;line-height:1.35}.catalog-info span{display:block;color:var(--muted);font-size:10px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .tmdb-score{color:var(--gold)!important;font-family:'DM Sans';font-weight:600}
+    .catalog-custom{grid-column:1/-1;border-style:dashed;justify-content:center;min-height:66px;color:var(--gold);font-weight:600}
+    .catalog-status{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted)}
+    .catalog-cover img{width:100%;height:100%;border-radius:10px;object-fit:cover}
+    .back-btn{border:0;background:transparent;color:var(--gold);padding:0 0 12px;font-size:13px}
+    .selected-film{display:flex;align-items:center;gap:12px;background:#251c17;border:1px solid #493528;border-radius:16px;padding:12px 14px}
+    .selected-film-icon{width:42px;height:52px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#81482c,#d07b3f);font-size:22px}
+    .selected-film strong{display:block}.selected-film span{font-size:11px;color:var(--muted)}
+    form{padding:6px 30px 30px}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .form-section{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:8px 0 -3px;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+    .form-section::after{content:"";height:1px;background:var(--line);flex:1}
+    .field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}
+    label{font-size:12px;color:#cbbdaf;font-weight:500}
+    textarea.control{min-height:88px;resize:vertical}
+    .upload{border:1px dashed #554235;border-radius:18px;min-height:150px;display:grid;place-items:center;text-align:center;color:var(--muted);position:relative;overflow:hidden;background:#130f0d}
+    .upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+    .upload-copy{position:relative;z-index:1;padding:20px}.upload.has-image .upload-copy{background:rgba(10,7,5,.72);border-radius:14px;color:white}
+    .rating{display:flex;gap:4px;flex-direction:row-reverse;justify-content:flex-end}
+    .rating input{display:none}.rating label{font-size:28px;color:#4e4035;cursor:pointer}
+    .rating label:hover,.rating label:hover~label,.rating input:checked~label{color:var(--gold)}
+    .form-actions{display:flex;justify-content:space-between;gap:10px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
+    .right-actions{display:flex;gap:10px}
+    .danger{color:#ff9187;background:transparent;border:1px solid #633a36;display:none}
+    .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,100px);opacity:0;background:var(--cream);color:#22150d;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:40;transition:.3s}
+    .toast.show{transform:translate(-50%,0);opacity:1}
+    .tmdb-credit{text-align:center;color:#756b63;font-size:10px;padding:0 20px 36px}.tmdb-credit strong{color:#90cea1;letter-spacing:.12em}
+    @media(max-width:850px){.hero{grid-template-columns:1fr}.quote{display:none}.collection{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:590px){.shell{width:min(100% - 28px,1180px)}header{height:66px}.brand small{display:none}.nav-actions .btn-ghost{display:none}.hero{padding:48px 0 24px}.stats{gap:8px}.stat{padding:15px}.stat b{font-size:24px}.collection{grid-template-columns:1fr}.movie-card{min-height:410px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.form-section{grid-column:auto}.modal-head{padding:22px 20px 10px}.steps{padding:0 20px 16px}.step span:last-child{display:none}form{padding:4px 20px 24px}.add-choice{padding:6px 20px 24px;grid-template-columns:1fr}.choice-card{min-height:150px}.choice-icon{margin-bottom:16px}.catalog{padding:4px 20px 24px}.catalog-list{grid-template-columns:1fr;max-height:58vh}.catalog-custom{grid-column:auto}.collection.list .poster{width:120px}.collection.list .card-top{margin-left:120px}.collection.list .card-body{left:120px;padding:18px}.collection.list .movie-card h3{font-size:20px}}
+  </style>
+</head>
+<body>
+  <div class="grain"></div><div class="glow one"></div><div class="glow two"></div>
+  <header>
+    <nav class="shell">
+      <a class="brand" href="../"><span class="brand-mark">🎞️</span><span>Movie Memory<small>Taithai Apps</small></span></a>
+      <div class="nav-actions">
+        <button class="btn btn-ghost" id="exportBtn">ส่งออกข้อมูล</button>
+        <button class="btn btn-primary" data-open>＋ เพิ่มหนัง</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div>
+        <div class="eyebrow">Your personal cinema archive</div>
+        <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
+        <p class="hero-copy">เก็บตั๋วหนัง เรื่องราว และความรู้สึกหลังดูจบไว้ในที่เดียว เพื่อกลับมาเปิดดูเมื่อไรก็ได้</p>
+      </div>
+      <div class="quote">“หนังจบ แต่ความรู้สึกในวันนั้นไม่จำเป็นต้องหายไป”<strong>— บันทึกการดูหนังของคุณ</strong></div>
+    </section>
+
+    <section class="stats" aria-label="สถิติ">
+      <div class="stat"><b id="movieCount">0</b><span>เรื่องที่บันทึก</span></div>
+      <div class="stat"><b id="thisYearCount">0</b><span>เรื่องในปีนี้</span></div>
+      <div class="stat"><b id="avgRating">—</b><span>คะแนนเฉลี่ย</span></div>
+    </section>
+
+    <section class="toolbar">
+      <div class="search"><span>⌕</span><input id="searchInput" class="control" type="search" placeholder="ค้นหาชื่อหนัง โรงหนัง หรือโน้ต..."></div>
+      <select id="yearFilter" class="control" aria-label="กรองตามปี"><option value="all">ทุกปี</option></select>
+      <select id="sortSelect" class="control" aria-label="เรียงลำดับ">
+        <option value="newest">ดูล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="rating">คะแนนสูงสุด</option><option value="title">ชื่อ A–Z</option>
+      </select>
+      <div class="view-switch" aria-label="รูปแบบการแสดงผล">
+        <button id="gridBtn" class="active" aria-label="ตาราง">▦</button><button id="listBtn" aria-label="รายการ">☷</button>
+      </div>
+    </section>
+
+    <section class="collection" id="collection"></section>
+    <div class="tmdb-credit"><strong>TMDB</strong> · This product uses the TMDB API but is not endorsed or certified by TMDB.</div>
+  </main>
+
+  <dialog id="movieDialog">
+    <div class="modal-head">
+      <div><h2 id="dialogTitle">เพิ่มความทรงจำใหม่</h2><p>รายละเอียดเล็ก ๆ ทำให้เราจำวันนั้นได้ชัดขึ้น</p></div>
+      <button class="icon-btn" type="button" id="closeDialog" aria-label="ปิด">×</button>
+    </div>
+    <div class="steps" id="stepIndicator">
+      <div class="step active" data-step-dot="choice"><span class="step-dot">1</span><span>วิธีเพิ่ม</span></div><div class="step-line"></div>
+      <div class="step" data-step-dot="catalog"><span class="step-dot">2</span><span>เลือกหนัง</span></div><div class="step-line"></div>
+      <div class="step" data-step-dot="form"><span class="step-dot">3</span><span>บันทึกรายละเอียด</span></div>
+    </div>
+    <section class="add-choice" id="addChoice">
+      <button class="choice-card" id="cameraChoice" type="button">
+        <span class="choice-icon">📷</span><strong>ถ่ายรูปเพื่อเพิ่ม</strong>
+        <span>ถ่ายตั๋วหนัง โปสเตอร์ หรือภาพจากวันนั้น แล้วกรอกรายละเอียดต่อ</span><small>เปิดกล้อง →</small>
+      </button>
+      <button class="choice-card" id="manualChoice" type="button">
+        <span class="choice-icon">🎬</span><strong>เลือกหนังด้วยตัวเอง</strong>
+        <span>ค้นหาหรือเลื่อนดูรายชื่อหนัง กดเลือกเรื่องที่ดู แล้วบันทึกความทรงจำ</span><small>ดูรายชื่อหนัง →</small>
+      </button>
+      <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
+    </section>
+    <section class="catalog" id="catalogStep" hidden>
+      <button class="back-btn" id="catalogBack" type="button">← กลับไปเลือกวิธีเพิ่ม</button>
+      <div class="tmdb-bar"><strong>TMDB</strong> · หนังยอดนิยมและผลการค้นหา</div>
+      <div class="catalog-search"><span>⌕</span><input class="control" id="catalogSearch" type="search" placeholder="ค้นหาชื่อหนัง ไทยหรืออังกฤษ..."></div>
+      <div class="catalog-heading"><strong id="catalogTitle">หนังยอดนิยมในไทย</strong><span id="catalogCount"></span></div>
+      <div class="catalog-list" id="catalogList"></div>
+    </section>
+    <form id="movieForm" hidden>
+      <input type="hidden" id="movieId">
+      <input type="hidden" id="tmdbId">
+      <input type="hidden" id="imageData">
+      <div class="form-grid">
+        <div class="field full" id="selectedFilmWrap" hidden>
+          <label>หนังที่เลือก</label>
+          <div class="selected-film"><span class="selected-film-icon">🎬</span><div><strong id="selectedFilmTitle"></strong><span id="selectedFilmMeta"></span></div></div>
+        </div>
+        <div class="field full">
+          <label>รูปโปสเตอร์หรือตั๋วหนัง</label>
+          <label class="upload" id="uploadBox">
+            <input id="imageInput" type="file" accept="image/*" capture="environment">
+            <img id="imagePreview" alt="" hidden>
+            <span class="upload-copy">🎟️<br><strong>แตะเพื่อเลือกรูป</strong><br><small>โปสเตอร์ รูปตั๋ว หรือภาพวันนั้น</small></span>
+          </label>
+        </div>
+        <div class="form-section">เกี่ยวกับหนัง</div>
+        <div class="field full"><label for="title">ชื่อหนัง *</label><input class="control" id="title" required maxlength="100" placeholder="เช่น Past Lives"></div>
+        <div class="form-section">วันและสถานที่</div>
+        <div class="field"><label for="watchDate">วันที่ดู *</label><input class="control" id="watchDate" type="date" required></div>
+        <div class="field"><label for="format">รูปแบบ</label><select class="control" id="format"><option>โรงภาพยนตร์</option><option>Streaming</option><option>แผ่น / Digital</option><option>เทศกาลหนัง</option><option>อื่น ๆ</option></select></div>
+        <div class="field"><label for="cinema">โรงหนัง / สถานที่</label><input class="control" id="cinema" maxlength="80" placeholder="เช่น SF World Cinema"></div>
+        <div class="field"><label for="seat">โรง / ที่นั่ง</label><input class="control" id="seat" maxlength="40" placeholder="เช่น Cinema 8 · G12"></div>
+        <div class="field full"><label for="companion">ดูกับใคร</label><input class="control" id="companion" maxlength="80" placeholder="เช่น ดูคนเดียว, กับเพื่อน, กับครอบครัว"></div>
+        <div class="form-section">ความรู้สึกหลังดู</div>
+        <div class="field full"><label>คะแนนของฉัน</label><div class="rating">
+          <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
+          <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
+          <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
+          <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
+          <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
+        </div></div>
+        <div class="field full"><label for="note">ความทรงจำ / รีวิวสั้น ๆ</label><textarea class="control" id="note" maxlength="500" placeholder="รู้สึกอย่างไร ดูกับใคร หรือมีฉากไหนที่อยากจำ..."></textarea></div>
+      </div>
+      <div class="form-actions">
+        <button class="btn danger" id="deleteBtn" type="button">ลบบันทึก</button>
+        <div class="right-actions"><button class="btn btn-ghost" type="button" id="cancelBtn">ยกเลิก</button><button class="btn btn-primary" type="submit">บันทึกความทรงจำ</button></div>
+      </div>
+    </form>
+  </dialog>
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const STORAGE_KEY = 'taithai_movie_memory_v1';
+    const DEFAULT_TMDB_CREDENTIAL = 'a7ee9f0641a8225ed2d6f0693de8507d';
+    const TMDB_API = 'https://api.themoviedb.org/3';
+    const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w500';
+    const $ = (id) => document.getElementById(id);
+    let movies = loadMovies();
+    let view = localStorage.getItem('movie_memory_view') || 'grid';
+    let tmdbResults = [];
+    let tmdbTimer;
+
+    function loadMovies(){
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+      catch { return []; }
+    }
+    function saveMovies(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(movies)); }
+    function esc(value=''){
+      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+    }
+    function dateLabel(value){
+      if(!value) return 'ไม่ระบุวันที่';
+      return new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short',year:'numeric'}).format(new Date(value+'T12:00:00'));
+    }
+    function stars(value){
+      const n = Number(value)||0;
+      return n ? '★'.repeat(n)+'☆'.repeat(5-n) : 'ยังไม่ได้ให้คะแนน';
+    }
+    function filteredMovies(){
+      const q = $('searchInput').value.trim().toLowerCase();
+      const year = $('yearFilter').value;
+      const sort = $('sortSelect').value;
+      const result = movies.filter(m => {
+        const text = [m.title,m.cinema,m.seat,m.companion,m.note,m.format].join(' ').toLowerCase();
+        return (!q || text.includes(q)) && (year === 'all' || (m.watchDate||'').startsWith(year));
+      });
+      result.sort((a,b)=>{
+        if(sort==='oldest') return (a.watchDate||'').localeCompare(b.watchDate||'');
+        if(sort==='rating') return (Number(b.rating)||0)-(Number(a.rating)||0);
+        if(sort==='title') return a.title.localeCompare(b.title,'th');
+        return (b.watchDate||'').localeCompare(a.watchDate||'');
+      });
+      return result;
+    }
+    function render(){
+      const list = filteredMovies();
+      $('collection').className = 'collection'+(view==='list'?' list':'');
+      $('gridBtn').classList.toggle('active',view==='grid');
+      $('listBtn').classList.toggle('active',view==='list');
+      if(!list.length){
+        $('collection').innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><strong>${movies.length?'ไม่พบบันทึกที่ค้นหา':'คอลเลกชันของคุณยังว่างอยู่'}</strong><br><span>${movies.length?'ลองเปลี่ยนคำค้นหาหรือตัวกรอง':'เพิ่มหนังเรื่องแรก แล้วเริ่มเก็บความทรงจำกัน'}</span><br><br><button class="btn btn-primary" data-open>＋ เพิ่มหนังเรื่องแรก</button></div>`;
+      }else{
+        $('collection').innerHTML = list.map(m=>`<article class="movie-card" data-id="${esc(m.id)}">
+          <div class="poster">${m.image?`<img src="${m.image}" alt="">`:`<div class="no-poster">🎞</div>`}</div>
+          <div class="card-top"><span class="format">${esc(m.format||'บันทึกหนัง')}</span><button class="more" aria-label="แก้ไข">•••</button></div>
+          <div class="card-body"><div class="watch-date">${dateLabel(m.watchDate)}</div><h3>${esc(m.title)}</h3>
+          <div class="meta">${m.cinema?`<span>📍 ${esc(m.cinema)}</span>`:''}${m.seat?`<span>· ${esc(m.seat)}</span>`:''}${m.companion?`<span>· 👥 ${esc(m.companion)}</span>`:''}</div>
+          <div class="stars" aria-label="${m.rating||0} ดาว">${stars(m.rating)}</div></div></article>`).join('');
+      }
+      updateStats(); updateYears();
+    }
+    function updateStats(){
+      $('movieCount').textContent = movies.length;
+      const currentYear=String(new Date().getFullYear());
+      $('thisYearCount').textContent=movies.filter(m=>(m.watchDate||'').startsWith(currentYear)).length;
+      const rated=movies.filter(m=>Number(m.rating));
+      $('avgRating').textContent=rated.length?(rated.reduce((s,m)=>s+Number(m.rating),0)/rated.length).toFixed(1):'—';
+    }
+    function updateYears(){
+      const selected=$('yearFilter').value;
+      const years=[...new Set(movies.map(m=>(m.watchDate||'').slice(0,4)).filter(Boolean))].sort().reverse();
+      $('yearFilter').innerHTML='<option value="all">ทุกปี</option>'+years.map(y=>`<option value="${y}">${Number(y)+543}</option>`).join('');
+      $('yearFilter').value=years.includes(selected)||selected==='all'?selected:'all';
+    }
+    function resetForm(){
+      $('movieForm').reset(); $('movieId').value=''; $('tmdbId').value=''; $('imageData').value='';
+      $('imagePreview').hidden=true; $('imagePreview').removeAttribute('src'); $('uploadBox').classList.remove('has-image');
+      $('selectedFilmWrap').hidden=true;
+      $('watchDate').value=new Date().toISOString().slice(0,10); $('dialogTitle').textContent='เพิ่มความทรงจำใหม่'; $('deleteBtn').style.display='none';
+    }
+    function showStep(step){
+      $('addChoice').hidden=step!=='choice'; $('catalogStep').hidden=step!=='catalog'; $('movieForm').hidden=step!=='form';
+      const order=['choice','catalog','form'], current=order.indexOf(step);
+      document.querySelectorAll('[data-step-dot]').forEach((el)=>{
+        const index=order.indexOf(el.dataset.stepDot);
+        el.classList.toggle('active',index===current);
+        el.classList.toggle('done',index<current);
+        el.querySelector('.step-dot').textContent=index<current?'✓':String(index+1);
+      });
+      if(step==='choice') $('dialogTitle').textContent='อยากเพิ่มหนังแบบไหน?';
+      if(step==='catalog'){ $('dialogTitle').textContent='เลือกหนังที่เคยดู'; $('catalogSearch').value=''; loadTmdbMovies(); setTimeout(()=>$('catalogSearch').focus(),50); }
+      if(step==='form' && !$('movieId').value) $('dialogTitle').textContent='รายละเอียดการดูหนัง';
+    }
+    function openNew(){ resetForm(); $('stepIndicator').hidden=false; showStep('choice'); $('movieDialog').showModal(); }
+    function beginForm(image=''){
+      if(image){ $('imageData').value=image; $('imagePreview').src=image; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
+      showStep('form');
+    }
+    function chooseMovie(movie){
+      $('tmdbId').value=movie.id;
+      $('title').value=movie.title;
+      $('selectedFilmTitle').textContent=movie.title;
+      $('selectedFilmMeta').textContent=[movie.original_title!==movie.title?movie.original_title:'',(movie.release_date||'').slice(0,4),movie.vote_average?`TMDB ${movie.vote_average.toFixed(1)}`:''].filter(Boolean).join(' · ');
+      if(movie.poster_path){ const poster=TMDB_IMAGE+movie.poster_path; $('imageData').value=poster; $('imagePreview').src=poster; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
+      $('selectedFilmWrap').hidden=false; beginForm(); setTimeout(()=>$('watchDate').focus(),50);
+    }
+    function tmdbOptions(){
+      const credential=DEFAULT_TMDB_CREDENTIAL;
+      if(!credential) return null;
+      return credential.length>40?{headers:{Authorization:`Bearer ${credential}`,accept:'application/json'}}:{headers:{accept:'application/json'}};
+    }
+    async function tmdbFetch(path,params={}){
+      const credential=DEFAULT_TMDB_CREDENTIAL;
+      if(!credential) throw new Error('NO_KEY');
+      const query=new URLSearchParams({language:'th-TH',region:'TH',...params});
+      if(credential.length<=40) query.set('api_key',credential);
+      const response=await fetch(`${TMDB_API}${path}?${query}`,tmdbOptions());
+      if(!response.ok) throw new Error(response.status===401?'INVALID_KEY':'TMDB_ERROR');
+      return response.json();
+    }
+    function renderTmdbResults(){
+      $('catalogCount').textContent=`${tmdbResults.length} เรื่อง`;
+      if(!tmdbResults.length){ $('catalogList').innerHTML='<div class="catalog-status">ไม่พบหนังที่ค้นหา<br><small>ลองใช้ชื่อภาษาอังกฤษหรือคำที่สั้นลง</small></div><button class="catalog-item catalog-custom" type="button" id="customMovie">＋ พิมพ์ชื่อหนังเอง</button>'; return; }
+      $('catalogList').innerHTML=tmdbResults.map((m,index)=>`<button class="catalog-item" type="button" data-tmdb-index="${index}">
+        <span class="catalog-cover">${m.poster_path?`<img src="${TMDB_IMAGE+m.poster_path}" alt="" loading="lazy">`:'🎞'}</span>
+        <span class="catalog-info"><strong>${esc(m.title)}</strong><span>${esc((m.release_date||'').slice(0,4)||'ไม่ระบุปี')}${m.original_title!==m.title?` · ${esc(m.original_title)}`:''}</span>${m.vote_average?`<span class="tmdb-score">★ ${m.vote_average.toFixed(1)} TMDB</span>`:''}</span>
+      </button>`).join('')+`<button class="catalog-item catalog-custom" type="button" id="customMovie">＋ ไม่เจอหนังเรื่องที่หา? พิมพ์ชื่อเอง</button>`;
+    }
+    async function loadTmdbMovies(query=''){
+      $('catalogList').innerHTML='<div class="catalog-status">กำลังโหลดหนังจาก TMDB…</div>';
+      $('catalogTitle').textContent=query?`ผลการค้นหา “${query}”`:'หนังยอดนิยมในไทย';
+      $('catalogCount').textContent='';
+      try{
+        const data=await tmdbFetch(query?'/search/movie':'/movie/popular',query?{query,include_adult:'false'}:{page:'1'});
+        tmdbResults=(data.results||[]).filter(m=>m.title);
+        renderTmdbResults();
+      }catch(error){
+        $('catalogList').innerHTML=`<div class="catalog-status">${error.message==='INVALID_KEY'?'ไม่สามารถยืนยันตัวตนกับ TMDB ได้':'เชื่อมต่อ TMDB ไม่สำเร็จ'}<br><button class="btn btn-ghost" type="button" id="retryTmdb">ลองอีกครั้ง</button></div>`;
+      }
+    }
+    function openEdit(id){
+      const m=movies.find(item=>item.id===id); if(!m)return;
+      resetForm(); $('movieId').value=m.id; $('title').value=m.title; $('watchDate').value=m.watchDate;
+      $('tmdbId').value=m.tmdbId||'';
+      $('format').value=m.format||'โรงภาพยนตร์'; $('cinema').value=m.cinema||''; $('seat').value=m.seat||''; $('companion').value=m.companion||''; $('note').value=m.note||'';
+      if(m.rating){ const r=document.querySelector(`input[name="rating"][value="${m.rating}"]`); if(r)r.checked=true; }
+      if(m.image){ $('imageData').value=m.image; $('imagePreview').src=m.image; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
+      $('stepIndicator').hidden=true; $('dialogTitle').textContent='แก้ไขความทรงจำ'; $('deleteBtn').style.display='inline-flex'; showStep('form'); $('dialogTitle').textContent='แก้ไขความทรงจำ'; $('movieDialog').showModal();
+    }
+    function showToast(text){ $('toast').textContent=text; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2200); }
+    function compressImage(file){
+      return new Promise((resolve,reject)=>{
+        if(!file.type.startsWith('image/')) return reject(new Error('not image'));
+        const reader=new FileReader();
+        reader.onload=()=>{
+          const img=new Image();
+          img.onload=()=>{
+            const max=1200, scale=Math.min(1,max/Math.max(img.width,img.height));
+            const canvas=document.createElement('canvas'); canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
+            canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL('image/jpeg',.78));
+          };
+          img.onerror=reject; img.src=reader.result;
+        };
+        reader.onerror=reject; reader.readAsDataURL(file);
+      });
+    }
+
+    document.addEventListener('click',e=>{
+      if(e.target.closest('[data-open]')) openNew();
+      const card=e.target.closest('.movie-card'); if(card) openEdit(card.dataset.id);
+    });
+    $('manualChoice').onclick=()=>showStep('catalog');
+    $('catalogBack').onclick=()=>showStep('choice');
+    $('catalogSearch').addEventListener('input',()=>{
+      clearTimeout(tmdbTimer);
+      tmdbTimer=setTimeout(()=>loadTmdbMovies($('catalogSearch').value.trim()),350);
+    });
+    $('catalogList').addEventListener('click',e=>{
+      const item=e.target.closest('[data-tmdb-index]');
+      if(item) chooseMovie(tmdbResults[Number(item.dataset.tmdbIndex)]);
+      if(e.target.closest('#customMovie')){ $('title').value=''; beginForm(); setTimeout(()=>$('title').focus(),50); }
+      if(e.target.closest('#retryTmdb')) loadTmdbMovies($('catalogSearch').value.trim());
+    });
+    $('closeDialog').onclick=$('cancelBtn').onclick=()=>$('movieDialog').close();
+    $('movieDialog').addEventListener('click',e=>{ if(e.target===$('movieDialog')) $('movieDialog').close(); });
+    async function handleImageFile(file,openAfter=false){
+      if(!file)return;
+      try{
+        const data=await compressImage(file);
+        if(openAfter) beginForm(data);
+        else { $('imageData').value=data; $('imagePreview').src=data; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
+      }catch{ showToast('ไม่สามารถอ่านรูปนี้ได้'); }
+    }
+    $('cameraChoice').onclick=()=>$('cameraInput').click();
+    $('cameraInput').addEventListener('change',e=>{ handleImageFile(e.target.files[0],true); e.target.value=''; });
+    $('imageInput').addEventListener('change',async e=>{
+      const file=e.target.files[0]; if(!file)return;
+      await handleImageFile(file);
+    });
+    $('movieForm').addEventListener('submit',e=>{
+      e.preventDefault();
+      const id=$('movieId').value;
+      const data={id:id||String(Date.now()),tmdbId:$('tmdbId').value,title:$('title').value.trim(),watchDate:$('watchDate').value,format:$('format').value,cinema:$('cinema').value.trim(),seat:$('seat').value.trim(),companion:$('companion').value.trim(),rating:document.querySelector('input[name="rating"]:checked')?.value||'',note:$('note').value.trim(),image:$('imageData').value,updatedAt:new Date().toISOString()};
+      if(id) movies=movies.map(m=>m.id===id?data:m); else movies.unshift(data);
+      try{ saveMovies(); }catch{ showToast('พื้นที่จัดเก็บรูปเต็ม ลองใช้รูปที่เล็กลง'); return; }
+      $('movieDialog').close(); render(); showToast(id?'แก้ไขบันทึกแล้ว':'เก็บความทรงจำแล้ว ✦');
+    });
+    $('deleteBtn').addEventListener('click',()=>{
+      const id=$('movieId').value; const movie=movies.find(m=>m.id===id);
+      if(movie && confirm(`ลบบันทึก “${movie.title}” ใช่ไหม?`)){ movies=movies.filter(m=>m.id!==id); saveMovies(); $('movieDialog').close(); render(); showToast('ลบบันทึกแล้ว'); }
+    });
+    ['searchInput','yearFilter','sortSelect'].forEach(id=>$(id).addEventListener(id==='searchInput'?'input':'change',render));
+    $('gridBtn').onclick=()=>{view='grid';localStorage.setItem('movie_memory_view',view);render()};
+    $('listBtn').onclick=()=>{view='list';localStorage.setItem('movie_memory_view',view);render()};
+    $('exportBtn').onclick=()=>{
+      if(!movies.length){showToast('ยังไม่มีข้อมูลให้ส่งออก');return}
+      const blob=new Blob([JSON.stringify({app:'Movie Memory',exportedAt:new Date().toISOString(),movies},null,2)],{type:'application/json'});
+      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`movie-memory-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href); showToast('ส่งออกข้อมูลแล้ว');
+    };
+    render();
+  </script>
+</body>
+</html>
