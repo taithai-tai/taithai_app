@@ -578,6 +578,12 @@
 
     /* Responsive Queries */
     @media (max-width: 860px) {
+      dialog {
+        position:fixed; inset:0; width:100vw!important; height:100dvh; max-height:100dvh!important;
+        margin:0; border:0; border-radius:0!important;
+      }
+      dialog .modal-header { min-height:64px; padding: max(13px,env(safe-area-inset-top)) 16px 12px; }
+      dialog .close-modal-btn { width:38px; height:38px; }
       .shell { width: min(100% - 24px, 1200px); }
       header { padding: max(9px, env(safe-area-inset-top)) 0 9px; }
       nav { align-items: flex-start; }
@@ -605,13 +611,43 @@
       .card-content { padding: 16px 14px 14px; }
       .movie-card h3 { font-size: 17px; }
       .card-meta-pills { display: none; }
-      .choice-container { grid-template-columns: 1fr; }
+      .choice-container { grid-template-columns: 1fr; gap:12px; padding:16px; align-content:start; }
+      .choice-card-btn { min-height:132px; padding:17px; display:grid; grid-template-columns:54px 1fr; column-gap:12px; align-items:center; }
+      .choice-card-btn > div { display:grid; grid-template-columns:54px 1fr; column-gap:12px; align-items:center; grid-column:1/-1; }
+      .choice-icon { grid-row:1/4; margin:0; font-size:38px; text-align:center; }
+      .choice-card-btn .choice-icon { grid-column:1; }
+      .choice-card-btn strong, .choice-card-btn span { grid-column:2; }
+      .choice-card-btn small { grid-column:2; margin-top:7px; }
       .catalog-list-grid { grid-template-columns: repeat(2, 1fr); }
+      .catalog-container { padding:14px 14px calc(24px + env(safe-area-inset-bottom)); }
+      .catalog-header-title { position:sticky; top:-14px; z-index:4; margin:-14px -14px 10px; padding:14px; background:#14100c; }
+      .catalog-search-bar { position:sticky; top:48px; z-index:4; margin:0 0 12px; padding-bottom:10px; background:#14100c; }
+      .catalog-search-bar .control { min-height:48px; font-size:16px; }
+      .catalog-list-grid { gap:10px; }
+      .catalog-item-info { padding:9px; }
       .poster-picker-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
       .form-grid { grid-template-columns: 1fr; }
-      .media-upload-row { grid-template-columns: 1fr; }
+      .form-container { padding:14px 14px 24px; }
+      .form-grid { gap:14px; }
+      .form-section-title { margin-top:7px; font-size:10px; }
+      .form-container .control { min-height:48px; font-size:16px; }
+      .media-upload-row { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+      .media-upload-row label { min-height:38px; font-size:10px; line-height:1.35; }
+      .upload-box-card { border-radius:14px; padding:8px; }
+      .upload-overlay-info { padding:8px; font-size:11px; }
+      .quick-chips { flex-wrap:nowrap; overflow-x:auto; padding:2px 0 5px; scrollbar-width:none; }
+      .chip { flex:none; min-height:34px; display:inline-flex; align-items:center; }
       .ticket-inspect-body { grid-template-columns: 1fr; }
-      .ticket-inspect-content { flex-direction: column; align-items: center; text-align: center; }
+      #inspectModal { overflow:hidden; }
+      .ticket-inspect-hero { height:230px; }
+      .ticket-inspect-content { flex-direction:row; align-items:flex-end; text-align:left; padding:54px 16px 16px; gap:14px; }
+      .ticket-inspect-cover { width:86px; }
+      .ticket-inspect-title-group { min-width:0; }
+      .ticket-inspect-title-group h2 { font-size:21px; overflow-wrap:anywhere; }
+      .ticket-inspect-body { flex:1; min-height:0; padding:18px 16px; gap:14px; }
+      .inspect-meta-grid { grid-template-columns:1fr 1fr; padding:13px; gap:10px; }
+      .inspect-meta-item span { font-size:12px; overflow-wrap:anywhere; }
+      .poster-picker-body { flex:1; min-height:0; padding:16px 14px calc(22px + env(safe-area-inset-bottom)); }
       .mobile-add-btn {
         display: inline-flex; position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom));
         z-index: 45; min-width: 58px; height: 58px; padding: 0 20px; border: 0; border-radius: 999px;
@@ -621,20 +657,20 @@
         min-height: 58px; touch-action: manipulation;
       }
       .toast { bottom: 88px; width: max-content; max-width: calc(100% - 28px); text-align: center; }
-      .modal-footer { padding: 12px 16px; gap: 8px; }
-      #saveMovieBtn { padding: 12px 18px!important; font-size: 14px!important; }
+      .modal-footer { padding: 10px 14px max(10px,env(safe-area-inset-bottom)); gap: 8px; min-height:68px; }
+      .modal-footer > div { flex:1; min-width:0; gap:8px!important; }
+      .modal-footer .btn { min-height:46px; padding:10px 14px; }
+      #saveMovieBtn { flex:1; padding:12px 14px!important; font-size:14px!important; white-space:nowrap; }
+      #cancelModalBtn { padding-inline:12px; }
+      .modal-footer #deleteEntryBtn { width:46px; flex:none; padding:0; font-size:0; }
+      .modal-footer #deleteEntryBtn::before { content:"🗑️"; font-size:18px; }
       .profile-form { flex-direction: column; }
       .profile-form .control, .profile-form .btn { width: 100%; min-height: 48px; }
       .profile-dialog-body { padding: 18px 16px 24px; }
-      #profileModal { position:fixed; inset:0; width:100vw; height:100dvh; max-height:100dvh; margin:0; border:0; border-radius:0; }
       #profileModal .modal-header { padding-top:max(16px,env(safe-area-inset-top)); }
       .social-movies { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
       .social-profile-head { position:sticky; top:-18px; z-index:3; margin:-18px -16px 18px; padding:18px 16px 14px; background:linear-gradient(#14100c 82%,transparent); }
       .social-avatar { width:58px; height:58px; }
-      #addEditModal {
-        position: fixed; inset: 0; width: 100vw; height: 100dvh; max-height: 100dvh;
-        margin: 0; border: 0; border-radius: 0;
-      }
       #addEditModal .modal-header { padding-top: max(16px, env(safe-area-inset-top)); }
       #wizardStep1, #wizardStep2 { min-height: 0; flex: 1; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
       #wizardStep1 { align-content: start; }
@@ -685,11 +721,8 @@
       .choice-card-btn { min-height: 175px; padding: 20px; }
       .wizard-steps { padding: 10px 16px; }
       .wizard-step span { display: none; }
-      .form-container { padding: 16px; }
-      .catalog-container { padding: 16px; }
       .modal-header { padding: 16px; }
       .modal-header h2 { font-size: 18px; }
-      dialog:not(#addEditModal) { width: calc(100% - 12px); max-height: calc(100dvh - 12px); border-radius: 20px; }
       .poster-picker-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
       .social-movie { border-radius:12px; }
       .social-movie-info { padding:9px; }
