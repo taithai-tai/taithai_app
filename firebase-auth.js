@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
   getAuth, 
-  signInWithRedirect,
+  signInWithPopup,
   getRedirectResult,
   GoogleAuthProvider, 
   signOut, 
@@ -64,10 +64,14 @@ export async function loginWithGoogle() {
   }
 
   try {
-    await signInWithRedirect(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    if (result?.user) {
+      await saveUserProfile(result.user);
+      return result.user;
+    }
     return null;
   } catch (error) {
-    console.error("Redirect login error:", error);
+    console.error("Google popup login error:", error);
     throw error;
   }
 }
