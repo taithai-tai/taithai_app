@@ -1,7 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { 
   getAuth, 
-  signInWithPopup, 
   signInWithRedirect,
   getRedirectResult,
   GoogleAuthProvider, 
@@ -60,24 +59,16 @@ async function saveUserProfile(user) {
 }
 
 export async function loginWithGoogle() {
+  if (window.location.protocol === 'file:') {
+    throw new Error('AUTH_REQUIRES_HTTP');
+  }
+
   try {
-    const result = await signInWithPopup(auth, googleProvider);
-    if (result && result.user) {
-      await saveUserProfile(result.user);
-      return result.user;
-    }
+    await signInWithRedirect(auth, googleProvider);
+    return null;
   } catch (error) {
-    console.warn("Popup sign-in failed or blocked, trying redirect...", error);
-    if (error.code === 'auth/popup-blocked' || error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
-      try {
-        await signInWithRedirect(auth, googleProvider);
-      } catch (redirectErr) {
-        console.error("Redirect login error:", redirectErr);
-        throw redirectErr;
-      }
-    } else {
-      throw error;
-    }
+    console.error("Redirect login error:", error);
+    throw error;
   }
 }
 

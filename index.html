@@ -1072,6 +1072,7 @@
     renderLanguage();
   </script>
 
+  <script src="./local-auth-bridge.js"></script>
   <script type="module">
     import { loginWithGoogle, logout, subscribeAuth } from "./firebase-auth.js";
 
@@ -1092,8 +1093,8 @@
       try {
         loginBtn.style.opacity = "0.7";
         loginBtn.disabled = true;
-        await loginWithGoogle();
-        showToast(i18n[currentLang].loginSuccessToast);
+        const user = await loginWithGoogle();
+        if (user) showToast(i18n[currentLang].loginSuccessToast);
       } catch (err) {
         console.error("Google Login Error:", err);
         showToast(i18n[currentLang].loginFailedToast);

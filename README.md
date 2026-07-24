@@ -1,20 +1,19 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# Taithai Apps
 
-# Run and deploy your AI Studio app
-
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb
+ชุดเว็บแอปขนาดเล็กของ Taithai รวมถึง Movie Memory, Temporary Chat,
+QR Code tools, URL Shortener และ Degree Plan Explorer
 
 ## Run Locally
 
 **Prerequisites:**  Node.js
 
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+1. เริ่ม local server (ไม่ต้องติดตั้ง dependencies):
    `npm run dev`
+2. เปิด `http://localhost:3000`
+
+โปรเจกต์ไม่ต้องใช้ `GEMINI_API_KEY` ระบบล็อกอินใช้ Firebase configuration
+จาก `firebase-auth.js` และ Movie Memory ใช้ TMDB API สำหรับค้นหาหนัง
+
+> Firebase Google Login ไม่รองรับการเปิดหน้าเว็บตรงด้วย `file://`
+> ต้องเปิดผ่าน `http://localhost:3000` หรือโดเมน `https://taithai.app`

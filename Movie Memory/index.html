@@ -696,6 +696,7 @@
     <form id="movieForm" style="display:none">
       <div class="form-container">
         <input type="hidden" id="formMovieId">
+        <input type="hidden" id="formReleaseDate">
         <input type="hidden" id="formPosterData">
         <input type="hidden" id="formTicketData">
 
@@ -925,10 +926,46 @@
     let tmdbDebounceTimer = null;
     let inspectingMovieId = null;
 
+    function safeText(value, maxLength = 500) {
+      return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
+    }
+
+    function safeImage(value) {
+      const image = safeText(value, 1500000);
+      return /^(https:\/\/|data:image\/(?:jpeg|png|webp);base64,)/i.test(image) ? image : '';
+    }
+
+    function normalizeMovie(raw, index = 0) {
+      const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+      const rawId = safeText(value.id, 80);
+      const id = /^[a-zA-Z0-9_-]+$/.test(rawId) ? rawId : `m_${Date.now()}_${index}`;
+      const validDate = date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : '';
+      const allowedFormats = ['โรงภาพยนตร์', 'Streaming', 'แผ่น / Digital', 'เทศกาลหนัง', 'อื่น ๆ'];
+      const format = allowedFormats.includes(value.format) ? value.format : 'โรงภาพยนตร์';
+      const rating = Math.min(5, Math.max(0, Math.round(Number(value.rating) || 0)));
+
+      return {
+        id,
+        title: safeText(value.title, 100) || 'บันทึกความทรงจำภาพยนตร์',
+        watchDate: validDate(value.watchDate) ? value.watchDate : new Date().toISOString().slice(0, 10),
+        releaseDate: validDate(value.releaseDate) ? value.releaseDate : '',
+        format,
+        cinema: safeText(value.cinema, 80),
+        seat: safeText(value.seat, 40),
+        companion: safeText(value.companion, 80),
+        rating,
+        note: safeText(value.note, 1000),
+        posterImg: safeImage(value.posterImg || value.image),
+        ticketImg: safeImage(value.ticketImg),
+        updatedAt: safeText(value.updatedAt, 40)
+      };
+    }
+
     function loadMoviesFromStorage() {
       try {
         const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('taithai_movie_memory_v1');
-        return raw ? JSON.parse(raw) : [];
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.map(normalizeMovie) : [];
       } catch (e) {
         return [];
       }
@@ -1019,7 +1056,11 @@
           topFmt = f;
         }
       });
-      $('statTopFormat').innerHTML = topFmt !== '—' ? topFmt : `<em>—</em>`;
+      if (topFmt !== '—') {
+        $('statTopFormat').textContent = topFmt;
+      } else {
+        $('statTopFormat').innerHTML = `<em>—</em>`;
+      }
 
       // Year filter options
       const yearFilter = $('yearFilter');
@@ -1217,6 +1258,7 @@
       if (!selected) return;
 
       $('formTitleInput').value = selected.title || '';
+      $('formReleaseDate').value = selected.release_date || '';
       if (selected.poster_path) {
         const fullPosterUrl = `${IMG_URL}${selected.poster_path}`;
         $('formPosterData').value = fullPosterUrl;
@@ -1224,10 +1266,6 @@
         $('posterPreviewImg').style.display = 'block';
         $('posterOverlayInfo').style.display = 'block';
         $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>';
-      }
-
-      if (selected.release_date) {
-        $('formWatchDateInput').value = selected.release_date;
       }
 
       $('selectedFilmTitleTxt').textContent = `🎬 ${selected.title}`;
@@ -1239,6 +1277,7 @@
 
     function resetForm() {
       $('formMovieId').value = '';
+      $('formReleaseDate').value = '';
       $('formPosterData').value = '';
       $('formTicketData').value = '';
       $('formTitleInput').value = '';
@@ -1279,6 +1318,7 @@
       }
 
       const id = $('formMovieId').value || ('m_' + Date.now());
+      const releaseDate = $('formReleaseDate').value;
       const watchDate = $('formWatchDateInput').value || new Date().toISOString().split('T')[0];
       const format = $('formFormatInput').value;
       const cinema = $('formCinemaInput').value.trim();
@@ -1293,6 +1333,7 @@
         id,
         title,
         watchDate,
+        releaseDate,
         format,
         cinema,
         seat,
@@ -1347,6 +1388,7 @@
       $('inspectModal').close();
       
       $('formMovieId').value = movie.id;
+      $('formReleaseDate').value = movie.releaseDate || '';
       $('formTitleInput').value = movie.title || '';
       $('formWatchDateInput').value = movie.watchDate || '';
       $('formFormatInput').value = movie.format || 'โรงภาพยนตร์';
@@ -1444,8 +1486,8 @@
       reader.onload = e => {
         try {
           const imported = JSON.parse(e.target.result);
-          if (Array.isArray(imported)) {
-            movies = imported;
+          if (Array.isArray(imported) && imported.length <= 5000) {
+            movies = imported.map(normalizeMovie);
             saveMoviesToStorage();
             renderCollection();
             $('backupModal').close();
@@ -1602,8 +1644,9 @@
     });
   </script>
 
+  <script src="../local-auth-bridge.js"></script>
   <script type="module">
-    import { loginWithGoogle, logout, subscribeAuth } from "/firebase-auth.js";
+    import { loginWithGoogle, logout, subscribeAuth } from "../firebase-auth.js";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -1620,6 +1663,8 @@
           await loginWithGoogle();
         } catch (err) {
           console.error("Google Login Error:", err);
+          const detail = err?.code ? ` (${err.code})` : '';
+          showToast(`เข้าสู่ระบบไม่สำเร็จ${detail}`);
         } finally {
           loginBtn.style.opacity = "1";
           loginBtn.disabled = false;

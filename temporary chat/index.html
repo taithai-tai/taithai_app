@@ -828,8 +828,9 @@ function leaveChat() {
 applyLanguage('en');
 </script>
 
+<script src="../local-auth-bridge.js"></script>
 <script type="module">
-  import { loginWithGoogle, logout, subscribeAuth } from "/firebase-auth.js";
+  import { loginWithGoogle, logout, subscribeAuth } from "../firebase-auth.js";
 
   const loginBtn = document.getElementById("googleLoginBtn");
   const logoutBtn = document.getElementById("logoutBtn");
