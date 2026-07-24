@@ -5,8 +5,9 @@
       getMyPublicProfile,
       claimUsername,
       searchPublicProfiles,
+      getPublicProfile,
       publishMovieCollection
-    } from "../firebase-auth.js?v=20260725-5";
+    } from "../firebase-auth.js?v=20260725-7";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -24,6 +25,7 @@
     let myProfile = null;
     let peopleSearchTimer = null;
     let movieSyncTimer = null;
+    const profileSearchCache = new Map();
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
     const movieSyncKey = uid => `movie_memory_public_sync_v2_${uid}`;
 
@@ -52,22 +54,63 @@
       profileModal.showModal();
     }
 
-    function openPublicProfile(uid, username = "") {
-      if (!uid) {
+    function renderPublicMovies(publicMovies) {
+      const list = Array.isArray(publicMovies) ? publicMovies : [];
+      document.getElementById("socialMovies").innerHTML = list.length ? list.map(movie => `
+        <article class="social-movie">
+          ${movie.posterImg
+            ? `<img src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}" loading="lazy" decoding="async">`
+            : '<div class="social-movie-placeholder">🎬</div>'}
+          <div class="social-movie-info">
+            <strong>${escapeHtml(movie.title || "ไม่มีชื่อหนัง")}</strong>
+            <small>${formatDate(movie.watchDate)} · ${formatStars(movie.rating)}</small>
+          </div>
+        </article>
+      `).join("") : `
+        <div class="social-profile-empty">
+          <span>🎞️</span>
+          <strong>ยังไม่มีรายการหนังที่แชร์</strong>
+          <small>เมื่อเจ้าของบัญชีเปิดแอป รายการหนังจะซิงก์มาแสดงที่นี่</small>
+        </div>`;
+    }
+
+    async function openPublicProfile(profile) {
+      if (!profile?.uid) {
         showToast("เปิดโปรไฟล์นี้ไม่สำเร็จ");
         return;
       }
-      const params = new URLSearchParams({ uid });
-      if (username) params.set("username", username);
-      window.location.href = `/Movie%20Memory/profile?${params.toString()}`;
+      peopleSearchResults.hidden = true;
+      peopleSearchInput.value = "";
+      document.getElementById("profileModalTitle").textContent = "Movie Memory";
+      profileSetup.hidden = true;
+      publicProfileView.hidden = false;
+      document.getElementById("socialAvatar").src = profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`;
+      document.getElementById("socialName").textContent = profile.displayName || profile.username || "Movie Memory";
+      document.getElementById("socialUsername").textContent = profile.username ? `@${profile.username}` : "";
+      renderPublicMovies(profile.publicMovies);
+      if (!profileModal.open) profileModal.showModal();
+
+      if (!Array.isArray(profile.publicMovies)) {
+        try {
+          const fresh = await getPublicProfile(profile.uid);
+          renderPublicMovies(fresh.movies);
+        } catch (error) {
+          console.warn("Could not refresh this public profile:", error);
+        }
+      }
     }
 
     document.getElementById("closeProfileBtn").addEventListener("click", () => profileModal.close());
     userProfileBar.addEventListener("click", event => {
       if (event.target.closest("#logoutBtn")) return;
       if (myProfile?.username) {
-        const params = new URLSearchParams({ uid: signedInUser.uid, username: myProfile.username });
-        window.location.href = `/Movie%20Memory/profile?${params.toString()}`;
+        openPublicProfile({
+          ...myProfile,
+          uid: signedInUser.uid,
+          displayName: signedInUser.displayName,
+          photoURL: signedInUser.photoURL,
+          publicMovies: movies
+        });
       } else {
         openUsernameSetup();
       }
@@ -104,6 +147,8 @@
         }
         try {
           const profiles = await searchPublicProfiles(term);
+          profileSearchCache.clear();
+          profiles.forEach(profile => profileSearchCache.set(profile.uid, profile));
           peopleSearchResults.innerHTML = profiles.length ? profiles.map(profile => `
             <button class="people-result" type="button" data-profile-uid="${escapeHtml(profile.uid)}" data-profile-username="${escapeHtml(profile.username)}">
               <img src="${escapeHtml(profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="" loading="lazy" decoding="async">
@@ -119,7 +164,7 @@
     });
     peopleSearchResults.addEventListener("click", event => {
       const result = event.target.closest("[data-profile-uid]");
-      if (result) openPublicProfile(result.dataset.profileUid, result.dataset.profileUsername);
+      if (result) openPublicProfile(profileSearchCache.get(result.dataset.profileUid));
     });
     document.addEventListener("click", event => {
       if (!peopleSearchWrap.contains(event.target)) peopleSearchResults.hidden = true;

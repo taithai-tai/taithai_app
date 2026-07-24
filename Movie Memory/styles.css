@@ -123,6 +123,13 @@
     .social-movie-info { padding:11px; }
     .social-movie-info strong { display:block; font-size:13px; line-height:1.35; }
     .social-movie-info small { color:var(--muted); }
+    #profileModal { width:min(1050px,calc(100% - 24px)); height:min(820px,88dvh); }
+    .profile-dialog-body { flex:1; min-height:0; }
+    #publicProfileView { min-height:100%; }
+    .social-profile-empty { grid-column:1/-1; min-height:260px; border:1px dashed var(--border); border-radius:20px; display:grid; place-content:center; justify-items:center; gap:7px; padding:28px; color:var(--muted); text-align:center; }
+    .social-profile-empty span { font-size:48px; }
+    .social-profile-empty strong { color:var(--cream); font-size:18px; }
+    .social-profile-empty small { max-width:360px; }
     .profile-form { display:flex; gap:10px; }
     .profile-form .control { flex:1; }
     .logout-btn {
@@ -617,6 +624,9 @@
       .profile-form { flex-direction: column; }
       .profile-form .control, .profile-form .btn { width: 100%; min-height: 48px; }
       .profile-dialog-body { padding: 18px 16px 24px; }
+      #profileModal { position:fixed; inset:0; width:100vw; height:100dvh; max-height:100dvh; margin:0; border:0; border-radius:0; }
+      #profileModal .modal-header { padding-top:max(16px,env(safe-area-inset-top)); }
+      .social-movies { grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
       #addEditModal {
         position: fixed; inset: 0; width: 100vw; height: 100dvh; max-height: 100dvh;
         margin: 0; border: 0; border-radius: 0;
