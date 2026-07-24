@@ -547,7 +547,7 @@
       <div class="stats-bar">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">2</span>
+          <span class="stat-num">6</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -579,6 +579,39 @@
           </div>
           <span class="app-tag" id="appTag2"></span>
         </a>
+
+        <a class="app-card" href="javascript:void(0)" onclick="goToQrReader()">
+          <div class="app-icon">📷</div>
+          <div>
+            <div class="app-name" id="appName3"></div>
+            <div class="app-desc" id="appDesc3"></div>
+          </div>
+          <span class="app-tag" id="appTag3"></span>
+        </a>
+        <a class="app-card" href="javascript:void(0)" onclick="goToUrlShortener()">
+          <div class="app-icon">🔗</div>
+          <div>
+            <div class="app-name" id="appName4"></div>
+            <div class="app-desc" id="appDesc4"></div>
+          </div>
+          <span class="app-tag" id="appTag4"></span>
+        </a>
+        <a class="app-card" href="javascript:void(0)" onclick="goToDoctorPlan()">
+          <div class="app-icon">🩺</div>
+          <div>
+            <div class="app-name" id="appName5"></div>
+            <div class="app-desc" id="appDesc5"></div>
+          </div>
+          <span class="app-tag" id="appTag5"></span>
+        </a>
+        <a class="app-card" href="javascript:void(0)" onclick="goToMovieMemory()">
+          <div class="app-icon">🎞️</div>
+          <div>
+            <div class="app-name" id="appName6"></div>
+            <div class="app-desc" id="appDesc6"></div>
+          </div>
+          <span class="app-tag" id="appTag6"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -592,7 +625,30 @@
 
   <script>
     const TEMP_CHAT_URL = "https://taithai.app/temporary%20chat/";
-    const QR_GENERATOR_URL = "javascript:void(0)"; // ใส่ลิงก์จริงของ QR Code Generator ตรงนี้
+    const QR_GENERATOR_URL = "https://taithai.app/QR%20Code%20Generator%20/";
+    const QR_READER_URL = "https://taithai.app/QR%20Code%20Reader/";
+    const URL_SHORTENER_URL = "https://taithai.app/S/";
+    const DOCTOR_PLAN_URL = "https://taithai.app/Bangkok%20Doctor%20Plan/";
+    const MOVIE_MEMORY_URL = "https://taithai.app/Movie%20Memory/";
+
+    const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
+
+    (function resolveRootShortLink() {
+      const parts = window.location.pathname.split("/").filter(Boolean);
+      const pathCode = parts.length === 1 ? parts[0] : (parts[0] === "S" ? parts[1] : "");
+      const queryCode = new URLSearchParams(window.location.search).get("c");
+      const code = (/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode || "") ? pathCode : queryCode);
+      if (!code) return;
+
+      try {
+        const db = JSON.parse(localStorage.getItem(SHORTLINK_STORE_KEY) || "{}");
+        if (db[code]?.url) {
+          window.location.replace(db[code].url);
+        }
+      } catch (e) {
+        console.warn("Shortlink lookup failed", e);
+      }
+    })();
 
     const i18n = {
       en: {
@@ -613,11 +669,32 @@
         appDesc2: "Create QR codes easily for links, text, or shared content with a simple and fast generator interface.",
         appTag2: "🔳 QR Tool",
 
+        appName3: "QR Code Reader",
+        appDesc3: "Scan QR codes instantly with your camera or image uploads and open link results in one tap.",
+        appTag3: "📷 QR Scan",
+
+        appName4: "URL Shortener",
+        appDesc4: "Create the shortest links possible like taithai.app/S/abcd in a clean minimal experience.",
+        appTag4: "🔗 Short URL",
+        appName5: "BU Degree Plan Explorer",
+        appDesc5: "Loads degree-plan PDFs from degreeplan.bu.ac.th and organizes them into readable categories.",
+        appTag5: "🩺 Smart Catalog",
+        appName6: "Movie Memory",
+        appDesc6: "Keep your movie tickets, ratings, cinema details, and little memories from every film you have watched.",
+        appTag6: "🎞️ Movie Journal",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
         openingText1: "Opening Taithai Temporary Chat… 🌸",
         openingText2: "Opening QR Code Generator… 🌸",
-        noLinkYet2: "No link added yet for QR Code Generator"
+        openingText3: "Opening QR Code Reader… 🌸",
+        noLinkYet2: "No link added yet for QR Code Generator",
+        noLinkYet3: "No link added yet for QR Code Reader",
+        openingText4: "Opening URL Shortener… 🌸",
+        noLinkYet4: "No link added yet for URL Shortener",
+        openingText5: "Opening BU Degree Plan Explorer… 🌸",
+        noLinkYet5: "No link added yet for BU Degree Plan Explorer",
+        openingText6: "Opening Movie Memory… 🎞️"
       },
       th: {
         htmlLang: "th",
@@ -637,11 +714,32 @@
         appDesc2: "สร้างคิวอาร์โค้ดได้อย่างง่ายดายสำหรับลิงก์ ข้อความ หรือคอนเทนต์ที่ต้องการแชร์ ด้วยหน้าใช้งานที่เรียบง่ายและรวดเร็ว",
         appTag2: "🔳 เครื่องมือ QR",
 
+        appName3: "ตัวอ่านคิวอาร์โค้ด",
+        appDesc3: "สแกน QR Code ได้ทันทีผ่านกล้องหรือรูปภาพ พร้อมเปิดลิงก์จากผลลัพธ์ได้ในคลิกเดียว",
+        appTag3: "📷 สแกน QR",
+
+        appName4: "URL Shortener",
+        appDesc4: "สร้างลิงก์ให้สั้นที่สุดเป็นรูปแบบ taithai.app/S/abcd ด้วยหน้าจอเรียบง่าย",
+        appTag4: "🔗 ลิงก์สั้น",
+        appName5: "ตัวอ่าน Degree Plan BU",
+        appDesc5: "ดึงรายการ PDF จาก degreeplan.bu.ac.th แล้วจัดหมวดหมู่ให้อ่านง่าย ค้นหาไว",
+        appTag5: "🩺 แคตตาล็อกอัจฉริยะ",
+        appName6: "Movie Memory",
+        appDesc6: "เก็บตั๋วหนัง คะแนน โรงภาพยนตร์ และความทรงจำเล็ก ๆ จากหนังทุกเรื่องที่เคยดู",
+        appTag6: "🎞️ สมุดบันทึกหนัง",
+
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
         openingText1: "กำลังเปิด Taithai Temporary Chat… 🌸",
         openingText2: "กำลังเปิด ตัวสร้างคิวอาร์โค้ด… 🌸",
-        noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด"
+        openingText3: "กำลังเปิด ตัวอ่านคิวอาร์โค้ด… 🌸",
+        noLinkYet2: "ยังไม่ได้ใส่ลิงก์ของ ตัวสร้างคิวอาร์โค้ด",
+        noLinkYet3: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่านคิวอาร์โค้ด",
+        openingText4: "กำลังเปิด URL Shortener… 🌸",
+        noLinkYet4: "ยังไม่ได้ใส่ลิงก์ของ URL Shortener",
+        openingText5: "กำลังเปิด ตัวอ่าน Degree Plan BU… 🌸",
+        noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่าน Degree Plan BU",
+        openingText6: "กำลังเปิด Movie Memory… 🎞️"
       }
     };
 
@@ -673,6 +771,20 @@
       document.getElementById("appName2").textContent = t.appName2;
       document.getElementById("appDesc2").textContent = t.appDesc2;
       document.getElementById("appTag2").textContent = t.appTag2;
+
+      document.getElementById("appName3").textContent = t.appName3;
+      document.getElementById("appDesc3").textContent = t.appDesc3;
+      document.getElementById("appTag3").textContent = t.appTag3;
+
+      document.getElementById("appName4").textContent = t.appName4;
+      document.getElementById("appDesc4").textContent = t.appDesc4;
+      document.getElementById("appTag4").textContent = t.appTag4;
+      document.getElementById("appName5").textContent = t.appName5;
+      document.getElementById("appDesc5").textContent = t.appDesc5;
+      document.getElementById("appTag5").textContent = t.appTag5;
+      document.getElementById("appName6").textContent = t.appName6;
+      document.getElementById("appDesc6").textContent = t.appDesc6;
+      document.getElementById("appTag6").textContent = t.appTag6;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -706,6 +818,50 @@
       showToast(i18n[currentLang].openingText2);
       setTimeout(() => {
         window.location.href = QR_GENERATOR_URL;
+      }, 250);
+    }
+
+
+
+    function goToQrReader() {
+      if (!QR_READER_URL || QR_READER_URL === "javascript:void(0)") {
+        showToast(i18n[currentLang].noLinkYet3);
+        return;
+      }
+
+      showToast(i18n[currentLang].openingText3);
+      setTimeout(() => {
+        window.location.href = QR_READER_URL;
+      }, 250);
+    }
+    function goToUrlShortener() {
+      if (!URL_SHORTENER_URL || URL_SHORTENER_URL === "javascript:void(0)") {
+        showToast(i18n[currentLang].noLinkYet4);
+        return;
+      }
+
+      showToast(i18n[currentLang].openingText4);
+      setTimeout(() => {
+        window.location.href = URL_SHORTENER_URL;
+      }, 250);
+    }
+
+    function goToDoctorPlan() {
+      if (!DOCTOR_PLAN_URL || DOCTOR_PLAN_URL === "javascript:void(0)") {
+        showToast(i18n[currentLang].noLinkYet5);
+        return;
+      }
+
+      showToast(i18n[currentLang].openingText5);
+      setTimeout(() => {
+        window.location.href = DOCTOR_PLAN_URL;
+      }, 250);
+    }
+
+    function goToMovieMemory() {
+      showToast(i18n[currentLang].openingText6);
+      setTimeout(() => {
+        window.location.href = MOVIE_MEMORY_URL;
       }, 250);
     }
 
