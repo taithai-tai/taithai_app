@@ -128,6 +128,10 @@
       text-decoration: none; font-family: inherit;
     }
     .btn:active { transform: scale(0.97); }
+    :where(button, a, input, select, textarea, [tabindex]):focus-visible {
+      outline: 3px solid rgba(255, 181, 71, 0.45);
+      outline-offset: 3px;
+    }
     .btn-primary {
       color: #1a0f05;
       background: linear-gradient(135deg, var(--gold), #ff8c44);
@@ -219,6 +223,18 @@
     }
     .view-btn.active { background: var(--surface-card); color: var(--gold); border: 1px solid var(--border-gold); }
 
+    .collection-head {
+      display: flex; align-items: flex-end; justify-content: space-between; gap: 16px;
+      margin: 4px 2px 18px;
+    }
+    .collection-head h2 { font-size: 21px; letter-spacing: -0.02em; }
+    .collection-head p { color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .clear-filter-btn {
+      border: 0; background: transparent; color: var(--gold); font: inherit; font-size: 12px;
+      cursor: pointer; padding: 7px 10px; border-radius: 999px;
+    }
+    .clear-filter-btn:hover { background: rgba(255, 181, 71, 0.1); }
+
     /* Vertical Aspect Ratio Uniformity Rule */
     .vertical-aspect {
       aspect-ratio: 2 / 3;
@@ -251,7 +267,15 @@
     .movie-card:hover .poster-bg img { transform: scale(1.05); }
     .poster-overlay {
       position: absolute; inset: 0;
-      background: linear-gradient(to bottom, rgba(13,10,8,0.25) 0%, rgba(13,10,8,0.5) 45%, rgba(13,10,8,0.96) 90%);
+      background: linear-gradient(
+        to bottom,
+        rgba(13, 10, 8, 0) 0%,
+        rgba(13, 10, 8, 0) 42%,
+        rgba(13, 10, 8, 0.12) 52%,
+        rgba(13, 10, 8, 0.68) 72%,
+        rgba(13, 10, 8, 0.96) 92%,
+        rgba(13, 10, 8, 1) 100%
+      );
     }
     .card-header {
       position: relative; z-index: 2; padding: 16px; display: flex; justify-content: space-between; align-items: flex-start;
@@ -345,13 +369,14 @@
     .empty-icon { font-size: 58px; margin-bottom: 14px; }
     .empty-state h3 { font-size: 22px; margin-bottom: 8px; color: var(--cream); }
     .empty-state p { color: var(--muted); max-width: 440px; margin: 0 auto 20px; font-size: 14px; }
+    .mobile-add-btn { display: none; }
 
     /* Dialogs / Modals */
     dialog {
       width: min(840px, calc(100% - 24px)); max-height: 92vh; border: 1px solid var(--border-gold);
       border-radius: var(--radius-lg); background: #14100c; color: var(--cream); padding: 0;
       box-shadow: 0 35px 100px rgba(0, 0, 0, 0.85); overflow: hidden; margin: auto;
-      display: flex; flex-direction: column;
+      display: none; flex-direction: column;
     }
     dialog[open] { display: flex; }
     dialog::backdrop { background: rgba(5, 3, 2, 0.85); backdrop-filter: blur(12px); }
@@ -426,7 +451,13 @@
 
     /* Form Step */
     form#movieForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-    .form-container { padding: 20px 28px 28px; overflow-y: auto; flex: 1; }
+    #movieForm {
+      min-height: 0; flex: 1; overflow: hidden; flex-direction: column;
+    }
+    .form-container {
+      padding: 20px 28px 28px; overflow-y: auto; overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch; flex: 1; min-height: 0;
+    }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
     .form-col-full { grid-column: 1 / -1; }
     .form-section-title {
@@ -482,15 +513,40 @@
     }
     .ticket-inspect-cover {
       width: 100px; aspect-ratio: 2 / 3; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      border: 2px solid var(--border-gold); flex-shrink: 0; background: #221810;
+      border: 2px solid var(--border-gold); flex-shrink: 0; background: #221810; position: relative;
     }
     .ticket-inspect-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .change-poster-btn {
+      position: absolute; left: 6px; right: 6px; bottom: 6px; z-index: 3;
+      border: 1px solid rgba(255,255,255,.24); border-radius: 999px; padding: 6px 8px;
+      background: rgba(13,10,8,.82); backdrop-filter: blur(10px); color: var(--cream);
+      font: inherit; font-size: 9px; font-weight: 700; cursor: pointer;
+    }
+    .change-poster-btn:hover { background: var(--gold); color: #1a0f05; border-color: var(--gold); }
     .ticket-inspect-title-group h2 { font-size: 26px; font-weight: 700; line-height: 1.2; }
     .ticket-inspect-body { padding: 24px 28px; display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 20px; overflow-y: auto; }
     .inspect-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--surface-card); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
     .inspect-meta-item strong { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
     .inspect-meta-item span { font-size: 14px; font-weight: 600; color: var(--cream); }
     .inspect-quote { background: var(--surface-card); padding: 16px; border-radius: var(--radius); border-left: 3px solid var(--gold); font-style: italic; color: #e6d8cb; }
+
+    .poster-picker-body { padding: 20px 24px 26px; overflow-y: auto; }
+    .poster-picker-help { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
+    .poster-picker-grid {
+      display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 12px;
+    }
+    .poster-option {
+      border: 2px solid transparent; border-radius: 14px; background: var(--surface-card);
+      padding: 0; overflow: hidden; aspect-ratio: 2/3; cursor: pointer; transition: .2s; position: relative;
+    }
+    .poster-option:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: var(--shadow-gold); }
+    .poster-option img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .poster-option.current { border-color: var(--gold); }
+    .poster-option.current::after {
+      content: 'ใช้อยู่'; position: absolute; right: 6px; bottom: 6px; padding: 3px 7px;
+      border-radius: 999px; background: var(--gold); color: #1a0f05; font-size: 9px; font-weight: 700;
+    }
+    .poster-picker-status { grid-column: 1/-1; text-align: center; padding: 50px 20px; color: var(--muted); }
 
     /* Toast Notification */
     .toast {
@@ -503,15 +559,67 @@
 
     /* Responsive Queries */
     @media (max-width: 860px) {
+      .shell { width: min(100% - 24px, 1200px); }
+      header { padding: 10px 0; }
+      .brand-logo { width: 40px; height: 40px; }
+      .brand-title small, .user-info-text, #openAddModalBtn { display: none; }
+      .google-login-btn { padding: 9px 12px; }
+      .google-login-btn span { display: none; }
+      .hero { padding-top: 34px; }
       .hero { grid-template-columns: 1fr; gap: 20px; text-align: center; }
       .quote-box { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .toolbar { padding: 12px; border-radius: 20px; gap: 8px; }
+      .search-wrap { flex-basis: 100%; }
+      .toolbar > select.control { flex: 1; min-width: 0; width: calc(50% - 4px); }
+      .view-toggle { width: 100%; }
+      .view-btn { flex: 1; justify-content: center; }
+      .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+      .movie-card { height: 340px; border-radius: 20px; }
+      .card-content { padding: 16px 14px 14px; }
+      .movie-card h3 { font-size: 17px; }
+      .card-meta-pills { display: none; }
       .choice-container { grid-template-columns: 1fr; }
       .catalog-list-grid { grid-template-columns: repeat(2, 1fr); }
+      .poster-picker-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
       .form-grid { grid-template-columns: 1fr; }
       .media-upload-row { grid-template-columns: 1fr; }
       .ticket-inspect-body { grid-template-columns: 1fr; }
       .ticket-inspect-content { flex-direction: column; align-items: center; text-align: center; }
+      .mobile-add-btn {
+        display: inline-flex; position: fixed; right: 18px; bottom: calc(18px + env(safe-area-inset-bottom));
+        z-index: 45; min-width: 58px; height: 58px; padding: 0 20px; border: 0; border-radius: 999px;
+        align-items: center; justify-content: center; gap: 8px; color: #1a0f05; font: inherit;
+        font-weight: 700; background: linear-gradient(135deg, var(--gold), var(--orange));
+        box-shadow: 0 14px 40px rgba(244,119,59,.42); cursor: pointer;
+      }
+      .toast { bottom: 88px; width: max-content; max-width: calc(100% - 28px); text-align: center; }
+      .modal-footer { padding: 12px 16px; gap: 8px; }
+      #saveMovieBtn { padding: 12px 18px!important; font-size: 14px!important; }
+    }
+    @media (max-width: 480px) {
+      .hero h1 { font-size: 36px; }
+      .hero-copy { font-size: 14px; }
+      .stat-card { padding: 14px; }
+      .stat-val { font-size: 25px; }
+      .collection-grid { grid-template-columns: 1fr 1fr; }
+      .movie-card { height: 310px; }
+      .watch-date-chip { font-size: 9px; }
+      .choice-container { padding: 22px 16px; }
+      .choice-card-btn { min-height: 175px; padding: 20px; }
+      .wizard-steps { padding: 10px 16px; }
+      .wizard-step span { display: none; }
+      .form-container { padding: 16px; }
+      .catalog-container { padding: 16px; }
+      .modal-header { padding: 16px; }
+      .modal-header h2 { font-size: 18px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        scroll-behavior: auto!important;
+        animation-duration: 0.01ms!important;
+        transition-duration: 0.01ms!important;
+      }
     }
   </style>
 </head>
@@ -552,9 +660,6 @@
             <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
           </div>
 
-          <button class="btn btn-ghost" id="backupBtn" type="button" title="สำรองและเรียกคืนข้อมูล">
-            📥 นำเข้า / ส่งออก
-          </button>
           <button class="btn btn-primary" id="openAddModalBtn" type="button">
             ✨ ＋ เพิ่มบันทึกหนัง
           </button>
@@ -630,9 +735,21 @@
       </div>
     </section>
 
+    <div class="collection-head">
+      <div>
+        <h2>คอลเลกชันของฉัน</h2>
+        <p id="resultSummary">ยังไม่มีหนังในคอลเลกชัน</p>
+      </div>
+      <button class="clear-filter-btn" id="clearFiltersBtn" type="button" hidden>ล้างตัวกรอง ×</button>
+    </div>
+
     <!-- Movie Collection Display -->
     <section class="collection-grid" id="collectionGrid"></section>
   </main>
+
+  <button class="mobile-add-btn" id="mobileAddBtn" type="button" aria-label="เพิ่มบันทึกหนัง">
+    <span>＋</span><span>เพิ่มหนัง</span>
+  </button>
 
   <!-- Add/Edit Movie Dialog (Wizard Flow) -->
   <dialog id="addEditModal">
@@ -696,6 +813,7 @@
     <form id="movieForm" style="display:none">
       <div class="form-container">
         <input type="hidden" id="formMovieId">
+        <input type="hidden" id="formTmdbId">
         <input type="hidden" id="formReleaseDate">
         <input type="hidden" id="formPosterData">
         <input type="hidden" id="formTicketData">
@@ -745,7 +863,7 @@
           <div class="form-section-title">ข้อมูลภาพยนตร์</div>
           <div class="form-col-full">
             <label for="formTitleInput">ชื่อภาพยนตร์</label>
-            <input class="control" id="formTitleInput" placeholder="พิมพ์ชื่อภาพยนตร์..." maxlength="120">
+            <input class="control" id="formTitleInput" placeholder="พิมพ์ชื่อภาพยนตร์..." maxlength="120" required>
           </div>
 
           <div class="form-section-title">วันที่และสถานที่รับชม</div>
@@ -831,6 +949,7 @@
       <div class="ticket-inspect-content">
         <div class="ticket-inspect-cover">
           <img id="inspectCoverImg" src="" alt="">
+          <button class="change-poster-btn" id="changePosterBtn" type="button">เปลี่ยนโปสเตอร์</button>
         </div>
         <div class="ticket-inspect-title-group">
           <div class="badge-format" id="inspectFormatBadge" style="display:inline-block; margin-bottom:8px"></div>
@@ -873,35 +992,17 @@
     </div>
   </dialog>
 
-  <!-- Backup & Restore Modal -->
-  <dialog id="backupModal">
+  <dialog id="posterPickerModal">
     <div class="modal-header">
-      <h2>นำเข้า / ส่งออก ข้อมูลบันทึก</h2>
-      <button class="close-modal-btn" id="closeBackupBtn" type="button">×</button>
+      <div>
+        <h2>เลือกโปสเตอร์</h2>
+        <p id="posterPickerTitle" style="color:var(--muted);font-size:12px;margin-top:2px"></p>
+      </div>
+      <button class="close-modal-btn" id="closePosterPickerBtn" type="button" title="ปิดหน้าต่าง">×</button>
     </div>
-    <div style="padding:28px 28px">
-      <p style="color:var(--muted); margin-bottom:20px; font-size:14px">คุณสามารถส่งออกไฟล์ JSON เพื่อสำรองข้อมูลตั๋วหนังทั้งหมด หรือนำเข้าเพื่อย้ายข้อมูลไปยังอุปกรณ์อื่นได้</p>
-      
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
-        <div style="background:var(--surface-card); padding:20px; border-radius:var(--radius); border:1px solid var(--border)">
-          <h3 style="margin-bottom:8px; font-size:16px">📤 ส่งออกข้อมูล (Export)</h3>
-          <p style="font-size:12px; color:var(--muted); margin-bottom:16px">ดาวน์โหลดไฟล์ .json เพื่อเก็บไว้สำรอง</p>
-          <button class="btn btn-primary" id="exportDataBtn" type="button" style="width:100%">ดาวน์โหลด JSON</button>
-        </div>
-
-        <div style="background:var(--surface-card); padding:20px; border-radius:var(--radius); border:1px solid var(--border)">
-          <h3 style="margin-bottom:8px; font-size:16px">📥 นำเข้าข้อมูล (Import)</h3>
-          <p style="font-size:12px; color:var(--muted); margin-bottom:16px">เลือกไฟล์ .json เพื่อนำเข้าข้อมูลกลับมา</p>
-          <button class="btn btn-ghost" id="importDataBtn" type="button" style="width:100%">เลือกไฟล์ JSON</button>
-          <input type="file" id="importFileInput" accept=".json" hidden>
-        </div>
-      </div>
-
-      <div style="margin-top:24px; text-align:center; padding-top:20px; border-top:1px solid var(--border)">
-        <button class="btn btn-ghost" id="loadSampleDataBtn" type="button" style="font-size:12px; color:var(--gold)">
-          ✨ โหลดข้อมูลตัวอย่าง (Sample Demo)
-        </button>
-      </div>
+    <div class="poster-picker-body">
+      <p class="poster-picker-help">เลือกภาพที่ต้องการใช้เป็นหน้าปกในคอลเลกชันของคุณ</p>
+      <div class="poster-picker-grid" id="posterPickerGrid"></div>
     </div>
   </dialog>
 
@@ -925,6 +1026,7 @@
     let isCatalogLoading = false;
     let tmdbDebounceTimer = null;
     let inspectingMovieId = null;
+    let posterChoices = [];
 
     function safeText(value, maxLength = 500) {
       return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -946,6 +1048,7 @@
 
       return {
         id,
+        tmdbId: Number.isInteger(Number(value.tmdbId)) && Number(value.tmdbId) > 0 ? Number(value.tmdbId) : null,
         title: safeText(value.title, 100) || 'บันทึกความทรงจำภาพยนตร์',
         watchDate: validDate(value.watchDate) ? value.watchDate : new Date().toISOString().slice(0, 10),
         releaseDate: validDate(value.releaseDate) ? value.releaseDate : '',
@@ -1076,6 +1179,18 @@
     function renderCollection() {
       const grid = $('collectionGrid');
       const filtered = getFilteredMovies();
+      const filtersActive = Boolean(
+        $('searchInput').value.trim() ||
+        $('yearFilter').value !== 'all' ||
+        $('formatFilter').value !== 'all'
+      );
+
+      $('resultSummary').textContent = movies.length
+        ? filtersActive
+          ? `พบ ${filtered.length} จาก ${movies.length} เรื่อง`
+          : `${movies.length} เรื่อง · เก็บไว้เป็นความทรงจำแล้ว`
+        : 'ยังไม่มีหนังในคอลเลกชัน';
+      $('clearFiltersBtn').hidden = !filtersActive;
 
       grid.className = 'collection-grid';
       if (currentViewMode === 'list') grid.classList.add('list-view');
@@ -1090,10 +1205,10 @@
       if (filtered.length === 0) {
         grid.innerHTML = `
           <div class="empty-state">
-            <div class="empty-icon">🎬</div>
-            <h3>ยังไม่มีความทรงจำภาพยนตร์</h3>
-            <p>เริ่มต้นบันทึกตั๋วหนังเรื่องแรกของคุณ เพื่อสร้างสมุดภาพความทรงจำคอลเลกชันส่วนตัว</p>
-            <button class="btn btn-primary" onclick="openAddDialog()">✨ ＋ เพิ่มบันทึกหนังเรื่องแรก</button>
+            <div class="empty-icon">${movies.length ? '🔎' : '🎬'}</div>
+            <h3>${movies.length ? 'ไม่พบหนังที่ค้นหา' : 'ยังไม่มีความทรงจำภาพยนตร์'}</h3>
+            <p>${movies.length ? 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองเพื่อดูหนังทั้งหมด' : 'เริ่มบันทึกหนังเรื่องแรก แล้วค่อย ๆ สร้างคอลเลกชันความทรงจำของคุณ'}</p>
+            <button class="btn btn-primary" type="button" data-empty-action="${movies.length ? 'clear' : 'add'}">${movies.length ? 'ล้างตัวกรอง' : '✨ ＋ เพิ่มหนังเรื่องแรก'}</button>
           </div>
         `;
         return;
@@ -1103,7 +1218,7 @@
         grid.innerHTML = filtered.map(m => {
           const displayImg = m.ticketImg || m.posterImg || '';
           return `
-            <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')">
+            <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')" role="button" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
               <div class="ticket-stub-top">
                 <span class="ticket-cinema-badge">${escapeHtml(m.cinema || m.format || 'CINEMA')}</span>
                 <span style="font-size:11px; color:var(--gold); font-weight:700">${formatDate(m.watchDate)}</span>
@@ -1129,7 +1244,7 @@
         grid.innerHTML = filtered.map(m => {
           const displayImg = m.posterImg || m.ticketImg || '';
           return `
-            <div class="movie-card" onclick="openInspectDialog('${m.id}')">
+            <div class="movie-card" onclick="openInspectDialog('${m.id}')" role="button" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
               <div class="poster-bg">
                 ${displayImg ? `<img src="${escapeHtml(displayImg)}" alt="${escapeHtml(m.title)}">` : `<div class="no-poster-fill">🎬</div>`}
                 <div class="poster-overlay"></div>
@@ -1174,7 +1289,7 @@
     function switchWizardStep(stepNum) {
       $('wizardStep1').style.display = stepNum === 1 ? 'grid' : 'none';
       $('wizardStep2').style.display = stepNum === 2 ? 'block' : 'none';
-      $('movieForm').style.display = stepNum === 3 ? 'block' : 'none';
+      $('movieForm').style.display = stepNum === 3 ? 'flex' : 'none';
 
       $('stepIndicator1').className = `wizard-step ${stepNum === 1 ? 'active' : stepNum > 1 ? 'done' : ''}`;
       $('stepIndicator2').className = `wizard-step ${stepNum === 2 ? 'active' : stepNum > 2 ? 'done' : ''}`;
@@ -1257,6 +1372,7 @@
       const selected = catalogMoviesList.find(m => m.id === movieId);
       if (!selected) return;
 
+      $('formTmdbId').value = selected.id;
       $('formTitleInput').value = selected.title || '';
       $('formReleaseDate').value = selected.release_date || '';
       if (selected.poster_path) {
@@ -1277,6 +1393,7 @@
 
     function resetForm() {
       $('formMovieId').value = '';
+      $('formTmdbId').value = '';
       $('formReleaseDate').value = '';
       $('formPosterData').value = '';
       $('formTicketData').value = '';
@@ -1314,10 +1431,14 @@
     function executeSaveMovie() {
       let title = $('formTitleInput').value.trim();
       if (!title) {
-        title = 'บันทึกความทรงจำภาพยนตร์';
+        $('formTitleInput').focus();
+        $('formTitleInput').reportValidity();
+        showToast('กรุณาใส่ชื่อภาพยนตร์');
+        return;
       }
 
       const id = $('formMovieId').value || ('m_' + Date.now());
+      const tmdbId = Number($('formTmdbId').value) || null;
       const releaseDate = $('formReleaseDate').value;
       const watchDate = $('formWatchDateInput').value || new Date().toISOString().split('T')[0];
       const format = $('formFormatInput').value;
@@ -1331,6 +1452,7 @@
 
       const movieObj = {
         id,
+        tmdbId,
         title,
         watchDate,
         releaseDate,
@@ -1380,6 +1502,69 @@
       $('inspectModal').showModal();
     }
 
+    async function openPosterPicker() {
+      const movie = movies.find(m => m.id === inspectingMovieId);
+      if (!movie) return;
+
+      $('posterPickerTitle').textContent = movie.title;
+      $('posterPickerGrid').innerHTML = '<div class="poster-picker-status">กำลังค้นหาโปสเตอร์จาก TMDB…</div>';
+      $('posterPickerModal').showModal();
+
+      try {
+        let tmdbId = Number(movie.tmdbId) || null;
+        if (!tmdbId) {
+          const searchUrl = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=th-TH&query=${encodeURIComponent(movie.title)}&page=1`;
+          const searchResponse = await fetch(searchUrl);
+          if (!searchResponse.ok) throw new Error('SEARCH_FAILED');
+          const searchData = await searchResponse.json();
+          tmdbId = searchData.results?.[0]?.id || null;
+          if (!tmdbId) throw new Error('MOVIE_NOT_FOUND');
+          movie.tmdbId = tmdbId;
+          saveMoviesToStorage();
+        }
+
+        const imageUrl = `${BASE_URL}/movie/${tmdbId}/images?api_key=${API_KEY}&include_image_language=th,en,null`;
+        const response = await fetch(imageUrl);
+        if (!response.ok) throw new Error('IMAGES_FAILED');
+        const data = await response.json();
+        const seen = new Set();
+        posterChoices = (data.posters || [])
+          .filter(item => item.file_path && !seen.has(item.file_path) && seen.add(item.file_path))
+          .slice(0, 40);
+
+        if (!posterChoices.length) {
+          $('posterPickerGrid').innerHTML = '<div class="poster-picker-status">ยังไม่มีโปสเตอร์แบบอื่นสำหรับหนังเรื่องนี้</div>';
+          return;
+        }
+
+        $('posterPickerGrid').innerHTML = posterChoices.map((poster, index) => {
+          const src = `${IMG_URL}${poster.file_path}`;
+          const current = movie.posterImg === src ? ' current' : '';
+          return `<button class="poster-option${current}" type="button" data-poster-index="${index}" aria-label="เลือกโปสเตอร์แบบที่ ${index + 1}">
+            <img src="${src}" alt="" loading="lazy">
+          </button>`;
+        }).join('');
+      } catch (error) {
+        $('posterPickerGrid').innerHTML = '<div class="poster-picker-status">ไม่สามารถโหลดโปสเตอร์ได้ในขณะนี้<br><small>กรุณาลองใหม่อีกครั้ง</small></div>';
+      }
+    }
+
+    function applyPoster(index) {
+      const movie = movies.find(m => m.id === inspectingMovieId);
+      const poster = posterChoices[index];
+      if (!movie || !poster) return;
+
+      const posterUrl = `${IMG_URL}${poster.file_path}`;
+      movie.posterImg = posterUrl;
+      movie.updatedAt = new Date().toISOString();
+      saveMoviesToStorage();
+      renderCollection();
+      $('inspectBgImg').src = posterUrl;
+      $('inspectCoverImg').src = posterUrl;
+      $('posterPickerModal').close();
+      showToast('เปลี่ยนโปสเตอร์เรียบร้อยแล้ว');
+    }
+
     function editInspectedMovie() {
       if (!inspectingMovieId) return;
       const movie = movies.find(m => m.id === inspectingMovieId);
@@ -1388,6 +1573,7 @@
       $('inspectModal').close();
       
       $('formMovieId').value = movie.id;
+      $('formTmdbId').value = movie.tmdbId || '';
       $('formReleaseDate').value = movie.releaseDate || '';
       $('formTitleInput').value = movie.title || '';
       $('formWatchDateInput').value = movie.watchDate || '';
@@ -1468,81 +1654,13 @@
       reader.readAsDataURL(file);
     }
 
-    // Backup Export & Import
-    function exportBackup() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(movies, null, 2));
-      const downloadAnchor = document.createElement('a');
-      downloadAnchor.setAttribute("href", dataStr);
-      downloadAnchor.setAttribute("download", `Movie_Memory_Backup_${new Date().toISOString().slice(0,10)}.json`);
-      document.body.appendChild(downloadAnchor);
-      downloadAnchor.click();
-      downloadAnchor.remove();
-      showToast('📤 ส่งออกไฟล์สำรอง JSON สำเร็จ');
-    }
-
-    function importBackup(file) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        try {
-          const imported = JSON.parse(e.target.result);
-          if (Array.isArray(imported) && imported.length <= 5000) {
-            movies = imported.map(normalizeMovie);
-            saveMoviesToStorage();
-            renderCollection();
-            $('backupModal').close();
-            showToast('📥 นำเข้าข้อมูลบันทึกเรียบร้อยแล้ว');
-          } else {
-            alert('รูปแบบไฟล์ JSON ไม่ถูกต้อง');
-          }
-        } catch (err) {
-          alert('ไม่สามารถอ่านไฟล์ JSON นี้ได้');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    function loadSampleDemo() {
-      movies = [
-        {
-          id: 'demo_1',
-          title: 'Past Lives',
-          watchDate: '2024-07-12',
-          format: 'โรงภาพยนตร์',
-          cinema: 'House Samyan',
-          seat: 'A8 · Cinema 1',
-          companion: 'กับแฟน',
-          rating: 5,
-          note: 'หนังงดงามและกินใจมาก เรื่องราวความสัมพันธ์ ความเป็นไปได้ และคำว่า "อินยอน"',
-          posterImg: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80',
-          ticketImg: ''
-        },
-        {
-          id: 'demo_2',
-          title: 'Dune: Part Two',
-          watchDate: '2024-03-02',
-          format: 'โรงภาพยนตร์',
-          cinema: 'Major Cineplex IMAX',
-          seat: 'H14 · IMAX Laser',
-          companion: 'กับเพื่อน',
-          rating: 5,
-          note: 'ยิ่งใหญ่ อลังการทั้งภาพและเสียงดนตรีประกอบของ Hans Zimmer ยอดเยี่ยมมาก!',
-          posterImg: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
-          ticketImg: ''
-        }
-      ];
-      saveMoviesToStorage();
-      renderCollection();
-      $('backupModal').close();
-      showToast('✨ โหลดข้อมูลตัวอย่างเรียบร้อยแล้ว');
-    }
-
     // Event Listeners Setup
     document.addEventListener('DOMContentLoaded', () => {
       renderCollection();
 
       // Modal Triggers
       $('openAddModalBtn').addEventListener('click', openAddDialog);
+      $('mobileAddBtn').addEventListener('click', openAddDialog);
       $('closeModalBtn').addEventListener('click', closeAddDialog);
       $('cancelModalBtn').addEventListener('click', closeAddDialog);
       
@@ -1606,6 +1724,27 @@
       $('yearFilter').addEventListener('change', renderCollection);
       $('formatFilter').addEventListener('change', renderCollection);
       $('sortSelect').addEventListener('change', renderCollection);
+      $('clearFiltersBtn').addEventListener('click', () => {
+        $('searchInput').value = '';
+        $('yearFilter').value = 'all';
+        $('formatFilter').value = 'all';
+        renderCollection();
+      });
+      $('collectionGrid').addEventListener('click', event => {
+        const action = event.target.closest('[data-empty-action]');
+        if (!action) return;
+        if (action.dataset.emptyAction === 'clear') {
+          $('clearFiltersBtn').click();
+        } else {
+          openAddDialog();
+        }
+      });
+      $('collectionGrid').addEventListener('keydown', event => {
+        const card = event.target.closest('[data-movie-id]');
+        if (!card || (event.key !== 'Enter' && event.key !== ' ')) return;
+        event.preventDefault();
+        openInspectDialog(card.dataset.movieId);
+      });
 
       // View Mode Toggle
       $('viewGridBtn').addEventListener('click', () => {
@@ -1628,18 +1767,13 @@
       $('closeInspectBtn').addEventListener('click', () => $('inspectModal').close());
       $('inspectCloseBtn').addEventListener('click', () => $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
-
-      // Backup Modal Controls
-      $('backupBtn').addEventListener('click', () => $('backupModal').showModal());
-      $('closeBackupBtn').addEventListener('click', () => $('backupModal').close());
-      $('exportDataBtn').addEventListener('click', exportBackup);
-      $('importDataBtn').addEventListener('click', () => $('importFileInput').click());
-      $('importFileInput').addEventListener('change', e => {
-        if (e.target.files && e.target.files[0]) {
-          importBackup(e.target.files[0]);
-        }
+      $('changePosterBtn').addEventListener('click', openPosterPicker);
+      $('closePosterPickerBtn').addEventListener('click', () => $('posterPickerModal').close());
+      $('posterPickerGrid').addEventListener('click', event => {
+        const option = event.target.closest('[data-poster-index]');
+        if (option) applyPoster(Number(option.dataset.posterIndex));
       });
-      $('loadSampleDataBtn').addEventListener('click', loadSampleDemo);
+
       $('deleteEntryBtn').addEventListener('click', deleteCurrentMovie);
     });
   </script>
