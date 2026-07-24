@@ -584,9 +584,14 @@
     @media (max-width: 860px) {
       .shell { width: min(100% - 24px, 1200px); }
       header { padding: 10px 0; }
+      nav { align-items: flex-start; }
+      .nav-actions { flex: 1; min-width: 0; flex-wrap: wrap; justify-content: flex-end; }
       .brand-logo { width: 40px; height: 40px; }
       .brand-title small, .user-info-text, #openAddModalBtn { display: none; }
-      .people-search { order:3; width:100%; }
+      .people-search { order: 3; width: 100%; flex-basis: 100%; }
+      .people-search .control { min-height: 46px; font-size: 16px; }
+      .people-results { position: fixed; top: 112px; left: 12px; right: 12px; max-height: min(55vh, 420px); }
+      .people-result { min-height: 58px; }
       .google-login-btn { padding: 9px 12px; }
       .google-login-btn span { display: none; }
       .hero { padding-top: 34px; }
@@ -620,8 +625,17 @@
       .toast { bottom: 88px; width: max-content; max-width: calc(100% - 28px); text-align: center; }
       .modal-footer { padding: 12px 16px; gap: 8px; }
       #saveMovieBtn { padding: 12px 18px!important; font-size: 14px!important; }
+      .profile-form { flex-direction: column; }
+      .profile-form .control, .profile-form .btn { width: 100%; min-height: 48px; }
+      .profile-dialog-body { padding: 18px 16px 24px; }
     }
     @media (max-width: 480px) {
+      .shell { width: min(100% - 18px, 1200px); }
+      .brand-title { display: none; }
+      .nav-actions { gap: 7px; }
+      .user-profile-bar { padding-right: 7px; }
+      .logout-btn { padding: 7px 9px; font-size: 10px; }
+      .people-results { top: 106px; left: 9px; right: 9px; }
       .hero h1 { font-size: 36px; }
       .hero-copy { font-size: 14px; }
       .stat-card { padding: 14px; }
@@ -637,6 +651,8 @@
       .catalog-container { padding: 16px; }
       .modal-header { padding: 16px; }
       .modal-header h2 { font-size: 18px; }
+      dialog { width: calc(100% - 12px); max-height: calc(100dvh - 12px); border-radius: 20px; }
+      .poster-picker-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {

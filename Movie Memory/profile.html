@@ -24,7 +24,18 @@
     .info{padding:14px}.info h3{font-size:15px;line-height:1.35;margin:0 0 7px}.meta{font-size:12px;color:var(--muted)}.stars{color:var(--gold);font-size:12px;margin-top:5px}
     .guest{margin:42px 0 0;padding:26px;border:1px solid #8a642d;background:linear-gradient(135deg,#2c1c11,#17100c);border-radius:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.guest h2{font-size:20px;margin:0 0 5px}.guest p{color:var(--muted);margin:0}
     .empty,.loading{text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:22px;color:var(--muted);grid-column:1/-1}.error{max-width:560px;margin:80px auto;text-align:center}.error .icon{font-size:58px}
-    @media(max-width:650px){nav{min-height:64px}.brand span:last-child{display:none}main{padding-top:30px}.profile-head{align-items:flex-start}.avatar{width:72px;height:72px}.stats{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.guest{align-items:flex-start;flex-direction:column}}
+    @media(max-width:650px){
+      .shell{width:calc(100% - 20px)}
+      nav{min-height:64px;gap:8px}.brand span:last-child{display:none}.logo{width:40px;height:40px}.actions{min-width:0;justify-content:flex-end;gap:7px}
+      .actions .button,.actions button{padding:9px 11px;font-size:12px;white-space:nowrap}
+      main{padding:28px 0 calc(60px + env(safe-area-inset-bottom))}
+      .profile-head{align-items:center;gap:14px;margin-bottom:24px}.avatar{width:70px;height:70px;flex:none}.profile-head h1{font-size:27px;overflow-wrap:anywhere}.handle{font-size:14px}
+      .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:18px 0 30px}.stat{padding:12px 8px;text-align:center;border-radius:14px}.stat strong{font-size:22px}.stat span{font-size:10px;line-height:1.3;display:block}
+      .section-title h2{font-size:19px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.movie{border-radius:15px}.info{padding:11px}.info h3{font-size:13px}.meta{font-size:10px}.stars{font-size:10px}
+      .guest{margin-top:28px;padding:20px;align-items:stretch;flex-direction:column}.guest h2{font-size:18px}.guest .primary{width:100%;min-height:48px}
+      .empty,.loading{padding:48px 14px}.error{margin:50px auto}.error h1{font-size:28px}
+    }
+    @media(max-width:370px){.actions .secondary{font-size:0}.actions .secondary::after{content:"← กลับ";font-size:12px}.stats{grid-template-columns:1fr}.stat{text-align:left}}
   </style>
 </head>
 <body>
