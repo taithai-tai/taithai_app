@@ -4,6 +4,8 @@ import {
   signInWithPopup,
   getRedirectResult,
   GoogleAuthProvider, 
+  browserLocalPersistence,
+  setPersistence,
   signOut, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
@@ -26,6 +28,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app, "ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb");
+const authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
+  console.error("Could not enable persistent Firebase session:", error);
+  throw error;
+});
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -33,7 +39,7 @@ googleProvider.setCustomParameters({
 });
 
 // Check redirect results on load
-getRedirectResult(auth).then(async (result) => {
+authReady.then(() => getRedirectResult(auth)).then(async (result) => {
   if (result && result.user) {
     await saveUserProfile(result.user);
   }
@@ -64,6 +70,7 @@ export async function loginWithGoogle() {
   }
 
   try {
+    await authReady;
     const result = await signInWithPopup(auth, googleProvider);
     if (result?.user) {
       await saveUserProfile(result.user);
@@ -86,10 +93,12 @@ export async function logout() {
 }
 
 export function subscribeAuth(callback) {
-  return onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      saveUserProfile(user);
-    }
-    callback(user);
-  });
+  let unsubscribe = () => {};
+  authReady.then(() => {
+    unsubscribe = onAuthStateChanged(auth, async (user) => {
+      if (user) saveUserProfile(user);
+      callback(user);
+    });
+  }).catch(() => callback(null));
+  return () => unsubscribe();
 }
