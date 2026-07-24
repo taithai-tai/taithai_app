@@ -51,7 +51,7 @@
     </section>
   </main>
   <script type="module">
-    import { getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-4";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-5";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const stars=value=>"★".repeat(Number(value)||0)+"☆".repeat(5-(Number(value)||0));
@@ -61,10 +61,20 @@
       const match=decodeURIComponent(location.pathname).match(/\/Movie-Memory\/@([^/]+)/);
       return String(query||match?.[1]||"").replace(/^@/,"");
     }
+    function withTimeout(promise, milliseconds=12000){
+      return Promise.race([
+        promise,
+        new Promise((_,reject)=>setTimeout(()=>reject(new Error("LOAD_TIMEOUT")),milliseconds))
+      ]);
+    }
     async function loadProfile(){
       try{
-        const {profile,movies}=await getPublicProfileByUsername(usernameFromUrl());
-        const canonicalUrl=`/Movie%20Memory/profile?username=${encodeURIComponent(profile.username)}`;
+        const params=new URLSearchParams(location.search);
+        const uid=params.get("uid");
+        const profileRequest=uid?getPublicProfile(uid):getPublicProfileByUsername(usernameFromUrl());
+        const {profile,movies}=await withTimeout(profileRequest);
+        const canonicalParams=new URLSearchParams({uid:profile.uid,username:profile.username});
+        const canonicalUrl=`/Movie%20Memory/profile?${canonicalParams.toString()}`;
         if(location.pathname+location.search!==canonicalUrl) history.replaceState(null,"",canonicalUrl);
         document.title=`@${profile.username} — Movie Memory`;
         const rated=movies.filter(movie=>Number(movie.rating)>0);
@@ -72,7 +82,7 @@
         const currentYear=String(new Date().getFullYear());
         content.innerHTML=`
           <section class="profile-head">
-            <img class="avatar" src="${escapeHtml(profile.photoURL||`https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="">
+            <img class="avatar" src="${escapeHtml(profile.photoURL||`https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="" decoding="async">
             <div><h1>${escapeHtml(profile.displayName||profile.username)}</h1><div class="handle">@${escapeHtml(profile.username)}</div></div>
           </section>
           <section class="stats">
@@ -83,11 +93,13 @@
           <div class="section-title"><h2>คอลเลกชันภาพยนตร์</h2><span>${movies.length} เรื่อง</span></div>
           <section class="grid">${movies.length?movies.map(movie=>`
             <article class="movie">
-              ${movie.posterImg?`<img class="poster" src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}">`:`<div class="placeholder">🎬</div>`}
+              ${movie.posterImg?`<img class="poster" src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}" loading="lazy" decoding="async">`:`<div class="placeholder">🎬</div>`}
               <div class="info"><h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3><div class="meta">${date(movie.watchDate)} · ${escapeHtml(movie.format)}</div><div class="stars">${stars(movie.rating)}</div></div>
             </article>`).join(""):`<div class="empty">บัญชีนี้ยังไม่มีภาพยนตร์ในคอลเลกชัน</div>`}</section>`;
-      }catch{
-        content.innerHTML='<div class="error"><div class="icon">🎞️</div><h1>ไม่พบโปรไฟล์นี้</h1><p>ไอดีอาจถูกเปลี่ยน หรือยังไม่ได้สร้างโปรไฟล์</p><a class="button primary" href="/Movie%20Memory/">กลับไป Movie Memory</a></div>';
+      }catch(error){
+        const timedOut=error?.message==="LOAD_TIMEOUT";
+        content.innerHTML=`<div class="error"><div class="icon">🎞️</div><h1>${timedOut?"โหลดข้อมูลไม่สำเร็จ":"ไม่พบโปรไฟล์นี้"}</h1><p>${timedOut?"การเชื่อมต่อใช้เวลานานเกินไป กรุณาลองใหม่อีกครั้ง":"ไอดีอาจถูกเปลี่ยน หรือยังไม่ได้สร้างโปรไฟล์"}</p><button class="button primary" id="retryProfileBtn">ลองโหลดอีกครั้ง</button> <a class="button secondary" href="/Movie%20Memory/">กลับ</a></div>`;
+        document.getElementById("retryProfileBtn").addEventListener("click",()=>{content.innerHTML='<div class="loading">กำลังโหลดข้อมูลอีกครั้ง...</div>';loadProfile()});
       }
     }
     async function login(){try{await loginWithGoogle();location.href="/Movie%20Memory/"}catch{alert("เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่")}}

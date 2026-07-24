@@ -112,7 +112,7 @@ export function subscribeAuth(callback) {
   let unsubscribe = () => {};
   authReady.then(() => {
     unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) saveUserProfile(user);
+      if (user) await saveUserProfile(user);
       callback(user);
     });
   }).catch(() => callback(null));
@@ -125,8 +125,14 @@ function normalizeUsername(value) {
 
 export async function getMyPublicProfile(user) {
   if (!user) return null;
-  const snapshot = await getDoc(doc(db, "publicProfiles", user.uid));
-  return snapshot.exists() ? snapshot.data() : null;
+  try {
+    const snapshot = await getDoc(doc(db, "publicProfiles", user.uid));
+    if (snapshot.exists() && snapshot.data()?.username) return snapshot.data();
+  } catch (error) {
+    console.warn("Public profile is not available yet, using the private profile:", error);
+  }
+  const privateSnapshot = await getDoc(doc(db, "users", user.uid));
+  return privateSnapshot.exists() ? privateSnapshot.data() : null;
 }
 
 export async function claimUsername(user, requestedUsername) {
