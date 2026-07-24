@@ -3,470 +3,1657 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#17120f">
-  <title>Movie Memory — สมุดเก็บตั๋วหนัง</title>
+  <meta name="theme-color" content="#0d0a08">
+  <title>Movie Memory — สมุดบันทึกและเก็บตั๋วหนังความทรงจำ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --ink:#f8f1e7;--muted:#a99d90;--bg:#100d0b;--surface:#191411;--surface-2:#211a16;
-      --line:#302720;--gold:#ffb547;--orange:#f4773b;--cream:#f5e5cc;--danger:#e7655a;
-      --shadow:0 24px 70px rgba(0,0,0,.35);--radius:24px
+    :root {
+      --bg: #0d0a08;
+      --surface: #16120e;
+      --surface-card: #1f1813;
+      --surface-hover: #2a2019;
+      --border: #33261c;
+      --border-gold: #8a642d;
+      --gold: #ffb547;
+      --gold-light: #ffd285;
+      --gold-dark: #cc8a24;
+      --orange: #f4773b;
+      --cream: #f8f1e7;
+      --muted: #a69788;
+      --muted-dark: #6e6154;
+      --danger: #e7655a;
+      --danger-bg: rgba(231, 101, 90, 0.12);
+      --success: #57c26f;
+      --shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      --shadow-gold: 0 10px 30px rgba(255, 181, 71, 0.15);
+      --radius-sm: 10px;
+      --radius: 18px;
+      --radius-lg: 28px;
     }
-    *{box-sizing:border-box}
-    html{scroll-behavior:smooth}
-    body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans Thai','DM Sans',sans-serif;min-height:100vh;line-height:1.55}
-    button,input,select,textarea{font:inherit}
-    button{cursor:pointer}
-    .grain{position:fixed;inset:0;pointer-events:none;opacity:.035;z-index:20;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
-    .glow{position:fixed;width:520px;height:520px;border-radius:50%;filter:blur(120px);opacity:.12;pointer-events:none}
-    .glow.one{background:#ff7a36;right:-200px;top:-180px}.glow.two{background:#d69b40;left:-280px;bottom:-260px}
-    .shell{width:min(1180px,calc(100% - 40px));margin:auto;position:relative}
-    header{height:76px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;position:sticky;top:0;background:rgba(16,13,11,.82);backdrop-filter:blur(18px);z-index:10}
-    nav{display:flex;align-items:center;justify-content:space-between;gap:20px}
-    .brand{display:flex;align-items:center;gap:12px;color:var(--ink);text-decoration:none;font-weight:700;letter-spacing:-.02em}
-    .brand-mark{width:42px;height:42px;border:1px solid #5e432d;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#2f2219,#18120e);box-shadow:inset 0 1px rgba(255,255,255,.08)}
-    .brand small{display:block;color:var(--muted);font-weight:400;font-size:10px;letter-spacing:.15em;text-transform:uppercase}
-    .nav-actions{display:flex;align-items:center;gap:10px}
-    .btn{border:0;border-radius:999px;padding:11px 18px;font-weight:600;transition:.2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
-    .btn:hover{transform:translateY(-2px)}.btn-primary{color:#241409;background:linear-gradient(135deg,var(--gold),#ff8c44);box-shadow:0 8px 26px rgba(244,119,59,.22)}
-    .btn-ghost{color:var(--ink);background:#211a16;border:1px solid var(--line)}
-    .hero{padding:70px 0 38px;display:grid;grid-template-columns:1.35fr .65fr;gap:44px;align-items:end}
-    .eyebrow{font-family:'DM Sans';color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;margin-bottom:15px}
-    h1{font-size:clamp(42px,7vw,84px);letter-spacing:-.065em;line-height:.98;margin:0 0 20px;max-width:780px}
-    h1 em{font-style:normal;color:var(--gold)}
-    .hero-copy{color:var(--muted);font-size:17px;max-width:610px;margin:0}
-    .quote{border-left:1px solid #6c4b30;padding:5px 0 5px 20px;color:#c9b9aa;font-weight:300}
-    .quote strong{display:block;color:var(--ink);font-size:13px;margin-top:10px}
-    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0 38px}
-    .stat{padding:20px;background:linear-gradient(145deg,#1d1713,#16110e);border:1px solid var(--line);border-radius:20px}
-    .stat b{display:block;font-family:'DM Sans';font-size:30px;line-height:1.1}.stat span{font-size:12px;color:var(--muted)}
-    .toolbar{display:flex;gap:12px;align-items:center;margin-bottom:24px;flex-wrap:wrap}
-    .search{position:relative;flex:1;min-width:240px}
-    .search span{position:absolute;left:17px;top:50%;transform:translateY(-50%);opacity:.55}
-    .control{width:100%;color:var(--ink);background:#17120f;border:1px solid var(--line);border-radius:15px;padding:13px 15px;outline:none;transition:.2s}
-    .search .control{padding-left:46px}.control:focus{border-color:#9b653a;box-shadow:0 0 0 3px rgba(255,181,71,.08)}
-    select.control{width:auto;min-width:150px}
-    .view-switch{display:flex;padding:4px;border:1px solid var(--line);border-radius:14px;background:#17120f}
-    .view-switch button{width:38px;height:36px;border:0;border-radius:10px;background:transparent;color:var(--muted)}
-    .view-switch button.active{background:#31251e;color:var(--gold)}
-    .collection{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;padding-bottom:90px}
-    .movie-card{position:relative;min-height:380px;border-radius:var(--radius);overflow:hidden;background:var(--surface);border:1px solid var(--line);isolation:isolate;box-shadow:0 10px 40px rgba(0,0,0,.18);transition:.25s}
-    .movie-card:hover{transform:translateY(-5px);border-color:#5b4434;box-shadow:var(--shadow)}
-    .poster{position:absolute;inset:0;background:linear-gradient(150deg,#39271d,#17110e);z-index:-2}
-    .poster img{width:100%;height:100%;object-fit:cover;display:block}
-    .poster::after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,rgba(8,5,3,.03) 18%,rgba(8,5,3,.38) 50%,#110d0a 96%)}
-    .no-poster{width:100%;height:100%;display:grid;place-items:center;color:#6c5342;font-size:70px;background:radial-gradient(circle at 70% 25%,#49301f,#1b1410 60%)}
-    .card-top{display:flex;justify-content:space-between;padding:16px;align-items:flex-start}
-    .format{font-family:'DM Sans';font-size:10px;font-weight:700;letter-spacing:.12em;padding:7px 10px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:rgba(18,13,10,.68);backdrop-filter:blur(8px)}
-    .more{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.16);background:rgba(18,13,10,.68);color:white;opacity:0;transition:.2s}
-    .movie-card:hover .more,.more:focus{opacity:1}
-    .card-body{position:absolute;left:0;right:0;bottom:0;padding:26px 23px 23px}
-    .watch-date{font-family:'DM Sans';font-size:11px;color:var(--gold);font-weight:700;letter-spacing:.1em;text-transform:uppercase}
-    .movie-card h3{font-size:24px;line-height:1.2;margin:6px 0 8px;letter-spacing:-.025em}
-    .meta{font-size:12px;color:#c2b4a8;display:flex;gap:8px;flex-wrap:wrap}
-    .stars{color:var(--gold);letter-spacing:1px;margin-top:12px;font-size:14px}
-    .collection.list{grid-template-columns:1fr}
-    .collection.list .movie-card{min-height:170px}
-    .collection.list .poster{width:180px;right:auto}
-    .collection.list .poster::after{background:linear-gradient(90deg,rgba(8,5,3,.05),#191411 94%)}
-    .collection.list .card-top{margin-left:180px}
-    .collection.list .card-body{left:180px;top:34px;bottom:auto}
-    .empty{grid-column:1/-1;text-align:center;padding:70px 20px;border:1px dashed #46372d;border-radius:28px;color:var(--muted)}
-    .empty-icon{font-size:52px;filter:grayscale(.35);margin-bottom:8px}
-    dialog{width:min(780px,calc(100% - 30px));max-height:92vh;border:1px solid #4a392e;border-radius:28px;background:#17120f;color:var(--ink);padding:0;box-shadow:0 30px 100px #000;overflow:auto}
-    dialog::backdrop{background:rgba(4,3,2,.76);backdrop-filter:blur(8px)}
-    [hidden]{display:none!important}
-    .modal-head{display:flex;justify-content:space-between;align-items:start;padding:28px 30px 14px;position:sticky;top:0;background:rgba(23,18,15,.94);backdrop-filter:blur(16px);z-index:5}
-    .modal-head h2{margin:0;font-size:26px}.modal-head p{margin:4px 0 0;color:var(--muted);font-size:13px}
-    .icon-btn{border:1px solid var(--line);color:var(--ink);background:#221a16;width:38px;height:38px;border-radius:50%;font-size:18px}
-    .steps{display:flex;align-items:center;padding:0 30px 20px;gap:8px;color:#66594f;font-size:10px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
-    .step{display:flex;align-items:center;gap:7px;white-space:nowrap}.step-dot{width:22px;height:22px;border:1px solid #44372e;border-radius:50%;display:grid;place-items:center;font-family:'DM Sans'}
-    .step.active{color:var(--cream)}.step.active .step-dot{background:var(--gold);border-color:var(--gold);color:#27170c}.step.done{color:#9e8e7e}.step.done .step-dot{background:#382b22;color:var(--gold)}
-    .step-line{height:1px;flex:1;background:#362b24;min-width:18px}
-    .add-choice{padding:10px 30px 32px;display:grid;grid-template-columns:1fr 1fr;gap:14px}
-    .choice-card{min-height:210px;border:1px solid var(--line);border-radius:22px;background:linear-gradient(145deg,#211a16,#15100d);color:var(--ink);padding:24px;text-align:left;transition:.22s}
-    .choice-card:hover{transform:translateY(-3px);border-color:#8a5d39;background:linear-gradient(145deg,#2a201a,#18110e)}
-    .choice-icon{width:54px;height:54px;border-radius:17px;background:#32241b;display:grid;place-items:center;font-size:27px;margin-bottom:28px}
-    .choice-card strong{display:block;font-size:19px;margin-bottom:6px}.choice-card span{display:block;color:var(--muted);font-size:13px}
-    .choice-card small{display:block;color:var(--gold);margin-top:14px;font-weight:600}
-    .catalog{padding:6px 30px 30px}
-    .tmdb-bar{margin-bottom:12px;color:var(--muted);font-size:11px}
-    .tmdb-bar strong{color:#90cea1;letter-spacing:.08em}
-    .catalog-search{position:sticky;top:0;background:#17120f;padding:4px 0 14px;z-index:2}
-    .catalog-search .control{padding-left:42px}.catalog-search>span{position:absolute;left:16px;top:17px;color:var(--muted)}
-    .catalog-heading{display:flex;align-items:end;justify-content:space-between;margin:4px 0 12px}.catalog-heading strong{font-size:14px}.catalog-heading span{color:var(--muted);font-size:10px}
-    .catalog-list{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-height:500px;overflow:auto;padding:1px 6px 8px 1px;scrollbar-color:#4d3a2e transparent}
-    .catalog-item{border:1px solid var(--line);border-radius:16px;background:#1d1713;color:var(--ink);padding:10px;display:flex;align-items:center;gap:12px;text-align:left;transition:.18s;min-height:86px}
-    .catalog-item:hover{border-color:#835a3b;background:#261d17}
-    .catalog-cover{width:52px;height:68px;border-radius:10px;display:grid;place-items:center;flex:0 0 auto;font-family:'DM Sans';font-size:18px;font-weight:700;color:#fff;background:#2a211b;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1)}
-    .catalog-info{min-width:0;flex:1}.catalog-info strong{display:block;font-size:13px;line-height:1.35}.catalog-info span{display:block;color:var(--muted);font-size:10px;margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .tmdb-score{color:var(--gold)!important;font-family:'DM Sans';font-weight:600}
-    .catalog-custom{grid-column:1/-1;border-style:dashed;justify-content:center;min-height:66px;color:var(--gold);font-weight:600}
-    .catalog-status{grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted)}
-    .catalog-cover img{width:100%;height:100%;border-radius:10px;object-fit:cover}
-    .back-btn{border:0;background:transparent;color:var(--gold);padding:0 0 12px;font-size:13px}
-    .selected-film{display:flex;align-items:center;gap:12px;background:#251c17;border:1px solid #493528;border-radius:16px;padding:12px 14px}
-    .selected-film-icon{width:42px;height:52px;border-radius:9px;display:grid;place-items:center;background:linear-gradient(145deg,#81482c,#d07b3f);font-size:22px}
-    .selected-film strong{display:block}.selected-film span{font-size:11px;color:var(--muted)}
-    form{padding:6px 30px 30px}
-    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .form-section{grid-column:1/-1;display:flex;align-items:center;gap:10px;margin:8px 0 -3px;color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
-    .form-section::after{content:"";height:1px;background:var(--line);flex:1}
-    .field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}
-    label{font-size:12px;color:#cbbdaf;font-weight:500}
-    textarea.control{min-height:88px;resize:vertical}
-    .upload{border:1px dashed #554235;border-radius:18px;min-height:150px;display:grid;place-items:center;text-align:center;color:var(--muted);position:relative;overflow:hidden;background:#130f0d}
-    .upload input{position:absolute;inset:0;opacity:0;cursor:pointer}
-    .upload img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .upload-copy{position:relative;z-index:1;padding:20px}.upload.has-image .upload-copy{background:rgba(10,7,5,.72);border-radius:14px;color:white}
-    .rating{display:flex;gap:4px;flex-direction:row-reverse;justify-content:flex-end}
-    .rating input{display:none}.rating label{font-size:28px;color:#4e4035;cursor:pointer}
-    .rating label:hover,.rating label:hover~label,.rating input:checked~label{color:var(--gold)}
-    .form-actions{display:flex;justify-content:space-between;gap:10px;margin-top:28px;padding-top:18px;border-top:1px solid var(--line)}
-    .right-actions{display:flex;gap:10px}
-    .danger{color:#ff9187;background:transparent;border:1px solid #633a36;display:none}
-    .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,100px);opacity:0;background:var(--cream);color:#22150d;padding:11px 18px;border-radius:999px;font-size:13px;font-weight:600;z-index:40;transition:.3s}
-    .toast.show{transform:translate(-50%,0);opacity:1}
-    .tmdb-credit{text-align:center;color:#756b63;font-size:10px;padding:0 20px 36px}.tmdb-credit strong{color:#90cea1;letter-spacing:.12em}
-    @media(max-width:850px){.hero{grid-template-columns:1fr}.quote{display:none}.collection{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media(max-width:590px){.shell{width:min(100% - 28px,1180px)}header{height:66px}.brand small{display:none}.nav-actions .btn-ghost{display:none}.hero{padding:48px 0 24px}.stats{gap:8px}.stat{padding:15px}.stat b{font-size:24px}.collection{grid-template-columns:1fr}.movie-card{min-height:410px}.form-grid{grid-template-columns:1fr}.field.full{grid-column:auto}.form-section{grid-column:auto}.modal-head{padding:22px 20px 10px}.steps{padding:0 20px 16px}.step span:last-child{display:none}form{padding:4px 20px 24px}.add-choice{padding:6px 20px 24px;grid-template-columns:1fr}.choice-card{min-height:150px}.choice-icon{margin-bottom:16px}.catalog{padding:4px 20px 24px}.catalog-list{grid-template-columns:1fr;max-height:58vh}.catalog-custom{grid-column:auto}.collection.list .poster{width:120px}.collection.list .card-top{margin-left:120px}.collection.list .card-body{left:120px;padding:18px}.collection.list .movie-card h3{font-size:20px}}
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background-color: var(--bg);
+      color: var(--cream);
+      font-family: 'Noto Sans Thai', 'DM Sans', sans-serif;
+      min-height: 100vh;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
+    }
+
+    /* Ambient FX */
+    .grain {
+      position: fixed; inset: 0; pointer-events: none; opacity: 0.03; z-index: 99;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    }
+    .glow-spot {
+      position: fixed; border-radius: 50%; filter: blur(140px); opacity: 0.15; pointer-events: none; z-index: 0;
+    }
+    .glow-spot.one { width: 550px; height: 550px; background: #ff7a36; top: -200px; right: -150px; }
+    .glow-spot.two { width: 600px; height: 600px; background: #d69b40; bottom: -250px; left: -200px; }
+
+    /* Layout Container */
+    .shell {
+      width: min(1200px, calc(100% - 36px));
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Navigation Header */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(13, 10, 8, 0.88);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 14px 0;
+    }
+    nav {
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    .brand {
+      display: flex; align-items: center; gap: 12px; color: var(--cream); text-decoration: none; font-weight: 700;
+    }
+    .brand-logo {
+      width: 44px; height: 44px; border-radius: 14px;
+      background: linear-gradient(135deg, #2e1f14, #18110b);
+      border: 1px solid var(--border-gold);
+      display: grid; place-items: center; font-size: 22px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.15), 0 6px 16px rgba(0,0,0,0.4);
+    }
+    .brand-title { font-size: 19px; letter-spacing: -0.02em; font-family: 'Space Grotesk', sans-serif; }
+    .brand-title small { display: block; font-size: 10px; color: var(--muted); font-weight: 500; font-family: 'Noto Sans Thai'; letter-spacing: 0.12em; text-transform: uppercase; margin-top: -2px; }
+
+    .nav-actions { display: flex; align-items: center; gap: 10px; }
+
+    .google-login-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 255, 255, 0.08); border: 1px solid var(--border);
+      border-radius: 999px; padding: 9px 16px; color: var(--cream);
+      font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      font-family: inherit;
+    }
+    .google-login-btn:hover {
+      background: rgba(255, 255, 255, 0.15); border-color: var(--border-gold); color: var(--gold);
+    }
+    .google-login-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .user-profile-bar {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--surface-card); border: 1px solid var(--border-gold);
+      padding: 4px 12px 4px 6px; border-radius: 999px;
+    }
+    .user-avatar {
+      width: 30px; height: 30px; border-radius: 50%; object-fit: cover; border: 1px solid var(--gold);
+    }
+    .user-info-text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
+    .user-name { font-size: 12px; font-weight: 600; color: var(--cream); max-width: 100px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 10px; color: var(--muted); max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logout-btn {
+      border: none; background: rgba(231, 101, 90, 0.15); color: var(--danger);
+      font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+      cursor: pointer; transition: 0.2s; font-family: inherit;
+    }
+    .logout-btn:hover { background: var(--danger); color: white; }
+
+    /* Buttons */
+    .btn {
+      border: 0; border-radius: 999px; padding: 11px 22px; font-weight: 600; font-size: 14px;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+      text-decoration: none; font-family: inherit;
+    }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary {
+      color: #1a0f05;
+      background: linear-gradient(135deg, var(--gold), #ff8c44);
+      box-shadow: 0 6px 20px rgba(244, 119, 59, 0.25);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px rgba(244, 119, 59, 0.38);
+      background: linear-gradient(135deg, var(--gold-light), #ff9a58);
+    }
+    .btn-ghost {
+      color: var(--cream); background: var(--surface-card); border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      background: var(--surface-hover); border-color: var(--border-gold); color: var(--gold);
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 48px 0 24px;
+      display: grid; grid-template-columns: 1.25fr 0.75fr; gap: 36px; align-items: end;
+    }
+    .eyebrow {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--gold); font-size: 11px; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+      margin-bottom: 12px; display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255, 181, 71, 0.08); padding: 5px 14px; border-radius: 999px; border: 1px solid rgba(255, 181, 71, 0.2);
+    }
+    .hero h1 {
+      font-size: clamp(34px, 5.2vw, 64px); letter-spacing: -0.04em; line-height: 1.08; margin: 0 0 16px; font-weight: 700;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--gold-light), var(--orange));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero-copy {
+      color: var(--muted); font-size: 16px; max-width: 580px; margin: 0; line-height: 1.6;
+    }
+    .quote-box {
+      background: linear-gradient(145deg, rgba(31, 24, 19, 0.8), rgba(22, 18, 14, 0.9));
+      border: 1px solid var(--border); border-left: 3px solid var(--gold);
+      border-radius: var(--radius); padding: 20px 22px; color: #d4c5b7; font-weight: 300; font-size: 14px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.3);
+    }
+    .quote-box strong { display: block; color: var(--gold); font-size: 12px; margin-top: 8px; font-weight: 600; }
+
+    /* Dashboard Stats Bar */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 24px 0;
+    }
+    .stat-card {
+      padding: 16px 18px; background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius);
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .stat-card:hover { border-color: var(--border-gold); transform: translateY(-2px); }
+    .stat-val {
+      font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; line-height: 1.1; color: var(--cream);
+    }
+    .stat-val em { font-style: normal; color: var(--gold); }
+    .stat-lbl { font-size: 12px; color: var(--muted); margin-top: 4px; display: block; font-weight: 500; }
+
+    /* Controls & Toolbar */
+    .toolbar {
+      display: flex; gap: 12px; align-items: center; margin-bottom: 28px; flex-wrap: wrap;
+      background: var(--surface); padding: 14px 18px; border-radius: var(--radius-lg); border: 1px solid var(--border);
+    }
+    .search-wrap {
+      position: relative; flex: 1; min-width: 220px;
+    }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+    .control {
+      width: 100%; color: var(--cream); background: var(--bg); border: 1px solid var(--border);
+      border-radius: 14px; padding: 11px 16px; outline: none; font-size: 14px; font-family: inherit;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .search-wrap .control { padding-left: 44px; }
+    .control:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.12); }
+    select.control {
+      width: auto; cursor: pointer; min-width: 130px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a69788' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; -webkit-appearance: none;
+    }
+    .view-toggle {
+      display: flex; padding: 3px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); gap: 2px;
+    }
+    .view-btn {
+      padding: 8px 12px; border: 0; border-radius: 9px; background: transparent; color: var(--muted);
+      cursor: pointer; font-size: 13px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .view-btn.active { background: var(--surface-card); color: var(--gold); border: 1px solid var(--border-gold); }
+
+    /* Vertical Aspect Ratio Uniformity Rule */
+    .vertical-aspect {
+      aspect-ratio: 2 / 3;
+      width: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+
+    /* Collection Views */
+    .collection-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 22px; padding-bottom: 80px;
+    }
+    
+    /* Grid Card Style */
+    .movie-card {
+      position: relative; border-radius: var(--radius-lg); overflow: hidden;
+      background: var(--surface-card); border: 1px solid var(--border);
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4); transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer; display: flex; flex-direction: column; height: 420px;
+    }
+    .movie-card:hover {
+      transform: translateY(-6px); border-color: var(--border-gold); box-shadow: var(--shadow-gold), 0 20px 50px rgba(0,0,0,0.6);
+    }
+    .poster-bg {
+      position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #18120d;
+    }
+    .poster-bg img {
+      width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s ease;
+    }
+    .movie-card:hover .poster-bg img { transform: scale(1.05); }
+    .poster-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to bottom, rgba(13,10,8,0.25) 0%, rgba(13,10,8,0.5) 45%, rgba(13,10,8,0.96) 90%);
+    }
+    .card-header {
+      position: relative; z-index: 2; padding: 16px; display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .badge-format {
+      font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 999px;
+      background: rgba(13, 10, 8, 0.8); backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15); color: var(--cream);
+    }
+    .card-content {
+      position: relative; z-index: 2; margin-top: auto; padding: 20px 18px 18px;
+    }
+    .watch-date-chip {
+      font-family: 'Space Grotesk', sans-serif; font-size: 11px; color: var(--gold); font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; display: flex; align-items: center; gap: 6px;
+    }
+    .movie-card h3 {
+      font-size: 20px; line-height: 1.25; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.02em;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .card-meta-pills {
+      display: flex; flex-wrap: wrap; gap: 6px; font-size: 11px; color: var(--muted); margin-bottom: 10px;
+    }
+    .meta-pill {
+      display: inline-flex; align-items: center; gap: 4px; background: rgba(255, 255, 255, 0.08);
+      padding: 3px 8px; border-radius: 6px; backdrop-filter: blur(4px);
+    }
+    .card-stars {
+      color: var(--gold); font-size: 14px; letter-spacing: 2px;
+    }
+    .no-poster-fill {
+      width: 100%; height: 100%; display: grid; place-items: center; font-size: 58px; color: rgba(255,181,71,0.25);
+      background: radial-gradient(circle at center, #2e2017 0%, #120e0b 100%);
+    }
+
+    /* List View Style */
+    .collection-grid.list-view {
+      grid-template-columns: 1fr; gap: 14px;
+    }
+    .collection-grid.list-view .movie-card {
+      height: 140px; flex-direction: row; border-radius: var(--radius);
+    }
+    .collection-grid.list-view .poster-bg { width: 110px; position: relative; }
+    .collection-grid.list-view .poster-overlay {
+      background: linear-gradient(to right, rgba(13,10,8,0) 0%, rgba(13,10,8,0.85) 100%);
+    }
+    .collection-grid.list-view .card-header { position: absolute; right: 16px; top: 16px; }
+    .collection-grid.list-view .card-content { flex: 1; margin-top: 0; padding: 16px 20px; display: flex; flex-direction: column; justify-content: center; }
+
+    /* Ticket View Style */
+    .collection-grid.ticket-view {
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 22px;
+    }
+    .ticket-stub-card {
+      background: linear-gradient(135deg, #241a13 0%, #17110c 100%);
+      border: 1px solid var(--border-gold); border-radius: 20px; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; box-shadow: 0 15px 40px rgba(0,0,0,0.6); transition: transform 0.25s, border-color 0.25s;
+      cursor: pointer;
+    }
+    .ticket-stub-card:hover { transform: translateY(-5px); border-color: var(--gold); }
+    .ticket-stub-top {
+      padding: 16px 18px; border-bottom: 2px dashed rgba(255, 181, 71, 0.3); position: relative;
+      display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.2);
+    }
+    .ticket-stub-top::before, .ticket-stub-top::after {
+      content: ''; position: absolute; bottom: -12px; width: 22px; height: 22px; border-radius: 50%; background: var(--bg); z-index: 5;
+    }
+    .ticket-stub-top::before { left: -12px; border-right: 1px solid var(--border-gold); }
+    .ticket-stub-top::after { right: -12px; border-left: 1px solid var(--border-gold); }
+    .ticket-stub-body {
+      padding: 18px; display: flex; gap: 14px; flex: 1;
+    }
+    .ticket-thumb {
+      width: 80px; aspect-ratio: 2 / 3; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border); background:#18120d;
+    }
+    .ticket-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .ticket-info { flex: 1; min-width: 0; display: flex; flex-direction: column; justify-content: center; }
+    .ticket-cinema-badge { font-size: 11px; color: var(--gold); font-weight: 700; text-transform: uppercase; }
+    .ticket-title { font-size: 17px; font-weight: 700; margin: 3px 0 5px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ticket-details { font-size: 12px; color: var(--muted); display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-bottom: 6px; }
+    .ticket-barcode {
+      height: 28px; background: repeating-linear-gradient(90deg, var(--muted) 0, var(--muted) 2px, transparent 2px, transparent 5px);
+      opacity: 0.35; margin-top: auto; border-radius: 4px;
+    }
+
+    /* Empty Collection State */
+    .empty-state {
+      grid-column: 1 / -1; text-align: center; padding: 60px 20px; background: var(--surface-card);
+      border: 1px dashed var(--border); border-radius: var(--radius-lg); margin-bottom: 40px;
+    }
+    .empty-icon { font-size: 58px; margin-bottom: 14px; }
+    .empty-state h3 { font-size: 22px; margin-bottom: 8px; color: var(--cream); }
+    .empty-state p { color: var(--muted); max-width: 440px; margin: 0 auto 20px; font-size: 14px; }
+
+    /* Dialogs / Modals */
+    dialog {
+      width: min(840px, calc(100% - 24px)); max-height: 92vh; border: 1px solid var(--border-gold);
+      border-radius: var(--radius-lg); background: #14100c; color: var(--cream); padding: 0;
+      box-shadow: 0 35px 100px rgba(0, 0, 0, 0.85); overflow: hidden; margin: auto;
+      display: flex; flex-direction: column;
+    }
+    dialog[open] { display: flex; }
+    dialog::backdrop { background: rgba(5, 3, 2, 0.85); backdrop-filter: blur(12px); }
+    
+    .modal-header {
+      padding: 20px 28px 16px; display: flex; align-items: center; justify-content: space-between;
+      border-bottom: 1px solid var(--border); background: rgba(20, 16, 12, 0.98);
+      position: sticky; top: 0; z-index: 30; backdrop-filter: blur(10px); flex-shrink: 0;
+    }
+    .modal-header h2 { font-size: 22px; font-weight: 700; }
+    .close-modal-btn {
+      width: 40px; height: 40px; border-radius: 50%; border: 1px solid var(--border); background: var(--surface);
+      color: var(--cream); cursor: pointer; display: grid; place-items: center; font-size: 24px; transition: all 0.2s;
+      flex-shrink: 0; line-height: 1;
+    }
+    .close-modal-btn:hover { background: var(--danger-bg); color: var(--danger); border-color: var(--danger); transform: scale(1.06); }
+
+    /* Wizard Steps Bar */
+    .wizard-steps {
+      display: flex; align-items: center; padding: 12px 28px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); gap: 10px;
+      flex-shrink: 0;
+    }
+    .wizard-step {
+      display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .step-num {
+      width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--border);
+      display: grid; place-items: center; font-family: 'Space Grotesk'; font-size: 11px;
+    }
+    .wizard-step.active { color: var(--gold); }
+    .wizard-step.active .step-num { border-color: var(--gold); background: var(--gold); color: #1a0f05; font-weight: 700; }
+    .wizard-step.done { color: var(--success); }
+    .wizard-step.done .step-num { border-color: var(--success); background: var(--success); color: #fff; }
+    .step-divider { flex: 1; height: 1px; background: var(--border); }
+
+    /* Choice Grid in Modal (2 Options) */
+    .choice-container { padding: 36px 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px; overflow-y: auto; }
+    .choice-card-btn {
+      padding: 28px 24px; border-radius: var(--radius); background: var(--surface-card); border: 1px solid var(--border);
+      text-align: left; cursor: pointer; transition: all 0.25s; color: var(--cream); display: flex; flex-direction: column; justify-content: space-between; min-height: 220px;
+    }
+    .choice-card-btn:hover {
+      border-color: var(--gold); background: var(--surface-hover); transform: translateY(-4px); box-shadow: var(--shadow-gold);
+    }
+    .choice-icon { font-size: 46px; margin-bottom: 16px; display: block; }
+    .choice-card-btn strong { display: block; font-size: 18px; margin-bottom: 6px; }
+    .choice-card-btn span { font-size: 13px; color: var(--muted); line-height: 1.5; }
+    .choice-card-btn small { color: var(--gold); font-size: 13px; font-weight: 600; margin-top: 16px; display: block; }
+
+    /* Catalog Search Step */
+    .catalog-container { padding: 20px 28px 28px; overflow-y: auto; flex: 1; }
+    .catalog-header-title { font-size: 14px; font-weight: 700; color: var(--gold); margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .catalog-search-bar { position: relative; margin-bottom: 16px; }
+    
+    .catalog-list-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; padding-bottom: 20px;
+    }
+    .catalog-item-card {
+      position: relative; border-radius: 14px; background: var(--surface-card);
+      border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; text-align: left; color: var(--cream);
+      overflow: hidden; display: flex; flex-direction: column;
+    }
+    .catalog-item-card:hover { border-color: var(--border-gold); background: var(--surface-hover); transform: translateY(-4px); box-shadow: 0 10px 24px rgba(0,0,0,0.5); }
+    .catalog-poster-thumb {
+      width: 100%; aspect-ratio: 2 / 3; background: #221810; overflow: hidden; position: relative;
+    }
+    .catalog-poster-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .catalog-item-info { padding: 10px 12px; }
+    .catalog-item-info strong { display: block; font-size: 13px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .catalog-item-info span { font-size: 11px; color: var(--muted); display: block; }
+
+    /* Form Step */
+    form#movieForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+    .form-container { padding: 20px 28px 28px; overflow-y: auto; flex: 1; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-col-full { grid-column: 1 / -1; }
+    .form-section-title {
+      font-size: 12px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: 0.1em;
+      margin: 10px 0 2px; grid-column: 1 / -1; display: flex; align-items: center; gap: 10px;
+    }
+    .form-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    label { display: block; font-size: 12px; font-weight: 600; color: var(--cream); margin-bottom: 6px; }
+    textarea.control { min-height: 85px; resize: vertical; }
+
+    /* Media Row (Poster Selected From Catalog + Ticket Uploaded by User) */
+    .media-upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .upload-box-card {
+      border: 2px dashed var(--border); border-radius: var(--radius); padding: 12px; text-align: center;
+      background: var(--surface); cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+      aspect-ratio: 2 / 3; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%;
+    }
+    .upload-box-card:hover { border-color: var(--gold); background: var(--surface-hover); }
+    .upload-preview-thumb { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 1; border-radius: calc(var(--radius) - 2px); }
+    .upload-overlay-info {
+      position: relative; z-index: 2; background: rgba(13, 10, 8, 0.85); padding: 10px 14px; border-radius: 12px; backdrop-filter: blur(4px);
+    }
+
+    /* Quick Chips */
+    .quick-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+    .chip {
+      font-size: 11px; padding: 4px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); cursor: pointer; transition: all 0.15s;
+    }
+    .chip:hover { border-color: var(--border-gold); color: var(--gold); background: var(--surface-hover); }
+
+    /* Interactive Rating Stars */
+    .rating-stars-picker { display: flex; gap: 6px; font-size: 28px; cursor: pointer; }
+    .star-btn { color: var(--muted-dark); transition: color 0.15s, transform 0.15s; user-select: none; }
+    .star-btn.active, .star-btn:hover { color: var(--gold); transform: scale(1.15); }
+
+    /* Prominent Sticky Modal Footer with Clear Save Button */
+    .modal-footer {
+      padding: 16px 28px; border-top: 1px solid var(--border); background: #16110c;
+      display: flex; justify-content: space-between; align-items: center; position: sticky; bottom: 0; z-index: 30; flex-shrink: 0;
+    }
+
+    /* Ticket Details Modal (Inspector) */
+    .ticket-inspect-hero {
+      position: relative; height: 260px; overflow: hidden; background: #1a120c; flex-shrink: 0;
+    }
+    .ticket-inspect-poster {
+      position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(25px) brightness(0.4); transform: scale(1.1);
+    }
+    .ticket-inspect-content {
+      position: relative; z-index: 2; height: 100%; display: flex; align-items: flex-end; padding: 22px 28px; gap: 20px;
+    }
+    .ticket-inspect-cover {
+      width: 100px; aspect-ratio: 2 / 3; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+      border: 2px solid var(--border-gold); flex-shrink: 0; background: #221810;
+    }
+    .ticket-inspect-cover img { width: 100%; height: 100%; object-fit: cover; }
+    .ticket-inspect-title-group h2 { font-size: 26px; font-weight: 700; line-height: 1.2; }
+    .ticket-inspect-body { padding: 24px 28px; display: grid; grid-template-columns: 1.3fr 0.7fr; gap: 20px; overflow-y: auto; }
+    .inspect-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; background: var(--surface-card); padding: 16px; border-radius: var(--radius); border: 1px solid var(--border); }
+    .inspect-meta-item strong { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .inspect-meta-item span { font-size: 14px; font-weight: 600; color: var(--cream); }
+    .inspect-quote { background: var(--surface-card); padding: 16px; border-radius: var(--radius); border-left: 3px solid var(--gold); font-style: italic; color: #e6d8cb; }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed; bottom: 28px; left: 50%; transform: translate(-50%, 100px);
+      background: var(--gold); color: #1a0f05; font-weight: 700; padding: 12px 24px; border-radius: 999px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 200; opacity: 0; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      pointer-events: none; font-size: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .toast.show { transform: translate(-50%, 0); opacity: 1; }
+
+    /* Responsive Queries */
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; gap: 20px; text-align: center; }
+      .quote-box { display: none; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .choice-container { grid-template-columns: 1fr; }
+      .catalog-list-grid { grid-template-columns: repeat(2, 1fr); }
+      .form-grid { grid-template-columns: 1fr; }
+      .media-upload-row { grid-template-columns: 1fr; }
+      .ticket-inspect-body { grid-template-columns: 1fr; }
+      .ticket-inspect-content { flex-direction: column; align-items: center; text-align: center; }
+    }
   </style>
 </head>
 <body>
-  <div class="grain"></div><div class="glow one"></div><div class="glow two"></div>
+  <div class="grain"></div>
+  <div class="glow-spot one"></div>
+  <div class="glow-spot two"></div>
+
+  <!-- Main Navigation Header -->
   <header>
-    <nav class="shell">
-      <a class="brand" href="../"><span class="brand-mark">🎞️</span><span>Movie Memory<small>Taithai Apps</small></span></a>
-      <div class="nav-actions">
-        <button class="btn btn-ghost" id="exportBtn">ส่งออกข้อมูล</button>
-        <button class="btn btn-primary" data-open>＋ เพิ่มหนัง</button>
-      </div>
-    </nav>
+    <div class="shell">
+      <nav>
+        <a class="brand" href="../">
+          <div class="brand-logo">🎞️</div>
+          <div class="brand-title">
+            Movie Memory
+            <small>Taithai Cinema Archive</small>
+          </div>
+        </a>
+
+        <div class="nav-actions">
+          <button id="googleLoginBtn" class="google-login-btn">
+            <svg viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
+            <span>เข้าสู่ระบบด้วย Google</span>
+          </button>
+
+          <div id="userProfileBar" class="user-profile-bar" style="display: none;">
+            <img id="userAvatar" class="user-avatar" src="" alt="Profile" />
+            <div class="user-info-text">
+              <span id="userName" class="user-name">...</span>
+              <span id="userEmail" class="user-email">...</span>
+            </div>
+            <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+          </div>
+
+          <button class="btn btn-ghost" id="backupBtn" type="button" title="สำรองและเรียกคืนข้อมูล">
+            📥 นำเข้า / ส่งออก
+          </button>
+          <button class="btn btn-primary" id="openAddModalBtn" type="button">
+            ✨ ＋ เพิ่มบันทึกหนัง
+          </button>
+        </div>
+      </nav>
+    </div>
   </header>
 
+  <!-- Hero & Statistics Container -->
   <main class="shell">
     <section class="hero">
       <div>
-        <div class="eyebrow">Your personal cinema archive</div>
+        <div class="eyebrow">🎬 Personal Cinema Vault</div>
         <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
-        <p class="hero-copy">เก็บตั๋วหนัง เรื่องราว และความรู้สึกหลังดูจบไว้ในที่เดียว เพื่อกลับมาเปิดดูเมื่อไรก็ได้</p>
+        <p class="hero-copy">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
       </div>
-      <div class="quote">“หนังจบ แต่ความรู้สึกในวันนั้นไม่จำเป็นต้องหายไป”<strong>— บันทึกการดูหนังของคุณ</strong></div>
+      <div class="quote-box">
+        “หนังจบลง... แต่ความรู้สึกและตั๋วใบนั้นจะคงอยู่ตลอดไป”
+        <strong>— บันทึกการชมภาพยนตร์ของคุณ</strong>
+      </div>
     </section>
 
-    <section class="stats" aria-label="สถิติ">
-      <div class="stat"><b id="movieCount">0</b><span>เรื่องที่บันทึก</span></div>
-      <div class="stat"><b id="thisYearCount">0</b><span>เรื่องในปีนี้</span></div>
-      <div class="stat"><b id="avgRating">—</b><span>คะแนนเฉลี่ย</span></div>
+    <!-- Dashboard Analytics -->
+    <section class="stats-grid" aria-label="สถิติบันทึก">
+      <div class="stat-card">
+        <div class="stat-val" id="statTotal">0</div>
+        <span class="stat-lbl">เรื่องที่บันทึกทั้งหมด</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statYear">0</div>
+        <span class="stat-lbl">ชมในปีนี้ (<span id="currYearTxt"></span>)</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statAvg"><em>—</em></div>
+        <span class="stat-lbl">คะแนนเฉลี่ย (เต็ม 5)</span>
+      </div>
+      <div class="stat-card">
+        <div class="stat-val" id="statTopFormat" style="font-size:22px"><em>—</em></div>
+        <span class="stat-lbl">รูปแบบยอดนิยม</span>
+      </div>
     </section>
 
+    <!-- Search & Toolbar -->
     <section class="toolbar">
-      <div class="search"><span>⌕</span><input id="searchInput" class="control" type="search" placeholder="ค้นหาชื่อหนัง โรงหนัง หรือโน้ต..."></div>
-      <select id="yearFilter" class="control" aria-label="กรองตามปี"><option value="all">ทุกปี</option></select>
-      <select id="sortSelect" class="control" aria-label="เรียงลำดับ">
-        <option value="newest">ดูล่าสุดก่อน</option><option value="oldest">เก่าสุดก่อน</option><option value="rating">คะแนนสูงสุด</option><option value="title">ชื่อ A–Z</option>
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="control" id="searchInput" type="search" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." autocomplete="off">
+      </div>
+
+      <select class="control" id="yearFilter" aria-label="กรองตามปีที่ดู">
+        <option value="all">ทุกปี</option>
       </select>
-      <div class="view-switch" aria-label="รูปแบบการแสดงผล">
-        <button id="gridBtn" class="active" aria-label="ตาราง">▦</button><button id="listBtn" aria-label="รายการ">☷</button>
+
+      <select class="control" id="formatFilter" aria-label="กรองตามรูปแบบ">
+        <option value="all">ทุกรูปแบบ</option>
+        <option value="โรงภาพยนตร์">โรงภาพยนตร์</option>
+        <option value="Streaming">Streaming</option>
+        <option value="แผ่น / Digital">แผ่น / Digital</option>
+        <option value="เทศกาลหนัง">เทศกาลหนัง</option>
+      </select>
+
+      <select class="control" id="sortSelect" aria-label="เรียงลำดับ">
+        <option value="newest">ดูล่าสุดก่อน</option>
+        <option value="oldest">เก่าสุดก่อน</option>
+        <option value="rating">คะแนนสูงสุด</option>
+        <option value="title">ชื่อ A–Z</option>
+      </select>
+
+      <div class="view-toggle">
+        <button class="view-btn active" id="viewGridBtn" type="button" title="แสดงแบบตารางโปสเตอร์">▦ Grid</button>
+        <button class="view-btn" id="viewListBtn" type="button" title="แสดงแบบรายการ">☷ List</button>
+        <button class="view-btn" id="viewTicketBtn" type="button" title="แสดงแบบตั๋วหนัง">🎟️ Ticket</button>
       </div>
     </section>
 
-    <section class="collection" id="collection"></section>
-    <div class="tmdb-credit"><strong>TMDB</strong> · This product uses the TMDB API but is not endorsed or certified by TMDB.</div>
+    <!-- Movie Collection Display -->
+    <section class="collection-grid" id="collectionGrid"></section>
   </main>
 
-  <dialog id="movieDialog">
-    <div class="modal-head">
-      <div><h2 id="dialogTitle">เพิ่มความทรงจำใหม่</h2><p>รายละเอียดเล็ก ๆ ทำให้เราจำวันนั้นได้ชัดขึ้น</p></div>
-      <button class="icon-btn" type="button" id="closeDialog" aria-label="ปิด">×</button>
+  <!-- Add/Edit Movie Dialog (Wizard Flow) -->
+  <dialog id="addEditModal">
+    <div class="modal-header">
+      <h2 id="modalHeaderTitle">เพิ่มความทรงจำหนังใหม่</h2>
+      <button class="close-modal-btn" id="closeModalBtn" type="button" title="ปิดหน้าต่าง">×</button>
     </div>
-    <div class="steps" id="stepIndicator">
-      <div class="step active" data-step-dot="choice"><span class="step-dot">1</span><span>วิธีเพิ่ม</span></div><div class="step-line"></div>
-      <div class="step" data-step-dot="catalog"><span class="step-dot">2</span><span>เลือกหนัง</span></div><div class="step-line"></div>
-      <div class="step" data-step-dot="form"><span class="step-dot">3</span><span>บันทึกรายละเอียด</span></div>
-    </div>
-    <section class="add-choice" id="addChoice">
-      <button class="choice-card" id="cameraChoice" type="button">
-        <span class="choice-icon">📷</span><strong>ถ่ายรูปเพื่อเพิ่ม</strong>
-        <span>ถ่ายตั๋วหนัง โปสเตอร์ หรือภาพจากวันนั้น แล้วกรอกรายละเอียดต่อ</span><small>เปิดกล้อง →</small>
-      </button>
-      <button class="choice-card" id="manualChoice" type="button">
-        <span class="choice-icon">🎬</span><strong>เลือกหนังด้วยตัวเอง</strong>
-        <span>ค้นหาหรือเลื่อนดูรายชื่อหนัง กดเลือกเรื่องที่ดู แล้วบันทึกความทรงจำ</span><small>ดูรายชื่อหนัง →</small>
-      </button>
-      <input id="cameraInput" type="file" accept="image/*" capture="environment" hidden>
-    </section>
-    <section class="catalog" id="catalogStep" hidden>
-      <button class="back-btn" id="catalogBack" type="button">← กลับไปเลือกวิธีเพิ่ม</button>
-      <div class="tmdb-bar"><strong>TMDB</strong> · หนังยอดนิยมและผลการค้นหา</div>
-      <div class="catalog-search"><span>⌕</span><input class="control" id="catalogSearch" type="search" placeholder="ค้นหาชื่อหนัง ไทยหรืออังกฤษ..."></div>
-      <div class="catalog-heading"><strong id="catalogTitle">หนังยอดนิยมในไทย</strong><span id="catalogCount"></span></div>
-      <div class="catalog-list" id="catalogList"></div>
-    </section>
-    <form id="movieForm" hidden>
-      <input type="hidden" id="movieId">
-      <input type="hidden" id="tmdbId">
-      <input type="hidden" id="imageData">
-      <div class="form-grid">
-        <div class="field full" id="selectedFilmWrap" hidden>
-          <label>หนังที่เลือก</label>
-          <div class="selected-film"><span class="selected-film-icon">🎬</span><div><strong id="selectedFilmTitle"></strong><span id="selectedFilmMeta"></span></div></div>
-        </div>
-        <div class="field full">
-          <label>รูปโปสเตอร์หรือตั๋วหนัง</label>
-          <label class="upload" id="uploadBox">
-            <input id="imageInput" type="file" accept="image/*" capture="environment">
-            <img id="imagePreview" alt="" hidden>
-            <span class="upload-copy">🎟️<br><strong>แตะเพื่อเลือกรูป</strong><br><small>โปสเตอร์ รูปตั๋ว หรือภาพวันนั้น</small></span>
-          </label>
-        </div>
-        <div class="form-section">เกี่ยวกับหนัง</div>
-        <div class="field full"><label for="title">ชื่อหนัง *</label><input class="control" id="title" required maxlength="100" placeholder="เช่น Past Lives"></div>
-        <div class="form-section">วันและสถานที่</div>
-        <div class="field"><label for="watchDate">วันที่ดู *</label><input class="control" id="watchDate" type="date" required></div>
-        <div class="field"><label for="format">รูปแบบ</label><select class="control" id="format"><option>โรงภาพยนตร์</option><option>Streaming</option><option>แผ่น / Digital</option><option>เทศกาลหนัง</option><option>อื่น ๆ</option></select></div>
-        <div class="field"><label for="cinema">โรงหนัง / สถานที่</label><input class="control" id="cinema" maxlength="80" placeholder="เช่น SF World Cinema"></div>
-        <div class="field"><label for="seat">โรง / ที่นั่ง</label><input class="control" id="seat" maxlength="40" placeholder="เช่น Cinema 8 · G12"></div>
-        <div class="field full"><label for="companion">ดูกับใคร</label><input class="control" id="companion" maxlength="80" placeholder="เช่น ดูคนเดียว, กับเพื่อน, กับครอบครัว"></div>
-        <div class="form-section">ความรู้สึกหลังดู</div>
-        <div class="field full"><label>คะแนนของฉัน</label><div class="rating">
-          <input type="radio" id="star5" name="rating" value="5"><label for="star5">★</label>
-          <input type="radio" id="star4" name="rating" value="4"><label for="star4">★</label>
-          <input type="radio" id="star3" name="rating" value="3"><label for="star3">★</label>
-          <input type="radio" id="star2" name="rating" value="2"><label for="star2">★</label>
-          <input type="radio" id="star1" name="rating" value="1"><label for="star1">★</label>
-        </div></div>
-        <div class="field full"><label for="note">ความทรงจำ / รีวิวสั้น ๆ</label><textarea class="control" id="note" maxlength="500" placeholder="รู้สึกอย่างไร ดูกับใคร หรือมีฉากไหนที่อยากจำ..."></textarea></div>
+
+    <!-- Wizard Steps Indicator -->
+    <div class="wizard-steps" id="wizardStepsBar">
+      <div class="wizard-step active" id="stepIndicator1">
+        <div class="step-num">1</div>
+        <span>เลือกวิธี</span>
       </div>
-      <div class="form-actions">
-        <button class="btn danger" id="deleteBtn" type="button">ลบบันทึก</button>
-        <div class="right-actions"><button class="btn btn-ghost" type="button" id="cancelBtn">ยกเลิก</button><button class="btn btn-primary" type="submit">บันทึกความทรงจำ</button></div>
+      <div class="step-divider"></div>
+      <div class="wizard-step" id="stepIndicator2">
+        <div class="step-num">2</div>
+        <span>เลือกโปสเตอร์หนัง</span>
+      </div>
+      <div class="step-divider"></div>
+      <div class="wizard-step" id="stepIndicator3">
+        <div class="step-num">3</div>
+        <span>บันทึกตั๋ว</span>
+      </div>
+    </div>
+
+    <!-- Step 1: Choice (2 Options) -->
+    <div class="choice-container" id="wizardStep1">
+      <button class="choice-card-btn" id="choiceTmdbBtn" type="button">
+        <div>
+          <span class="choice-icon">🎬</span>
+          <strong>ค้นหาและเลือกโปสเตอร์หนัง</strong>
+          <span>ค้นหารายชื่อหนัง เลือกระบบโปสเตอร์แนวตั้ง และดึงปีฉายอัตโนมัติ</span>
+        </div>
+        <small>ค้นหา & เลือกหนัง →</small>
+      </button>
+
+      <button class="choice-card-btn" id="choiceCameraBtn" type="button">
+        <div>
+          <span class="choice-icon">📷</span>
+          <strong>ถ่ายรูป / อัปโหลดตั๋วหนัง</strong>
+          <span>ใช้ภาพถ่ายตั๋วหนังจริง รูปบรรยากาศ หรือภาพตั๋วจากอุปกรณ์ของคุณ</span>
+        </div>
+        <small>อัปโหลดรูปตั๋วหนัง →</small>
+      </button>
+    </div>
+
+    <!-- Step 2: Movie Catalog Search & Recommendations -->
+    <div class="catalog-container" id="wizardStep2" style="display:none">
+      <div class="catalog-header-title">
+        <span id="catalogSectionLabel">🔥 รายชื่อหนังแนะนำ</span>
+        <button class="btn btn-ghost" id="backToStep1Btn" type="button" style="font-size:12px; padding:4px 12px">← ย้อนกลับ</button>
+      </div>
+      <div class="catalog-search-bar">
+        <input class="control" id="catalogSearchInput" type="search" placeholder="พิมพ์ชื่อหนังเพื่อค้นหา (เช่น Past Lives, Dune, หลานม่า)..." autocomplete="off">
+      </div>
+      <div class="catalog-list-grid" id="catalogResultsList"></div>
+    </div>
+
+    <!-- Step 3: Ticket Form with Clear Bottom Save Button -->
+    <form id="movieForm" style="display:none">
+      <div class="form-container">
+        <input type="hidden" id="formMovieId">
+        <input type="hidden" id="formPosterData">
+        <input type="hidden" id="formTicketData">
+
+        <div class="form-grid">
+          <!-- Selected Film Banner -->
+          <div class="form-col-full" id="selectedFilmBanner" style="display:none; background:var(--surface); padding:12px 16px; border-radius:12px; border:1px solid var(--border-gold)">
+            <strong id="selectedFilmTitleTxt" style="color:var(--gold); font-size:15px"></strong>
+            <span id="selectedFilmSubTxt" style="display:block; font-size:12px; color:var(--muted)"></span>
+          </div>
+
+          <!-- Media Section (Poster Selected from Catalog + Ticket Uploaded by User) -->
+          <div class="form-col-full">
+            <div class="form-section-title">รูปภาพประกอบแนวตั้ง (โปสเตอร์ & รูปตั๋วหนัง)</div>
+            <div class="media-upload-row">
+              
+              <!-- Poster Selection Card (Strictly Selected from Catalog - NOT User Upload!) -->
+              <div>
+                <label>โปสเตอร์หนัง (เลือกจากรายชื่อหนัง)</label>
+                <div class="upload-box-card" id="posterSelectZone" title="คลิกเพื่อค้นหาและเลือกโปสเตอร์หนัง">
+                  <img id="posterPreviewImg" class="upload-preview-thumb" style="display:none" alt="Poster">
+                  <div class="upload-overlay-info" id="posterOverlayInfo">
+                    🎬<br>
+                    <strong>เลือกโปสเตอร์หนัง</strong><br>
+                    <small style="color:var(--gold)">🔍 ค้นหาและเลือกจากรายชื่อหนัง</small>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Ticket Image Selection (User Photo Upload) -->
+              <div>
+                <label>รูปตั๋วหนัง / ภาพความทรงจำ (อัปโหลดรูปแนวตั้ง)</label>
+                <div class="upload-box-card" id="ticketUploadZone">
+                  <input type="file" id="ticketFileInput" accept="image/*" hidden>
+                  <img id="ticketPreviewImg" class="upload-preview-thumb" style="display:none" alt="Ticket">
+                  <div class="upload-overlay-info" id="ticketOverlayInfo">
+                    🎟️<br>
+                    <strong>อัปโหลดตั๋วหนัง</strong><br>
+                    <small style="color:var(--muted)">คลิกเพื่อเพิ่มรูปถ่ายตั๋วจริง</small>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <div class="form-section-title">ข้อมูลภาพยนตร์</div>
+          <div class="form-col-full">
+            <label for="formTitleInput">ชื่อภาพยนตร์</label>
+            <input class="control" id="formTitleInput" placeholder="พิมพ์ชื่อภาพยนตร์..." maxlength="120">
+          </div>
+
+          <div class="form-section-title">วันที่และสถานที่รับชม</div>
+          <div>
+            <label for="formWatchDateInput">วันที่ชม</label>
+            <input class="control" id="formWatchDateInput" type="date">
+          </div>
+          <div>
+            <label for="formFormatInput">รูปแบบการรับชม</label>
+            <select class="control" id="formFormatInput">
+              <option value="โรงภาพยนตร์">โรงภาพยนตร์</option>
+              <option value="Streaming">Streaming (Netflix/Disney+/etc.)</option>
+              <option value="แผ่น / Digital">แผ่น / Digital</option>
+              <option value="เทศกาลหนัง">เทศกาลหนัง</option>
+              <option value="อื่น ๆ">อื่น ๆ</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="formCinemaInput">โรงภาพยนตร์ / แพลตฟอร์ม</label>
+            <input class="control" id="formCinemaInput" placeholder="เช่น SF World Cinema, Netflix" maxlength="80">
+            <div class="quick-chips">
+              <span class="chip" data-fill-cinema="SF Cinema">SF Cinema</span>
+              <span class="chip" data-fill-cinema="Major Cineplex">Major</span>
+              <span class="chip" data-fill-cinema="House Samyan">House Samyan</span>
+              <span class="chip" data-fill-cinema="Netflix">Netflix</span>
+            </div>
+          </div>
+
+          <div>
+            <label for="formSeatInput">โรงที่ / เลขที่นั่ง</label>
+            <input class="control" id="formSeatInput" placeholder="เช่น Cinema 8 · G12" maxlength="50">
+          </div>
+
+          <div class="form-col-full">
+            <label for="formCompanionInput">รับชมร่วมกับใคร</label>
+            <input class="control" id="formCompanionInput" placeholder="เช่น ดูคนเดียว, กับเพื่อน, กับคนพิเศษ" maxlength="80">
+            <div class="quick-chips">
+              <span class="chip" data-fill-companion="ดูคนเดียว">ดูคนเดียว</span>
+              <span class="chip" data-fill-companion="กับแฟน">กับแฟน</span>
+              <span class="chip" data-fill-companion="กับเพื่อน">กับเพื่อน</span>
+              <span class="chip" data-fill-companion="กับครอบครัว">กับครอบครัว</span>
+            </div>
+          </div>
+
+          <div class="form-section-title">ความรู้สึกและคะแนน</div>
+          <div class="form-col-full">
+            <label>คะแนนของคุณ</label>
+            <div class="rating-stars-picker" id="ratingPicker">
+              <span class="star-btn" data-star="1">★</span>
+              <span class="star-btn" data-star="2">★</span>
+              <span class="star-btn" data-star="3">★</span>
+              <span class="star-btn" data-star="4">★</span>
+              <span class="star-btn" data-star="5">★</span>
+            </div>
+            <input type="hidden" id="formRatingVal" value="0">
+          </div>
+
+          <div class="form-col-full">
+            <label for="formNoteInput">ความทรงจำ & รีวิวสั้น ๆ</label>
+            <textarea class="control" id="formNoteInput" placeholder="เขียนบันทึก ความประทับใจ หรือฉากที่ชอบ..." maxlength="800"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Prominent Save Button Fixed at Bottom -->
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="deleteEntryBtn" type="button" style="color:var(--danger); display:none">
+          🗑️ ลบบันทึกนี้
+        </button>
+        <div style="margin-left:auto; display:flex; gap:12px; align-items:center;">
+          <button class="btn btn-ghost" id="cancelModalBtn" type="button">ยกเลิก</button>
+          <button class="btn btn-primary" id="saveMovieBtn" type="button" style="padding:14px 32px; font-size:16px; font-weight:700">✨ บันทึกความทรงจำ</button>
+        </div>
       </div>
     </form>
   </dialog>
+
+  <!-- Ticket Inspection Modal (View Details) -->
+  <dialog id="inspectModal">
+    <div class="ticket-inspect-hero">
+      <img id="inspectBgImg" class="ticket-inspect-poster" src="" alt="">
+      <div class="ticket-inspect-content">
+        <div class="ticket-inspect-cover">
+          <img id="inspectCoverImg" src="" alt="">
+        </div>
+        <div class="ticket-inspect-title-group">
+          <div class="badge-format" id="inspectFormatBadge" style="display:inline-block; margin-bottom:8px"></div>
+          <h2 id="inspectTitleTxt"></h2>
+          <div style="color:var(--gold); font-size:18px; margin-top:4px" id="inspectStarsTxt"></div>
+        </div>
+      </div>
+      <button class="close-modal-btn" id="closeInspectBtn" type="button" style="position:absolute; top:16px; right:16px; z-index:10">×</button>
+    </div>
+
+    <div class="ticket-inspect-body">
+      <div>
+        <label>ความรู้สึก & รีวิว</label>
+        <div class="inspect-quote" id="inspectNoteTxt"></div>
+      </div>
+
+      <div class="inspect-meta-grid">
+        <div class="inspect-meta-item">
+          <strong>วันที่รับชม</strong>
+          <span id="inspectDateTxt"></span>
+        </div>
+        <div class="inspect-meta-item">
+          <strong>สถานที่ / แพลตฟอร์ม</strong>
+          <span id="inspectCinemaTxt"></span>
+        </div>
+        <div class="inspect-meta-item">
+          <strong>โรง / ที่นั่ง</strong>
+          <span id="inspectSeatTxt"></span>
+        </div>
+        <div class="inspect-meta-item">
+          <strong>ผู้ร่วมชม</strong>
+          <span id="inspectCompanionTxt"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไขบันทึก</button>
+      <button class="btn btn-primary" id="inspectCloseBtn" type="button">ตกลง</button>
+    </div>
+  </dialog>
+
+  <!-- Backup & Restore Modal -->
+  <dialog id="backupModal">
+    <div class="modal-header">
+      <h2>นำเข้า / ส่งออก ข้อมูลบันทึก</h2>
+      <button class="close-modal-btn" id="closeBackupBtn" type="button">×</button>
+    </div>
+    <div style="padding:28px 28px">
+      <p style="color:var(--muted); margin-bottom:20px; font-size:14px">คุณสามารถส่งออกไฟล์ JSON เพื่อสำรองข้อมูลตั๋วหนังทั้งหมด หรือนำเข้าเพื่อย้ายข้อมูลไปยังอุปกรณ์อื่นได้</p>
+      
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px">
+        <div style="background:var(--surface-card); padding:20px; border-radius:var(--radius); border:1px solid var(--border)">
+          <h3 style="margin-bottom:8px; font-size:16px">📤 ส่งออกข้อมูล (Export)</h3>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:16px">ดาวน์โหลดไฟล์ .json เพื่อเก็บไว้สำรอง</p>
+          <button class="btn btn-primary" id="exportDataBtn" type="button" style="width:100%">ดาวน์โหลด JSON</button>
+        </div>
+
+        <div style="background:var(--surface-card); padding:20px; border-radius:var(--radius); border:1px solid var(--border)">
+          <h3 style="margin-bottom:8px; font-size:16px">📥 นำเข้าข้อมูล (Import)</h3>
+          <p style="font-size:12px; color:var(--muted); margin-bottom:16px">เลือกไฟล์ .json เพื่อนำเข้าข้อมูลกลับมา</p>
+          <button class="btn btn-ghost" id="importDataBtn" type="button" style="width:100%">เลือกไฟล์ JSON</button>
+          <input type="file" id="importFileInput" accept=".json" hidden>
+        </div>
+      </div>
+
+      <div style="margin-top:24px; text-align:center; padding-top:20px; border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" id="loadSampleDataBtn" type="button" style="font-size:12px; color:var(--gold)">
+          ✨ โหลดข้อมูลตัวอย่าง (Sample Demo)
+        </button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Element -->
   <div class="toast" id="toast"></div>
 
+  <!-- Main Application Script -->
   <script>
-    const STORAGE_KEY = 'taithai_movie_memory_v1';
-    const DEFAULT_TMDB_CREDENTIAL = 'a7ee9f0641a8225ed2d6f0693de8507d';
-    const TMDB_API = 'https://api.themoviedb.org/3';
-    const TMDB_IMAGE = 'https://image.tmdb.org/t/p/w500';
-    const $ = (id) => document.getElementById(id);
-    let movies = loadMovies();
-    let view = localStorage.getItem('movie_memory_view') || 'grid';
-    let tmdbResults = [];
-    let tmdbTimer;
+    const STORAGE_KEY = 'taithai_movie_memory_v2';
+    const API_KEY = 'a7ee9f0641a8225ed2d6f0693de8507d';
+    const BASE_URL = 'https://api.themoviedb.org/3';
+    const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 
-    function loadMovies(){
-      try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
-      catch { return []; }
+    const $ = id => document.getElementById(id);
+
+    let movies = loadMoviesFromStorage();
+    let currentViewMode = localStorage.getItem('mm_view_mode') || 'grid';
+    let catalogMoviesList = [];
+    let catalogPage = 1;
+    let catalogQuery = '';
+    let isCatalogLoading = false;
+    let tmdbDebounceTimer = null;
+    let inspectingMovieId = null;
+
+    function loadMoviesFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem('taithai_movie_memory_v1');
+        return raw ? JSON.parse(raw) : [];
+      } catch (e) {
+        return [];
+      }
     }
-    function saveMovies(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(movies)); }
-    function esc(value=''){
-      return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+    function saveMoviesToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+      } catch (e) {
+        showToast('⚠️ พื้นที่จัดเก็บเต็ม! ลองลดขนาดรูปภาพ');
+      }
     }
-    function dateLabel(value){
-      if(!value) return 'ไม่ระบุวันที่';
-      return new Intl.DateTimeFormat('th-TH',{day:'numeric',month:'short',year:'numeric'}).format(new Date(value+'T12:00:00'));
+
+    function showToast(msg) {
+      const toast = $('toast');
+      toast.textContent = msg;
+      toast.classList.add('show');
+      setTimeout(() => toast.classList.remove('show'), 2600);
     }
-    function stars(value){
-      const n = Number(value)||0;
-      return n ? '★'.repeat(n)+'☆'.repeat(5-n) : 'ยังไม่ได้ให้คะแนน';
+
+    function formatDate(dateStr) {
+      if (!dateStr) return 'ไม่ระบุวันที่';
+      try {
+        const d = new Date(dateStr + 'T12:00:00');
+        return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+      } catch {
+        return dateStr;
+      }
     }
-    function filteredMovies(){
+
+    function formatStars(rating) {
+      const num = Number(rating) || 0;
+      if (!num) return '☆☆☆☆☆';
+      return '★'.repeat(num) + '☆'.repeat(5 - num);
+    }
+
+    function getFilteredMovies() {
       const q = $('searchInput').value.trim().toLowerCase();
-      const year = $('yearFilter').value;
+      const yr = $('yearFilter').value;
+      const fmt = $('formatFilter').value;
       const sort = $('sortSelect').value;
-      const result = movies.filter(m => {
-        const text = [m.title,m.cinema,m.seat,m.companion,m.note,m.format].join(' ').toLowerCase();
-        return (!q || text.includes(q)) && (year === 'all' || (m.watchDate||'').startsWith(year));
+
+      let list = movies.filter(m => {
+        const combinedText = [m.title, m.cinema, m.seat, m.companion, m.note, m.format].join(' ').toLowerCase();
+        const matchQuery = !q || combinedText.includes(q);
+        const matchYear = yr === 'all' || (m.watchDate || '').startsWith(yr);
+        const matchFormat = fmt === 'all' || (m.format || '').includes(fmt);
+        return matchQuery && matchYear && matchFormat;
       });
-      result.sort((a,b)=>{
-        if(sort==='oldest') return (a.watchDate||'').localeCompare(b.watchDate||'');
-        if(sort==='rating') return (Number(b.rating)||0)-(Number(a.rating)||0);
-        if(sort==='title') return a.title.localeCompare(b.title,'th');
-        return (b.watchDate||'').localeCompare(a.watchDate||'');
+
+      list.sort((a, b) => {
+        if (sort === 'oldest') return (a.watchDate || '').localeCompare(b.watchDate || '');
+        if (sort === 'rating') return (Number(b.rating) || 0) - (Number(a.rating) || 0);
+        if (sort === 'title') return (a.title || '').localeCompare(b.title || '', 'th');
+        return (b.watchDate || '').localeCompare(a.watchDate || '');
       });
-      return result;
+
+      return list;
     }
-    function render(){
-      const list = filteredMovies();
-      $('collection').className = 'collection'+(view==='list'?' list':'');
-      $('gridBtn').classList.toggle('active',view==='grid');
-      $('listBtn').classList.toggle('active',view==='list');
-      if(!list.length){
-        $('collection').innerHTML = `<div class="empty"><div class="empty-icon">🎬</div><strong>${movies.length?'ไม่พบบันทึกที่ค้นหา':'คอลเลกชันของคุณยังว่างอยู่'}</strong><br><span>${movies.length?'ลองเปลี่ยนคำค้นหาหรือตัวกรอง':'เพิ่มหนังเรื่องแรก แล้วเริ่มเก็บความทรงจำกัน'}</span><br><br><button class="btn btn-primary" data-open>＋ เพิ่มหนังเรื่องแรก</button></div>`;
-      }else{
-        $('collection').innerHTML = list.map(m=>`<article class="movie-card" data-id="${esc(m.id)}">
-          <div class="poster">${m.image?`<img src="${m.image}" alt="">`:`<div class="no-poster">🎞</div>`}</div>
-          <div class="card-top"><span class="format">${esc(m.format||'บันทึกหนัง')}</span><button class="more" aria-label="แก้ไข">•••</button></div>
-          <div class="card-body"><div class="watch-date">${dateLabel(m.watchDate)}</div><h3>${esc(m.title)}</h3>
-          <div class="meta">${m.cinema?`<span>📍 ${esc(m.cinema)}</span>`:''}${m.seat?`<span>· ${esc(m.seat)}</span>`:''}${m.companion?`<span>· 👥 ${esc(m.companion)}</span>`:''}</div>
-          <div class="stars" aria-label="${m.rating||0} ดาว">${stars(m.rating)}</div></div></article>`).join('');
+
+    function updateStatsDashboard() {
+      $('statTotal').textContent = movies.length;
+      
+      const currYr = String(new Date().getFullYear());
+      $('currYearTxt').textContent = Number(currYr) + 543;
+      const countThisYear = movies.filter(m => (m.watchDate || '').startsWith(currYr)).length;
+      $('statYear').textContent = countThisYear;
+
+      const rated = movies.filter(m => Number(m.rating) > 0);
+      if (rated.length) {
+        const avg = (rated.reduce((sum, m) => sum + Number(m.rating), 0) / rated.length).toFixed(1);
+        $('statAvg').innerHTML = `${avg} <em>★</em>`;
+      } else {
+        $('statAvg').innerHTML = `<em>—</em>`;
       }
-      updateStats(); updateYears();
-    }
-    function updateStats(){
-      $('movieCount').textContent = movies.length;
-      const currentYear=String(new Date().getFullYear());
-      $('thisYearCount').textContent=movies.filter(m=>(m.watchDate||'').startsWith(currentYear)).length;
-      const rated=movies.filter(m=>Number(m.rating));
-      $('avgRating').textContent=rated.length?(rated.reduce((s,m)=>s+Number(m.rating),0)/rated.length).toFixed(1):'—';
-    }
-    function updateYears(){
-      const selected=$('yearFilter').value;
-      const years=[...new Set(movies.map(m=>(m.watchDate||'').slice(0,4)).filter(Boolean))].sort().reverse();
-      $('yearFilter').innerHTML='<option value="all">ทุกปี</option>'+years.map(y=>`<option value="${y}">${Number(y)+543}</option>`).join('');
-      $('yearFilter').value=years.includes(selected)||selected==='all'?selected:'all';
-    }
-    function resetForm(){
-      $('movieForm').reset(); $('movieId').value=''; $('tmdbId').value=''; $('imageData').value='';
-      $('imagePreview').hidden=true; $('imagePreview').removeAttribute('src'); $('uploadBox').classList.remove('has-image');
-      $('selectedFilmWrap').hidden=true;
-      $('watchDate').value=new Date().toISOString().slice(0,10); $('dialogTitle').textContent='เพิ่มความทรงจำใหม่'; $('deleteBtn').style.display='none';
-    }
-    function showStep(step){
-      $('addChoice').hidden=step!=='choice'; $('catalogStep').hidden=step!=='catalog'; $('movieForm').hidden=step!=='form';
-      const order=['choice','catalog','form'], current=order.indexOf(step);
-      document.querySelectorAll('[data-step-dot]').forEach((el)=>{
-        const index=order.indexOf(el.dataset.stepDot);
-        el.classList.toggle('active',index===current);
-        el.classList.toggle('done',index<current);
-        el.querySelector('.step-dot').textContent=index<current?'✓':String(index+1);
+
+      // Top format
+      const fmtCounts = {};
+      movies.forEach(m => {
+        const f = m.format || 'โรงภาพยนตร์';
+        fmtCounts[f] = (fmtCounts[f] || 0) + 1;
       });
-      if(step==='choice') $('dialogTitle').textContent='อยากเพิ่มหนังแบบไหน?';
-      if(step==='catalog'){ $('dialogTitle').textContent='เลือกหนังที่เคยดู'; $('catalogSearch').value=''; loadTmdbMovies(); setTimeout(()=>$('catalogSearch').focus(),50); }
-      if(step==='form' && !$('movieId').value) $('dialogTitle').textContent='รายละเอียดการดูหนัง';
-    }
-    function openNew(){ resetForm(); $('stepIndicator').hidden=false; showStep('choice'); $('movieDialog').showModal(); }
-    function beginForm(image=''){
-      if(image){ $('imageData').value=image; $('imagePreview').src=image; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
-      showStep('form');
-    }
-    function chooseMovie(movie){
-      $('tmdbId').value=movie.id;
-      $('title').value=movie.title;
-      $('selectedFilmTitle').textContent=movie.title;
-      $('selectedFilmMeta').textContent=[movie.original_title!==movie.title?movie.original_title:'',(movie.release_date||'').slice(0,4),movie.vote_average?`TMDB ${movie.vote_average.toFixed(1)}`:''].filter(Boolean).join(' · ');
-      if(movie.poster_path){ const poster=TMDB_IMAGE+movie.poster_path; $('imageData').value=poster; $('imagePreview').src=poster; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
-      $('selectedFilmWrap').hidden=false; beginForm(); setTimeout(()=>$('watchDate').focus(),50);
-    }
-    function tmdbOptions(){
-      const credential=DEFAULT_TMDB_CREDENTIAL;
-      if(!credential) return null;
-      return credential.length>40?{headers:{Authorization:`Bearer ${credential}`,accept:'application/json'}}:{headers:{accept:'application/json'}};
-    }
-    async function tmdbFetch(path,params={}){
-      const credential=DEFAULT_TMDB_CREDENTIAL;
-      if(!credential) throw new Error('NO_KEY');
-      const query=new URLSearchParams({language:'th-TH',region:'TH',...params});
-      if(credential.length<=40) query.set('api_key',credential);
-      const response=await fetch(`${TMDB_API}${path}?${query}`,tmdbOptions());
-      if(!response.ok) throw new Error(response.status===401?'INVALID_KEY':'TMDB_ERROR');
-      return response.json();
-    }
-    function renderTmdbResults(){
-      $('catalogCount').textContent=`${tmdbResults.length} เรื่อง`;
-      if(!tmdbResults.length){ $('catalogList').innerHTML='<div class="catalog-status">ไม่พบหนังที่ค้นหา<br><small>ลองใช้ชื่อภาษาอังกฤษหรือคำที่สั้นลง</small></div><button class="catalog-item catalog-custom" type="button" id="customMovie">＋ พิมพ์ชื่อหนังเอง</button>'; return; }
-      $('catalogList').innerHTML=tmdbResults.map((m,index)=>`<button class="catalog-item" type="button" data-tmdb-index="${index}">
-        <span class="catalog-cover">${m.poster_path?`<img src="${TMDB_IMAGE+m.poster_path}" alt="" loading="lazy">`:'🎞'}</span>
-        <span class="catalog-info"><strong>${esc(m.title)}</strong><span>${esc((m.release_date||'').slice(0,4)||'ไม่ระบุปี')}${m.original_title!==m.title?` · ${esc(m.original_title)}`:''}</span>${m.vote_average?`<span class="tmdb-score">★ ${m.vote_average.toFixed(1)} TMDB</span>`:''}</span>
-      </button>`).join('')+`<button class="catalog-item catalog-custom" type="button" id="customMovie">＋ ไม่เจอหนังเรื่องที่หา? พิมพ์ชื่อเอง</button>`;
-    }
-    async function loadTmdbMovies(query=''){
-      $('catalogList').innerHTML='<div class="catalog-status">กำลังโหลดหนังจาก TMDB…</div>';
-      $('catalogTitle').textContent=query?`ผลการค้นหา “${query}”`:'หนังยอดนิยมในไทย';
-      $('catalogCount').textContent='';
-      try{
-        const data=await tmdbFetch(query?'/search/movie':'/movie/popular',query?{query,include_adult:'false'}:{page:'1'});
-        tmdbResults=(data.results||[]).filter(m=>m.title);
-        renderTmdbResults();
-      }catch(error){
-        $('catalogList').innerHTML=`<div class="catalog-status">${error.message==='INVALID_KEY'?'ไม่สามารถยืนยันตัวตนกับ TMDB ได้':'เชื่อมต่อ TMDB ไม่สำเร็จ'}<br><button class="btn btn-ghost" type="button" id="retryTmdb">ลองอีกครั้ง</button></div>`;
+      let topFmt = '—';
+      let maxC = 0;
+      Object.keys(fmtCounts).forEach(f => {
+        if (fmtCounts[f] > maxC) {
+          maxC = fmtCounts[f];
+          topFmt = f;
+        }
+      });
+      $('statTopFormat').innerHTML = topFmt !== '—' ? topFmt : `<em>—</em>`;
+
+      // Year filter options
+      const yearFilter = $('yearFilter');
+      const selectedYear = yearFilter.value;
+      const years = [...new Set(movies.map(m => (m.watchDate || '').slice(0, 4)).filter(Boolean))].sort().reverse();
+      
+      yearFilter.innerHTML = '<option value="all">ทุกปี</option>' + years.map(y => `<option value="${y}">${Number(y) + 543}</option>`).join('');
+      if (years.includes(selectedYear) || selectedYear === 'all') {
+        yearFilter.value = selectedYear;
       }
     }
-    function openEdit(id){
-      const m=movies.find(item=>item.id===id); if(!m)return;
-      resetForm(); $('movieId').value=m.id; $('title').value=m.title; $('watchDate').value=m.watchDate;
-      $('tmdbId').value=m.tmdbId||'';
-      $('format').value=m.format||'โรงภาพยนตร์'; $('cinema').value=m.cinema||''; $('seat').value=m.seat||''; $('companion').value=m.companion||''; $('note').value=m.note||'';
-      if(m.rating){ const r=document.querySelector(`input[name="rating"][value="${m.rating}"]`); if(r)r.checked=true; }
-      if(m.image){ $('imageData').value=m.image; $('imagePreview').src=m.image; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
-      $('stepIndicator').hidden=true; $('dialogTitle').textContent='แก้ไขความทรงจำ'; $('deleteBtn').style.display='inline-flex'; showStep('form'); $('dialogTitle').textContent='แก้ไขความทรงจำ'; $('movieDialog').showModal();
+
+    function renderCollection() {
+      const grid = $('collectionGrid');
+      const filtered = getFilteredMovies();
+
+      grid.className = 'collection-grid';
+      if (currentViewMode === 'list') grid.classList.add('list-view');
+      if (currentViewMode === 'ticket') grid.classList.add('ticket-view');
+
+      $('viewGridBtn').classList.toggle('active', currentViewMode === 'grid');
+      $('viewListBtn').classList.toggle('active', currentViewMode === 'list');
+      $('viewTicketBtn').classList.toggle('active', currentViewMode === 'ticket');
+
+      updateStatsDashboard();
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-icon">🎬</div>
+            <h3>ยังไม่มีความทรงจำภาพยนตร์</h3>
+            <p>เริ่มต้นบันทึกตั๋วหนังเรื่องแรกของคุณ เพื่อสร้างสมุดภาพความทรงจำคอลเลกชันส่วนตัว</p>
+            <button class="btn btn-primary" onclick="openAddDialog()">✨ ＋ เพิ่มบันทึกหนังเรื่องแรก</button>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentViewMode === 'ticket') {
+        grid.innerHTML = filtered.map(m => {
+          const displayImg = m.ticketImg || m.posterImg || '';
+          return `
+            <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')">
+              <div class="ticket-stub-top">
+                <span class="ticket-cinema-badge">${escapeHtml(m.cinema || m.format || 'CINEMA')}</span>
+                <span style="font-size:11px; color:var(--gold); font-weight:700">${formatDate(m.watchDate)}</span>
+              </div>
+              <div class="ticket-stub-body">
+                <div class="ticket-thumb">
+                  ${displayImg ? `<img src="${escapeHtml(displayImg)}" class="vertical-aspect" alt="${escapeHtml(m.title)}">` : `<div style="width:100%;height:100%;display:grid;place-items:center;font-size:28px">🎟️</div>`}
+                </div>
+                <div class="ticket-info">
+                  <div class="ticket-title">${escapeHtml(m.title || 'ไม่มีชื่อ')}</div>
+                  <div class="ticket-details">
+                    <span>SEAT: ${escapeHtml(m.seat || '-')}</span>
+                    <span>WITH: ${escapeHtml(m.companion || '-')}</span>
+                  </div>
+                  <div style="color:var(--gold); font-size:13px">${formatStars(m.rating)}</div>
+                  <div class="ticket-barcode"></div>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        grid.innerHTML = filtered.map(m => {
+          const displayImg = m.posterImg || m.ticketImg || '';
+          return `
+            <div class="movie-card" onclick="openInspectDialog('${m.id}')">
+              <div class="poster-bg">
+                ${displayImg ? `<img src="${escapeHtml(displayImg)}" alt="${escapeHtml(m.title)}">` : `<div class="no-poster-fill">🎬</div>`}
+                <div class="poster-overlay"></div>
+              </div>
+              <div class="card-header">
+                <span class="badge-format">${escapeHtml(m.format || 'โรงภาพยนตร์')}</span>
+              </div>
+              <div class="card-content">
+                <div class="watch-date-chip">📅 ${formatDate(m.watchDate)}</div>
+                <h3>${escapeHtml(m.title || 'ไม่มีชื่อหนัง')}</h3>
+                <div class="card-meta-pills">
+                  ${m.cinema ? `<span class="meta-pill">📍 ${escapeHtml(m.cinema)}</span>` : ''}
+                  ${m.seat ? `<span class="meta-pill">💺 ${escapeHtml(m.seat)}</span>` : ''}
+                  ${m.companion ? `<span class="meta-pill">👥 ${escapeHtml(m.companion)}</span>` : ''}
+                </div>
+                <div class="card-stars">${formatStars(m.rating)}</div>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
     }
-    function showToast(text){ $('toast').textContent=text; $('toast').classList.add('show'); setTimeout(()=>$('toast').classList.remove('show'),2200); }
-    function compressImage(file){
-      return new Promise((resolve,reject)=>{
-        if(!file.type.startsWith('image/')) return reject(new Error('not image'));
-        const reader=new FileReader();
-        reader.onload=()=>{
-          const img=new Image();
-          img.onload=()=>{
-            const max=1200, scale=Math.min(1,max/Math.max(img.width,img.height));
-            const canvas=document.createElement('canvas'); canvas.width=Math.round(img.width*scale); canvas.height=Math.round(img.height*scale);
-            canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
-            resolve(canvas.toDataURL('image/jpeg',.78));
-          };
-          img.onerror=reject; img.src=reader.result;
-        };
-        reader.onerror=reject; reader.readAsDataURL(file);
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    // Dialog & Wizard Controls
+    function openAddDialog() {
+      resetForm();
+      $('modalHeaderTitle').textContent = 'เพิ่มความทรงจำหนังใหม่';
+      $('deleteEntryBtn').style.display = 'none';
+      switchWizardStep(1);
+      $('addEditModal').showModal();
+    }
+
+    function closeAddDialog() {
+      $('addEditModal').close();
+    }
+
+    function switchWizardStep(stepNum) {
+      $('wizardStep1').style.display = stepNum === 1 ? 'grid' : 'none';
+      $('wizardStep2').style.display = stepNum === 2 ? 'block' : 'none';
+      $('movieForm').style.display = stepNum === 3 ? 'block' : 'none';
+
+      $('stepIndicator1').className = `wizard-step ${stepNum === 1 ? 'active' : stepNum > 1 ? 'done' : ''}`;
+      $('stepIndicator2').className = `wizard-step ${stepNum === 2 ? 'active' : stepNum > 2 ? 'done' : ''}`;
+      $('stepIndicator3').className = `wizard-step ${stepNum === 3 ? 'active' : ''}`;
+
+      if (stepNum === 2) {
+        fetchCatalogMovies(1, true);
+      }
+    }
+
+    // Fetch movie catalog & search recommendations
+    async function fetchCatalogMovies(page = 1, reset = false) {
+      if (isCatalogLoading) return;
+      isCatalogLoading = true;
+      catalogPage = page;
+      
+      const query = $('catalogSearchInput').value.trim();
+      catalogQuery = query;
+
+      const listGrid = $('catalogResultsList');
+      if (reset) {
+        listGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted)">กำลังโหลดรายชื่อหนัง...</div>';
+      }
+
+      $('catalogSectionLabel').textContent = query ? `🔍 ผลการค้นหา "${query}"` : '🔥 รายชื่อหนังแนะนำ';
+
+      try {
+        let url = `${BASE_URL}/movie/popular?api_key=${API_KEY}&language=th-TH&page=${page}`;
+        if (query) {
+          url = `${BASE_URL}/search/movie?api_key=${API_KEY}&language=th-TH&query=${encodeURIComponent(query)}&page=${page}`;
+        }
+
+        const res = await fetch(url);
+        const data = await res.json();
+        const results = data.results || [];
+
+        if (reset) catalogMoviesList = [];
+        catalogMoviesList = [...catalogMoviesList, ...results];
+
+        if (catalogMoviesList.length === 0) {
+          listGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted)">ไม่พบรายชื่อหนัง ลองค้นหาด้วยคำอื่น</div>';
+          isCatalogLoading = false;
+          return;
+        }
+
+        listGrid.innerHTML = catalogMoviesList.map(item => {
+          const poster = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
+          const yr = item.release_date ? item.release_date.slice(0, 4) : '';
+          return `
+            <div class="catalog-item-card" onclick="selectCatalogMovie(${item.id})">
+              <div class="catalog-poster-thumb">
+                ${poster ? `<img src="${poster}" class="vertical-aspect" alt="${escapeHtml(item.title)}">` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:var(--muted);font-size:24px">🎬</div>`}
+              </div>
+              <div class="catalog-item-info">
+                <strong>${escapeHtml(item.title)}</strong>
+                <span>${yr ? `ปี ${yr}` : 'ภาพยนตร์'}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        if (data.page < data.total_pages) {
+          const loadMoreDiv = document.createElement('div');
+          loadMoreDiv.className = 'load-more-btn-wrap';
+          loadMoreDiv.style.cssText = 'grid-column: 1 / -1; text-align: center; margin-top: 10px;';
+          loadMoreDiv.innerHTML = `<button class="btn btn-ghost" type="button" onclick="fetchCatalogMovies(${page + 1}, false)">โหลดรายชื่อหนังเพิ่ม ＋</button>`;
+          listGrid.appendChild(loadMoreDiv);
+        }
+
+      } catch (err) {
+        if (reset) {
+          listGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted)">ไม่สามารถโหลดข้อมูลรายชื่อหนังได้ กรุณาลองใหม่อีกครั้ง</div>';
+        }
+      } finally {
+        isCatalogLoading = false;
+      }
+    }
+
+    function selectCatalogMovie(movieId) {
+      const selected = catalogMoviesList.find(m => m.id === movieId);
+      if (!selected) return;
+
+      $('formTitleInput').value = selected.title || '';
+      if (selected.poster_path) {
+        const fullPosterUrl = `${IMG_URL}${selected.poster_path}`;
+        $('formPosterData').value = fullPosterUrl;
+        $('posterPreviewImg').src = fullPosterUrl;
+        $('posterPreviewImg').style.display = 'block';
+        $('posterOverlayInfo').style.display = 'block';
+        $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>';
+      }
+
+      if (selected.release_date) {
+        $('formWatchDateInput').value = selected.release_date;
+      }
+
+      $('selectedFilmTitleTxt').textContent = `🎬 ${selected.title}`;
+      $('selectedFilmSubTxt').textContent = selected.release_date ? `ปีฉาย: ${selected.release_date.slice(0,4)}` : '';
+      $('selectedFilmBanner').style.display = 'block';
+
+      switchWizardStep(3);
+    }
+
+    function resetForm() {
+      $('formMovieId').value = '';
+      $('formPosterData').value = '';
+      $('formTicketData').value = '';
+      $('formTitleInput').value = '';
+      $('formWatchDateInput').value = new Date().toISOString().split('T')[0];
+      $('formFormatInput').value = 'โรงภาพยนตร์';
+      $('formCinemaInput').value = '';
+      $('formSeatInput').value = '';
+      $('formCompanionInput').value = '';
+      $('formNoteInput').value = '';
+      $('formRatingVal').value = '0';
+
+      $('posterPreviewImg').src = '';
+      $('posterPreviewImg').style.display = 'none';
+      $('posterOverlayInfo').style.display = 'block';
+      $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์หนัง</strong><br><small style="color:var(--gold)">🔍 ค้นหาและเลือกจากรายชื่อหนัง</small>';
+
+      $('ticketPreviewImg').src = '';
+      $('ticketPreviewImg').style.display = 'none';
+      $('ticketOverlayInfo').style.display = 'block';
+      $('ticketOverlayInfo').innerHTML = '🎟️<br><strong>อัปโหลดตั๋วหนัง</strong><br><small style="color:var(--muted)">คลิกเพื่อเพิ่มรูปถ่ายตั๋วจริง</small>';
+
+      $('selectedFilmBanner').style.display = 'none';
+      updateRatingStarsUI(0);
+    }
+
+    function updateRatingStarsUI(rating) {
+      const btns = document.querySelectorAll('#ratingPicker .star-btn');
+      btns.forEach((btn, idx) => {
+        btn.classList.toggle('active', idx < rating);
       });
     }
 
-    document.addEventListener('click',e=>{
-      if(e.target.closest('[data-open]')) openNew();
-      const card=e.target.closest('.movie-card'); if(card) openEdit(card.dataset.id);
-    });
-    $('manualChoice').onclick=()=>showStep('catalog');
-    $('catalogBack').onclick=()=>showStep('choice');
-    $('catalogSearch').addEventListener('input',()=>{
-      clearTimeout(tmdbTimer);
-      tmdbTimer=setTimeout(()=>loadTmdbMovies($('catalogSearch').value.trim()),350);
-    });
-    $('catalogList').addEventListener('click',e=>{
-      const item=e.target.closest('[data-tmdb-index]');
-      if(item) chooseMovie(tmdbResults[Number(item.dataset.tmdbIndex)]);
-      if(e.target.closest('#customMovie')){ $('title').value=''; beginForm(); setTimeout(()=>$('title').focus(),50); }
-      if(e.target.closest('#retryTmdb')) loadTmdbMovies($('catalogSearch').value.trim());
-    });
-    $('closeDialog').onclick=$('cancelBtn').onclick=()=>$('movieDialog').close();
-    $('movieDialog').addEventListener('click',e=>{ if(e.target===$('movieDialog')) $('movieDialog').close(); });
-    async function handleImageFile(file,openAfter=false){
-      if(!file)return;
-      try{
-        const data=await compressImage(file);
-        if(openAfter) beginForm(data);
-        else { $('imageData').value=data; $('imagePreview').src=data; $('imagePreview').hidden=false; $('uploadBox').classList.add('has-image'); }
-      }catch{ showToast('ไม่สามารถอ่านรูปนี้ได้'); }
+    // Direct Save Function triggered by Save Button at Bottom
+    function executeSaveMovie() {
+      let title = $('formTitleInput').value.trim();
+      if (!title) {
+        title = 'บันทึกความทรงจำภาพยนตร์';
+      }
+
+      const id = $('formMovieId').value || ('m_' + Date.now());
+      const watchDate = $('formWatchDateInput').value || new Date().toISOString().split('T')[0];
+      const format = $('formFormatInput').value;
+      const cinema = $('formCinemaInput').value.trim();
+      const seat = $('formSeatInput').value.trim();
+      const companion = $('formCompanionInput').value.trim();
+      const rating = Number($('formRatingVal').value) || 0;
+      const note = $('formNoteInput').value.trim();
+      const posterImg = $('formPosterData').value;
+      const ticketImg = $('formTicketData').value;
+
+      const movieObj = {
+        id,
+        title,
+        watchDate,
+        format,
+        cinema,
+        seat,
+        companion,
+        rating,
+        note,
+        posterImg,
+        ticketImg,
+        updatedAt: new Date().toISOString()
+      };
+
+      const existingIndex = movies.findIndex(m => m.id === id);
+      if (existingIndex >= 0) {
+        movies[existingIndex] = movieObj;
+      } else {
+        movies.unshift(movieObj);
+      }
+
+      saveMoviesToStorage();
+      renderCollection();
+      closeAddDialog();
+      showToast('✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว');
     }
-    $('cameraChoice').onclick=()=>$('cameraInput').click();
-    $('cameraInput').addEventListener('change',e=>{ handleImageFile(e.target.files[0],true); e.target.value=''; });
-    $('imageInput').addEventListener('change',async e=>{
-      const file=e.target.files[0]; if(!file)return;
-      await handleImageFile(file);
+
+    // Inspector modal
+    function openInspectDialog(id) {
+      const movie = movies.find(m => m.id === id);
+      if (!movie) return;
+
+      inspectingMovieId = id;
+      const bgImg = movie.posterImg || movie.ticketImg || '';
+      
+      $('inspectBgImg').src = bgImg;
+      $('inspectCoverImg').src = bgImg;
+      $('inspectFormatBadge').textContent = movie.format || 'โรงภาพยนตร์';
+      $('inspectTitleTxt').textContent = movie.title || 'ไม่มีชื่อ';
+      $('inspectStarsTxt').textContent = formatStars(movie.rating);
+      $('inspectNoteTxt').textContent = movie.note || 'ไม่มีรีวิวหรือความรู้สึกเพิ่มเติมในตั๋วใบนี้';
+      $('inspectDateTxt').textContent = formatDate(movie.watchDate);
+      $('inspectCinemaTxt').textContent = movie.cinema || 'ไม่ระบุสถานที่';
+      $('inspectSeatTxt').textContent = movie.seat || 'ไม่ระบุที่นั่ง';
+      $('inspectCompanionTxt').textContent = movie.companion || 'ดูคนเดียว';
+
+      $('inspectModal').showModal();
+    }
+
+    function editInspectedMovie() {
+      if (!inspectingMovieId) return;
+      const movie = movies.find(m => m.id === inspectingMovieId);
+      if (!movie) return;
+
+      $('inspectModal').close();
+      
+      $('formMovieId').value = movie.id;
+      $('formTitleInput').value = movie.title || '';
+      $('formWatchDateInput').value = movie.watchDate || '';
+      $('formFormatInput').value = movie.format || 'โรงภาพยนตร์';
+      $('formCinemaInput').value = movie.cinema || '';
+      $('formSeatInput').value = movie.seat || '';
+      $('formCompanionInput').value = movie.companion || '';
+      $('formNoteInput').value = movie.note || '';
+      $('formRatingVal').value = movie.rating || 0;
+
+      $('formPosterData').value = movie.posterImg || '';
+      if (movie.posterImg) {
+        $('posterPreviewImg').src = movie.posterImg;
+        $('posterPreviewImg').style.display = 'block';
+        $('posterOverlayInfo').style.display = 'block';
+        $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>';
+      }
+
+      $('formTicketData').value = movie.ticketImg || '';
+      if (movie.ticketImg) {
+        $('ticketPreviewImg').src = movie.ticketImg;
+        $('ticketPreviewImg').style.display = 'block';
+        $('ticketOverlayInfo').style.display = 'none';
+      }
+
+      updateRatingStarsUI(movie.rating || 0);
+
+      $('modalHeaderTitle').textContent = 'แก้ไขบันทึกภาพยนตร์';
+      $('deleteEntryBtn').style.display = 'inline-flex';
+
+      switchWizardStep(3);
+      $('addEditModal').showModal();
+    }
+
+    function deleteCurrentMovie() {
+      const id = $('formMovieId').value;
+      if (!id) return;
+
+      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบบันทึกตั๋วหนังเรื่องนี้?')) {
+        movies = movies.filter(m => m.id !== id);
+        saveMoviesToStorage();
+        renderCollection();
+        closeAddDialog();
+        showToast('🗑️ ลบบันทึกเรียบร้อยแล้ว');
+      }
+    }
+
+    // Image Upload Handlers for Ticket Upload
+    function handleImageFileSelect(file, targetHiddenInputId, targetPreviewImgId, targetOverlayId) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > MAX_WIDTH) {
+            height = Math.round((height * MAX_WIDTH) / width);
+            width = MAX_WIDTH;
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+          $(targetHiddenInputId).value = compressedDataUrl;
+          $(targetPreviewImgId).src = compressedDataUrl;
+          $(targetPreviewImgId).style.display = 'block';
+          $(targetOverlayId).style.display = 'none';
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Backup Export & Import
+    function exportBackup() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(movies, null, 2));
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", `Movie_Memory_Backup_${new Date().toISOString().slice(0,10)}.json`);
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      showToast('📤 ส่งออกไฟล์สำรอง JSON สำเร็จ');
+    }
+
+    function importBackup(file) {
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (Array.isArray(imported)) {
+            movies = imported;
+            saveMoviesToStorage();
+            renderCollection();
+            $('backupModal').close();
+            showToast('📥 นำเข้าข้อมูลบันทึกเรียบร้อยแล้ว');
+          } else {
+            alert('รูปแบบไฟล์ JSON ไม่ถูกต้อง');
+          }
+        } catch (err) {
+          alert('ไม่สามารถอ่านไฟล์ JSON นี้ได้');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function loadSampleDemo() {
+      movies = [
+        {
+          id: 'demo_1',
+          title: 'Past Lives',
+          watchDate: '2024-07-12',
+          format: 'โรงภาพยนตร์',
+          cinema: 'House Samyan',
+          seat: 'A8 · Cinema 1',
+          companion: 'กับแฟน',
+          rating: 5,
+          note: 'หนังงดงามและกินใจมาก เรื่องราวความสัมพันธ์ ความเป็นไปได้ และคำว่า "อินยอน"',
+          posterImg: 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=600&q=80',
+          ticketImg: ''
+        },
+        {
+          id: 'demo_2',
+          title: 'Dune: Part Two',
+          watchDate: '2024-03-02',
+          format: 'โรงภาพยนตร์',
+          cinema: 'Major Cineplex IMAX',
+          seat: 'H14 · IMAX Laser',
+          companion: 'กับเพื่อน',
+          rating: 5,
+          note: 'ยิ่งใหญ่ อลังการทั้งภาพและเสียงดนตรีประกอบของ Hans Zimmer ยอดเยี่ยมมาก!',
+          posterImg: 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=600&q=80',
+          ticketImg: ''
+        }
+      ];
+      saveMoviesToStorage();
+      renderCollection();
+      $('backupModal').close();
+      showToast('✨ โหลดข้อมูลตัวอย่างเรียบร้อยแล้ว');
+    }
+
+    // Event Listeners Setup
+    document.addEventListener('DOMContentLoaded', () => {
+      renderCollection();
+
+      // Modal Triggers
+      $('openAddModalBtn').addEventListener('click', openAddDialog);
+      $('closeModalBtn').addEventListener('click', closeAddDialog);
+      $('cancelModalBtn').addEventListener('click', closeAddDialog);
+      
+      // Prominent Save Button Handler
+      $('saveMovieBtn').addEventListener('click', executeSaveMovie);
+
+      // Wizard Navigation
+      $('choiceTmdbBtn').addEventListener('click', () => switchWizardStep(2));
+      $('choiceCameraBtn').addEventListener('click', () => {
+        resetForm();
+        switchWizardStep(3);
+        $('ticketFileInput').click();
+      });
+      $('backToStep1Btn').addEventListener('click', () => switchWizardStep(1));
+
+      // Catalog Search Listener with Debounce
+      $('catalogSearchInput').addEventListener('input', e => {
+        clearTimeout(tmdbDebounceTimer);
+        tmdbDebounceTimer = setTimeout(() => {
+          fetchCatalogMovies(1, true);
+        }, 350);
+      });
+
+      // Quick Chips Fillers
+      document.querySelectorAll('[data-fill-cinema]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          $('formCinemaInput').value = chip.dataset.fillCinema;
+        });
+      });
+
+      document.querySelectorAll('[data-fill-companion]').forEach(chip => {
+        chip.addEventListener('click', () => {
+          $('formCompanionInput').value = chip.dataset.fillCompanion;
+        });
+      });
+
+      // Interactive Rating Picker
+      document.querySelectorAll('#ratingPicker .star-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const r = Number(btn.dataset.star);
+          $('formRatingVal').value = r;
+          updateRatingStarsUI(r);
+        });
+      });
+
+      // Poster Selection (Takes user to catalog search!)
+      $('posterSelectZone').addEventListener('click', () => {
+        switchWizardStep(2);
+      });
+
+      // Ticket Image Upload
+      $('ticketUploadZone').addEventListener('click', () => $('ticketFileInput').click());
+      $('ticketFileInput').addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) {
+          handleImageFileSelect(e.target.files[0], 'formTicketData', 'ticketPreviewImg', 'ticketOverlayInfo');
+        }
+      });
+
+      // Filter & Toolbar Controls
+      $('searchInput').addEventListener('input', renderCollection);
+      $('yearFilter').addEventListener('change', renderCollection);
+      $('formatFilter').addEventListener('change', renderCollection);
+      $('sortSelect').addEventListener('change', renderCollection);
+
+      // View Mode Toggle
+      $('viewGridBtn').addEventListener('click', () => {
+        currentViewMode = 'grid';
+        localStorage.setItem('mm_view_mode', 'grid');
+        renderCollection();
+      });
+      $('viewListBtn').addEventListener('click', () => {
+        currentViewMode = 'list';
+        localStorage.setItem('mm_view_mode', 'list');
+        renderCollection();
+      });
+      $('viewTicketBtn').addEventListener('click', () => {
+        currentViewMode = 'ticket';
+        localStorage.setItem('mm_view_mode', 'ticket');
+        renderCollection();
+      });
+
+      // Inspector Controls
+      $('closeInspectBtn').addEventListener('click', () => $('inspectModal').close());
+      $('inspectCloseBtn').addEventListener('click', () => $('inspectModal').close());
+      $('inspectEditBtn').addEventListener('click', editInspectedMovie);
+
+      // Backup Modal Controls
+      $('backupBtn').addEventListener('click', () => $('backupModal').showModal());
+      $('closeBackupBtn').addEventListener('click', () => $('backupModal').close());
+      $('exportDataBtn').addEventListener('click', exportBackup);
+      $('importDataBtn').addEventListener('click', () => $('importFileInput').click());
+      $('importFileInput').addEventListener('change', e => {
+        if (e.target.files && e.target.files[0]) {
+          importBackup(e.target.files[0]);
+        }
+      });
+      $('loadSampleDataBtn').addEventListener('click', loadSampleDemo);
+      $('deleteEntryBtn').addEventListener('click', deleteCurrentMovie);
     });
-    $('movieForm').addEventListener('submit',e=>{
-      e.preventDefault();
-      const id=$('movieId').value;
-      const data={id:id||String(Date.now()),tmdbId:$('tmdbId').value,title:$('title').value.trim(),watchDate:$('watchDate').value,format:$('format').value,cinema:$('cinema').value.trim(),seat:$('seat').value.trim(),companion:$('companion').value.trim(),rating:document.querySelector('input[name="rating"]:checked')?.value||'',note:$('note').value.trim(),image:$('imageData').value,updatedAt:new Date().toISOString()};
-      if(id) movies=movies.map(m=>m.id===id?data:m); else movies.unshift(data);
-      try{ saveMovies(); }catch{ showToast('พื้นที่จัดเก็บรูปเต็ม ลองใช้รูปที่เล็กลง'); return; }
-      $('movieDialog').close(); render(); showToast(id?'แก้ไขบันทึกแล้ว':'เก็บความทรงจำแล้ว ✦');
+  </script>
+
+  <script type="module">
+    import { loginWithGoogle, logout, subscribeAuth } from "/firebase-auth.js";
+
+    const loginBtn = document.getElementById("googleLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userProfileBar = document.getElementById("userProfileBar");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+
+    if (loginBtn) {
+      loginBtn.addEventListener("click", async () => {
+        try {
+          loginBtn.style.opacity = "0.7";
+          loginBtn.disabled = true;
+          await loginWithGoogle();
+        } catch (err) {
+          console.error("Google Login Error:", err);
+        } finally {
+          loginBtn.style.opacity = "1";
+          loginBtn.disabled = false;
+        }
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await logout();
+        } catch (err) {
+          console.error("Logout Error:", err);
+        }
+      });
+    }
+
+    subscribeAuth((user) => {
+      if (user) {
+        if (loginBtn) loginBtn.style.display = "none";
+        if (userProfileBar) userProfileBar.style.display = "inline-flex";
+
+        const name = user.displayName || user.email || "User";
+        const email = user.email || "";
+        const photo = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+
+        if (userAvatar) userAvatar.src = photo;
+        if (userName) userName.textContent = name;
+        if (userEmail) userEmail.textContent = email;
+      } else {
+        if (loginBtn) loginBtn.style.display = "inline-flex";
+        if (userProfileBar) userProfileBar.style.display = "none";
+      }
     });
-    $('deleteBtn').addEventListener('click',()=>{
-      const id=$('movieId').value; const movie=movies.find(m=>m.id===id);
-      if(movie && confirm(`ลบบันทึก “${movie.title}” ใช่ไหม?`)){ movies=movies.filter(m=>m.id!==id); saveMovies(); $('movieDialog').close(); render(); showToast('ลบบันทึกแล้ว'); }
-    });
-    ['searchInput','yearFilter','sortSelect'].forEach(id=>$(id).addEventListener(id==='searchInput'?'input':'change',render));
-    $('gridBtn').onclick=()=>{view='grid';localStorage.setItem('movie_memory_view',view);render()};
-    $('listBtn').onclick=()=>{view='list';localStorage.setItem('movie_memory_view',view);render()};
-    $('exportBtn').onclick=()=>{
-      if(!movies.length){showToast('ยังไม่มีข้อมูลให้ส่งออก');return}
-      const blob=new Blob([JSON.stringify({app:'Movie Memory',exportedAt:new Date().toISOString(),movies},null,2)],{type:'application/json'});
-      const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`movie-memory-${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href); showToast('ส่งออกข้อมูลแล้ว');
-    };
-    render();
   </script>
 </body>
 </html>

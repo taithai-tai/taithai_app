@@ -1,0 +1,11 @@
+{
+  "name": "Remix: taithai_app",
+  "description": "Imported from GitHub: taithai-tai/taithai_app",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

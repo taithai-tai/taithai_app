@@ -98,10 +98,55 @@
     .share-btn:hover{transform:translateY(-2px);opacity:.92}
     .footer{padding:45px 7%;background:#111;color:#fff;margin-top:50px}
     @media(max-width:900px){.selector-grid,.plan-grid,.detail-grid{grid-template-columns:1fr}.semester-card.summer-card,.summer-divider{grid-column:span 1}.hero,.container,.footer{padding-left:5%;padding-right:5%}.modal-content{padding:26px}.hero h1{font-size:48px}.subject-top{align-items:flex-start}.credit{font-size:12px}}
+    
+    .google-login-btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: #ffffff; border: 1px solid #ddd;
+      border-radius: 999px; padding: 8px 16px; color: #333;
+      font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+      font-family: inherit; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .google-login-btn:hover { background: #f8f8f8; border-color: #b31624; color: #b31624; }
+    .google-login-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+    .user-profile-bar {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: #ffffff; border: 1px solid #ddd;
+      padding: 4px 12px 4px 6px; border-radius: 999px; color: #333;
+    }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #b31624; }
+    .user-info-text { display: flex; flex-direction: column; line-height: 1.2; text-align: left; }
+    .user-name { font-size: 12px; font-weight: 600; color: #111; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-email { font-size: 10px; color: #666; max-width: 130px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logout-btn {
+      border: none; background: rgba(179, 22, 36, 0.1); color: #b31624;
+      font-size: 11px; font-weight: 600; padding: 5px 10px; border-radius: 999px;
+      cursor: pointer; transition: 0.2s; font-family: inherit;
+    }
+    .logout-btn:hover { background: #b31624; color: white; }
   </style>
 </head>
 <body>
   <section class="hero">
+    <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+      <button id="googleLoginBtn" class="google-login-btn">
+        <svg viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+        </svg>
+        <span>เข้าสู่ระบบด้วย Google</span>
+      </button>
+
+      <div id="userProfileBar" class="user-profile-bar" style="display: none;">
+        <img id="userAvatar" class="user-avatar" src="" alt="Profile" />
+        <div class="user-info-text">
+          <span id="userName" class="user-name">...</span>
+          <span id="userEmail" class="user-email">...</span>
+        </div>
+        <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
+      </div>
+    </div>
     <h1>BU Curriculum<br>Planner 2568</h1>
     <p>เลือกคณะ เลือกสาขา แล้วดูแผนการเรียนแบบปี 1–4 แบ่งเทอมและซัมเมอร์ พร้อมคลิกดูรายละเอียดรายวิชา หน่วยกิต ชื่อเต็ม และวิชาบังคับก่อน</p>
   </section>
@@ -1129,6 +1174,60 @@
     renderExtraSubjects();
     updateShareURL();
     runTests();
+  </script>
+
+  <script type="module">
+    import { loginWithGoogle, logout, subscribeAuth } from "/firebase-auth.js";
+
+    const loginBtn = document.getElementById("googleLoginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const userProfileBar = document.getElementById("userProfileBar");
+    const userAvatar = document.getElementById("userAvatar");
+    const userName = document.getElementById("userName");
+    const userEmail = document.getElementById("userEmail");
+
+    if (loginBtn) {
+      loginBtn.addEventListener("click", async () => {
+        try {
+          loginBtn.style.opacity = "0.7";
+          loginBtn.disabled = true;
+          await loginWithGoogle();
+        } catch (err) {
+          console.error("Google Login Error:", err);
+        } finally {
+          loginBtn.style.opacity = "1";
+          loginBtn.disabled = false;
+        }
+      });
+    }
+
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", async () => {
+        try {
+          await logout();
+        } catch (err) {
+          console.error("Logout Error:", err);
+        }
+      });
+    }
+
+    subscribeAuth((user) => {
+      if (user) {
+        if (loginBtn) loginBtn.style.display = "none";
+        if (userProfileBar) userProfileBar.style.display = "inline-flex";
+
+        const name = user.displayName || user.email || "User";
+        const email = user.email || "";
+        const photo = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+
+        if (userAvatar) userAvatar.src = photo;
+        if (userName) userName.textContent = name;
+        if (userEmail) userEmail.textContent = email;
+      } else {
+        if (loginBtn) loginBtn.style.display = "inline-flex";
+        if (userProfileBar) userProfileBar.style.display = "none";
+      }
+    });
   </script>
 </body>
 </html>

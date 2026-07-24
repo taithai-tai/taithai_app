@@ -16,11 +16,43 @@
     button{margin-top:12px;width:100%;padding:12px;border:none;border-radius:12px;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer}
     #result{margin-top:16px;padding:12px;border:1px dashed var(--border);border-radius:12px;display:none;background:#fff}
     #result a{color:#b6573a;word-break:break-all}
+    .header-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+    .google-login-btn{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);border-radius:999px;padding:6px 14px;color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+    .google-login-btn:hover{border-color:var(--accent);color:var(--accent)}
+    .google-login-btn svg{width:16px;height:16px;flex-shrink:0}
+    .user-profile-bar{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--border);padding:4px 10px 4px 5px;border-radius:999px}
+    .user-avatar{width:26px;height:26px;border-radius:50%;object-fit:cover;border:1px solid var(--accent)}
+    .user-info-text{display:flex;flex-direction:column;line-height:1.2;text-align:left}
+    .user-name{font-size:11px;font-weight:600;color:var(--text);max-width:90px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .user-email{font-size:10px;color:var(--muted);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .logout-btn{border:none;background:rgba(222,127,95,.15);color:var(--accent);font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;cursor:pointer;font-family:inherit}
   </style>
 </head>
 <body>
   <main class="card">
-    <h1>🔗 URL Shortener</h1>
+    <div class="header-bar">
+      <h1 style="margin:0">🔗 URL Shortener</h1>
+      <div>
+        <button id="googleLoginBtn" class="google-login-btn">
+          <svg viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+          </svg>
+          <span>เข้าสู่ระบบ</span>
+        </button>
+
+        <div id="userProfileBar" class="user-profile-bar" style="display: none;">
+          <img id="userAvatar" class="user-avatar" src="" alt="Profile" />
+          <div class="user-info-text">
+            <span id="userName" class="user-name">...</span>
+            <span id="userEmail" class="user-email">...</span>
+          </div>
+          <button id="logoutBtn" class="logout-btn">ออก</button>
+        </div>
+      </div>
+    </div>
     <p>วางลิงก์ยาว แล้วกดสร้าง Shortlink ได้ทันที</p>
     <input id="longUrl" placeholder="https://example.com/page" />
     <button id="createBtn">สร้าง Shortlink</button>
@@ -28,7 +60,7 @@
   </main>
 
 <script>
-const BASE_DOMAIN='https://taithai.app';
+const BASE_DOMAIN=location.origin;
 const STORE_KEY='taithai_short_links_v2';
 const params=new URLSearchParams(location.search);
 const pathCode=location.pathname.split('/').filter(Boolean).pop();
@@ -63,6 +95,60 @@ document.getElementById('createBtn').onclick=()=>{
   result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank">${shortUrl}</a><br><br><button id="copyBtn" style="margin-top:0">คัดลอกลิงก์</button>`;
   document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shortUrl);
 };
+</script>
+
+<script type="module">
+  import { loginWithGoogle, logout, subscribeAuth } from "/firebase-auth.js";
+
+  const loginBtn = document.getElementById("googleLoginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userProfileBar = document.getElementById("userProfileBar");
+  const userAvatar = document.getElementById("userAvatar");
+  const userName = document.getElementById("userName");
+  const userEmail = document.getElementById("userEmail");
+
+  if (loginBtn) {
+    loginBtn.addEventListener("click", async () => {
+      try {
+        loginBtn.style.opacity = "0.7";
+        loginBtn.disabled = true;
+        await loginWithGoogle();
+      } catch (err) {
+        console.error("Google Login Error:", err);
+      } finally {
+        loginBtn.style.opacity = "1";
+        loginBtn.disabled = false;
+      }
+    });
+  }
+
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      try {
+        await logout();
+      } catch (err) {
+        console.error("Logout Error:", err);
+      }
+    });
+  }
+
+  subscribeAuth((user) => {
+    if (user) {
+      if (loginBtn) loginBtn.style.display = "none";
+      if (userProfileBar) userProfileBar.style.display = "inline-flex";
+
+      const name = user.displayName || user.email || "User";
+      const email = user.email || "";
+      const photo = user.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${user.uid}`;
+
+      if (userAvatar) userAvatar.src = photo;
+      if (userName) userName.textContent = name;
+      if (userEmail) userEmail.textContent = email;
+    } else {
+      if (loginBtn) loginBtn.style.display = "inline-flex";
+      if (userProfileBar) userProfileBar.style.display = "none";
+    }
+  });
 </script>
 </body>
 </html>
