@@ -1870,38 +1870,20 @@
     }
 
     async function openPublicProfile(uid) {
-      peopleSearchResults.hidden = true;
-      peopleSearchInput.value = "";
-      document.getElementById("profileModalTitle").textContent = "Movie Memory ของเพื่อน";
-      profileSetup.hidden = true;
-      publicProfileView.hidden = false;
-      document.getElementById("socialMovies").innerHTML = '<div class="empty-state"><p>กำลังโหลด...</p></div>';
-      profileModal.showModal();
       try {
-        const { profile, movies: publicMovies } = await getPublicProfile(uid);
-        document.getElementById("socialAvatar").src = profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`;
-        document.getElementById("socialName").textContent = profile.displayName || profile.username;
-        document.getElementById("socialUsername").textContent = `@${profile.username}`;
-        document.getElementById("socialMovies").innerHTML = publicMovies.length ? publicMovies.map(movie => `
-          <article class="social-movie">
-            ${movie.posterImg
-              ? `<img src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}">`
-              : '<div class="social-movie-placeholder">🎬</div>'}
-            <div class="social-movie-info">
-              <strong>${escapeHtml(movie.title || "ไม่มีชื่อหนัง")}</strong>
-              <small>${formatDate(movie.watchDate)} · ${formatStars(movie.rating)}</small>
-            </div>
-          </article>
-        `).join("") : '<div class="empty-state"><h3>ยังไม่มีหนัง</h3><p>บัญชีนี้ยังไม่ได้บันทึกภาพยนตร์</p></div>';
-      } catch (error) {
-        document.getElementById("socialMovies").innerHTML = '<div class="empty-state"><h3>เปิดโปรไฟล์ไม่ได้</h3><p>ลองใหม่อีกครั้งในภายหลัง</p></div>';
-      }
+        const { profile } = await getPublicProfile(uid);
+        window.location.href = `/Movie%20Memory/profile?username=${encodeURIComponent(profile.username)}`;
+      } catch { showToast("เปิดโปรไฟล์นี้ไม่สำเร็จ"); }
     }
 
     document.getElementById("closeProfileBtn").addEventListener("click", () => profileModal.close());
     userProfileBar.addEventListener("click", event => {
       if (event.target.closest("#logoutBtn")) return;
-      openUsernameSetup();
+      if (myProfile?.username) {
+        window.location.href = `/Movie%20Memory/profile?username=${encodeURIComponent(myProfile.username)}`;
+      } else {
+        openUsernameSetup();
+      }
     });
     userProfileBar.style.cursor = "pointer";
 

@@ -25,6 +25,10 @@ function safePath(urlPath) {
 }
 
 async function resolveFile(requestPath) {
+  const pathname = decodeURIComponent(requestPath.split('?')[0]);
+  if (/^\/Movie-Memory\/@[^/]+\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'profile.html');
+  }
   let target = safePath(requestPath);
   if (!target) return null;
 

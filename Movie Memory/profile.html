@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0a08">
+  <title>โปรไฟล์ — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#0d0a08;--surface:#19130f;--card:#211914;--line:#3b2a1e;--gold:#ffb547;--cream:#f8f1e7;--muted:#a69788}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 85% 0,#3b2115 0,transparent 34%),var(--bg);color:var(--cream);font-family:"Noto Sans Thai",sans-serif;min-height:100vh}
+    .shell{width:min(1180px,calc(100% - 36px));margin:auto}header{position:sticky;top:0;z-index:10;border-bottom:1px solid #ffffff12;background:#0d0a08df;backdrop-filter:blur(18px)}
+    nav{min-height:74px;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:11px;color:inherit;text-decoration:none;font:700 19px "Space Grotesk"}
+    .logo{width:43px;height:43px;border:1px solid #8a642d;border-radius:14px;display:grid;place-items:center;background:#21160f}.actions{display:flex;align-items:center;gap:10px}
+    button,.button{font:600 14px inherit;border-radius:999px;padding:10px 17px;cursor:pointer;text-decoration:none}.primary{border:1px solid var(--gold);background:var(--gold);color:#1c1008}.secondary{border:1px solid var(--line);background:#ffffff0a;color:var(--cream)}
+    main{padding:48px 0 80px}.profile-head{display:flex;align-items:center;gap:22px;margin-bottom:32px}.avatar{width:94px;height:94px;border-radius:50%;object-fit:cover;border:2px solid var(--gold);background:var(--surface)}
+    h1{margin:0;font-size:clamp(28px,5vw,48px);line-height:1.15}.handle{color:var(--gold);font-weight:600;margin-top:5px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:24px 0 42px}
+    .stat{border:1px solid var(--line);background:#19130fbb;border-radius:18px;padding:18px}.stat strong{display:block;font:700 27px "Space Grotesk";color:var(--gold)}.stat span{font-size:12px;color:var(--muted)}
+    .section-title{display:flex;justify-content:space-between;align-items:end;margin-bottom:18px}.section-title h2{margin:0;font-size:22px}.section-title span{color:var(--muted);font-size:13px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}.movie{min-width:0;border:1px solid var(--line);border-radius:19px;overflow:hidden;background:var(--card);box-shadow:0 15px 35px #0005}
+    .poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#251d17}.placeholder{aspect-ratio:2/3;display:grid;place-items:center;font-size:48px;background:#251d17}
+    .info{padding:14px}.info h3{font-size:15px;line-height:1.35;margin:0 0 7px}.meta{font-size:12px;color:var(--muted)}.stars{color:var(--gold);font-size:12px;margin-top:5px}
+    .guest{margin:42px 0 0;padding:26px;border:1px solid #8a642d;background:linear-gradient(135deg,#2c1c11,#17100c);border-radius:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.guest h2{font-size:20px;margin:0 0 5px}.guest p{color:var(--muted);margin:0}
+    .empty,.loading{text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:22px;color:var(--muted);grid-column:1/-1}.error{max-width:560px;margin:80px auto;text-align:center}.error .icon{font-size:58px}
+    @media(max-width:650px){nav{min-height:64px}.brand span:last-child{display:none}main{padding-top:30px}.profile-head{align-items:flex-start}.avatar{width:72px;height:72px}.stats{grid-template-columns:1fr}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.guest{align-items:flex-start;flex-direction:column}}
+  </style>
+</head>
+<body>
+  <header><div class="shell"><nav>
+    <a class="brand" href="/Movie%20Memory/"><span class="logo">🎞️</span><span>Movie Memory</span></a>
+    <div class="actions"><a class="button secondary" href="/Movie%20Memory/">← คอลเลกชันของฉัน</a><button id="loginBtn" class="primary" hidden>เข้าสู่ระบบด้วย Google</button></div>
+  </nav></div></header>
+  <main class="shell">
+    <div id="content"><div class="loading">กำลังเปิด Movie Memory...</div></div>
+    <section class="guest" id="guestInvite" hidden>
+      <div><h2>เก็บทุกเรื่องที่คุณดูไว้เป็นความทรงจำ 🎬</h2><p>สมัครหรือเข้าสู่ระบบ แล้วเริ่มสร้างคอลเลกชันภาพยนตร์ของคุณเอง</p></div>
+      <button class="primary" id="guestLoginBtn">เข้าสู่ระบบด้วย Google</button>
+    </section>
+  </main>
+  <script type="module">
+    import { getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-4";
+    const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
+    const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    const stars=value=>"★".repeat(Number(value)||0)+"☆".repeat(5-(Number(value)||0));
+    const date=value=>{try{return new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value+"T12:00:00"))}catch{return "ไม่ระบุวันที่"}};
+    function usernameFromUrl(){
+      const query=new URLSearchParams(location.search).get("username");
+      const match=decodeURIComponent(location.pathname).match(/\/Movie-Memory\/@([^/]+)/);
+      return String(query||match?.[1]||"").replace(/^@/,"");
+    }
+    async function loadProfile(){
+      try{
+        const {profile,movies}=await getPublicProfileByUsername(usernameFromUrl());
+        const canonicalUrl=`/Movie%20Memory/profile?username=${encodeURIComponent(profile.username)}`;
+        if(location.pathname+location.search!==canonicalUrl) history.replaceState(null,"",canonicalUrl);
+        document.title=`@${profile.username} — Movie Memory`;
+        const rated=movies.filter(movie=>Number(movie.rating)>0);
+        const average=rated.length?(rated.reduce((sum,movie)=>sum+Number(movie.rating),0)/rated.length).toFixed(1):"—";
+        const currentYear=String(new Date().getFullYear());
+        content.innerHTML=`
+          <section class="profile-head">
+            <img class="avatar" src="${escapeHtml(profile.photoURL||`https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="">
+            <div><h1>${escapeHtml(profile.displayName||profile.username)}</h1><div class="handle">@${escapeHtml(profile.username)}</div></div>
+          </section>
+          <section class="stats">
+            <div class="stat"><strong>${movies.length}</strong><span>เรื่องที่ดูทั้งหมด</span></div>
+            <div class="stat"><strong>${movies.filter(movie=>(movie.watchDate||"").startsWith(currentYear)).length}</strong><span>เรื่องที่ดูในปีนี้</span></div>
+            <div class="stat"><strong>${average}</strong><span>คะแนนเฉลี่ยจาก 5</span></div>
+          </section>
+          <div class="section-title"><h2>คอลเลกชันภาพยนตร์</h2><span>${movies.length} เรื่อง</span></div>
+          <section class="grid">${movies.length?movies.map(movie=>`
+            <article class="movie">
+              ${movie.posterImg?`<img class="poster" src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}">`:`<div class="placeholder">🎬</div>`}
+              <div class="info"><h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3><div class="meta">${date(movie.watchDate)} · ${escapeHtml(movie.format)}</div><div class="stars">${stars(movie.rating)}</div></div>
+            </article>`).join(""):`<div class="empty">บัญชีนี้ยังไม่มีภาพยนตร์ในคอลเลกชัน</div>`}</section>`;
+      }catch{
+        content.innerHTML='<div class="error"><div class="icon">🎞️</div><h1>ไม่พบโปรไฟล์นี้</h1><p>ไอดีอาจถูกเปลี่ยน หรือยังไม่ได้สร้างโปรไฟล์</p><a class="button primary" href="/Movie%20Memory/">กลับไป Movie Memory</a></div>';
+      }
+    }
+    async function login(){try{await loginWithGoogle();location.href="/Movie%20Memory/"}catch{alert("เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่")}}
+    loginBtn.addEventListener("click",login);document.getElementById("guestLoginBtn").addEventListener("click",login);
+    subscribeAuth(user=>{loginBtn.hidden=Boolean(user);guestInvite.hidden=Boolean(user)});
+    loadProfile();
+  </script>
+</body>
+</html>

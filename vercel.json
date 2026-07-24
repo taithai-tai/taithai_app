@@ -3,6 +3,12 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": true,
+  "rewrites": [
+    {
+      "source": "/Movie-Memory/:username",
+      "destination": "/Movie%20Memory/profile.html?username=:username"
+    }
+  ],
   "headers": [
     {
       "source": "/firebase-auth.js",

@@ -193,6 +193,21 @@ export async function getPublicProfile(uid) {
   };
 }
 
+export async function getPublicProfileByUsername(username) {
+  const normalized = normalizeUsername(username).replace(/^@/, "");
+  if (!normalized) throw new Error("PROFILE_NOT_FOUND");
+  const profileQuery = query(
+    collection(db, "publicProfiles"),
+    orderBy("usernameLower"),
+    startAt(normalized),
+    endAt(normalized),
+    limit(1)
+  );
+  const snapshot = await getDocs(profileQuery);
+  if (snapshot.empty) throw new Error("PROFILE_NOT_FOUND");
+  return getPublicProfile(snapshot.docs[0].data().uid);
+}
+
 export async function publishMovieCollection(user, movies) {
   if (!user) return;
   const movieCollection = collection(db, "users", user.uid, "publicMovies");
