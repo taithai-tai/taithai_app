@@ -23,7 +23,7 @@
     .poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#251d17}.placeholder{aspect-ratio:2/3;display:grid;place-items:center;font-size:48px;background:#251d17}
     .info{padding:14px}.info h3{font-size:15px;line-height:1.35;margin:0 0 7px}.meta{font-size:12px;color:var(--muted)}.stars{color:var(--gold);font-size:12px;margin-top:5px}
     .guest{margin:42px 0 0;padding:26px;border:1px solid #8a642d;background:linear-gradient(135deg,#2c1c11,#17100c);border-radius:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.guest h2{font-size:20px;margin:0 0 5px}.guest p{color:var(--muted);margin:0}
-    .empty,.loading{text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:22px;color:var(--muted);grid-column:1/-1}.error{max-width:560px;margin:80px auto;text-align:center}.error .icon{font-size:58px}
+    .empty,.loading{text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:22px;color:var(--muted);grid-column:1/-1}.profile-skeleton{height:220px;border-radius:24px;background:linear-gradient(90deg,#17110d 25%,#241a14 50%,#17110d 75%);background-size:200% 100%;animation:pulse 1.2s infinite}@keyframes pulse{to{background-position:-200% 0}}.error{max-width:560px;margin:80px auto;text-align:center}.error .icon{font-size:58px}
     @media(max-width:650px){
       .shell{width:calc(100% - 20px)}
       nav{min-height:64px;gap:8px}.brand span:last-child{display:none}.logo{width:40px;height:40px}.actions{min-width:0;justify-content:flex-end;gap:7px}
@@ -44,14 +44,22 @@
     <div class="actions"><a class="button secondary" href="/Movie%20Memory/">← คอลเลกชันของฉัน</a><button id="loginBtn" class="primary" hidden>เข้าสู่ระบบด้วย Google</button></div>
   </nav></div></header>
   <main class="shell">
-    <div id="content"><div class="loading">กำลังโหลดโปรไฟล์...</div></div>
+    <div id="content"><div class="profile-skeleton" aria-label="กำลังเตรียมโปรไฟล์"></div></div>
     <section class="guest" id="guestInvite" hidden>
       <div><h2>เก็บทุกเรื่องที่คุณดูไว้เป็นความทรงจำ 🎬</h2><p>สมัครหรือเข้าสู่ระบบ แล้วเริ่มสร้างคอลเลกชันภาพยนตร์ของคุณเอง</p></div>
       <button class="primary" id="guestLoginBtn">เข้าสู่ระบบด้วย Google</button>
     </section>
   </main>
+  <script>
+    window.setTimeout(() => {
+      const content = document.getElementById("content");
+      if (content?.querySelector(".profile-skeleton")) {
+        content.innerHTML = '<div class="error"><div class="icon">🎞️</div><h1>เชื่อมต่อโปรไฟล์ไม่สำเร็จ</h1><p>กรุณากลับไปค้นหาบัญชีอีกครั้ง</p><a class="button primary" href="/Movie%20Memory/">กลับไป Movie Memory</a></div>';
+      }
+    }, 12000);
+  </script>
   <script type="module">
-    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "../firebase-auth.js?v=20260725-6";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260725-8";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const stars=value=>"★".repeat(Number(value)||0)+"☆".repeat(5-(Number(value)||0));
