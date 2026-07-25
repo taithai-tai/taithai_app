@@ -56,7 +56,7 @@
       const validDate = date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : '';
       const allowedFormats = ['โรงภาพยนตร์', 'Streaming', 'แผ่น / Digital', 'เทศกาลหนัง', 'อื่น ๆ'];
       const format = allowedFormats.includes(value.format) ? value.format : 'โรงภาพยนตร์';
-      const rating = Math.min(5, Math.max(0, Math.round(Number(value.rating) || 0)));
+      const rating = Math.min(5, Math.max(0, Math.round((Number(value.rating) || 0) * 2) / 2));
 
       return {
         id,
@@ -124,9 +124,10 @@
     }
 
     function formatStars(rating) {
-      const num = Number(rating) || 0;
-      if (!num) return '☆☆☆☆☆';
-      return '★'.repeat(num) + '☆'.repeat(5 - num);
+      const num = Math.min(5, Math.max(0, Math.round((Number(rating) || 0) * 2) / 2));
+      const full = Math.floor(num);
+      const half = num % 1 !== 0;
+      return `${'★'.repeat(full)}${half ? '½' : ''}${'☆'.repeat(5 - Math.ceil(num))}`;
     }
 
     function getFilteredMovies() {
@@ -145,6 +146,16 @@
 
       list.sort((a, b) => {
         if (sort === 'oldest') return (a.watchDate || '').localeCompare(b.watchDate || '');
+        if (sort === 'release-newest') {
+          if (!a.releaseDate) return 1;
+          if (!b.releaseDate) return -1;
+          return b.releaseDate.localeCompare(a.releaseDate);
+        }
+        if (sort === 'release-oldest') {
+          if (!a.releaseDate) return 1;
+          if (!b.releaseDate) return -1;
+          return a.releaseDate.localeCompare(b.releaseDate);
+        }
         if (sort === 'rating') return (Number(b.rating) || 0) - (Number(a.rating) || 0);
         if (sort === 'title') return (a.title || '').localeCompare(b.title || '', 'th');
         return (b.watchDate || '').localeCompare(a.watchDate || '');
@@ -206,7 +217,8 @@
       const filtersActive = Boolean(
         $('searchInput').value.trim() ||
         $('yearFilter').value !== 'all' ||
-        $('formatFilter').value !== 'all'
+        $('formatFilter').value !== 'all' ||
+        $('sortSelect').value !== 'newest'
       );
       const advancedFilterCount = Number($('yearFilter').value !== 'all') +
         Number($('formatFilter').value !== 'all') +
@@ -280,6 +292,7 @@
               </div>
               <div class="card-header">
                 <span class="badge-format">${escapeHtml(m.format || 'โรงภาพยนตร์')}</span>
+                ${m.releaseDate ? `<span class="badge-release">ฉาย ${escapeHtml(m.releaseDate.slice(0, 4))}</span>` : ''}
               </div>
               <div class="card-content">
                 <div class="watch-date-chip">📅 ${formatDate(m.watchDate)}</div>
@@ -456,10 +469,14 @@
     }
 
     function updateRatingStarsUI(rating) {
+      const value = Math.min(5, Math.max(0, Math.round((Number(rating) || 0) * 2) / 2));
       const btns = document.querySelectorAll('#ratingPicker .star-btn');
       btns.forEach((btn, idx) => {
-        btn.classList.toggle('active', idx < rating);
+        const star = idx + 1;
+        btn.classList.toggle('active', value >= star);
+        btn.classList.toggle('half', value === star - 0.5);
       });
+      $('ratingValueLabel').textContent = `${value} / 5`;
     }
 
     // Direct Save Function triggered by Save Button at Bottom
@@ -724,7 +741,7 @@
       roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 32);
       context.stroke();
 
-      const rating = Math.min(5, Math.max(0, Math.round(Number(movie.rating) || 0)));
+      const rating = Math.min(5, Math.max(0, Math.round((Number(movie.rating) || 0) * 2) / 2));
       if (poster?.shareObjectUrl) URL.revokeObjectURL(poster.shareObjectUrl);
 
       context.textAlign = 'center';
@@ -759,7 +776,7 @@
       context.textAlign = 'right';
       context.fillStyle = '#ffb547';
       context.font = '700 36px sans-serif';
-      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, 1002, 1828);
+      context.fillText(formatStars(rating), 1002, 1828);
       context.fillStyle = '#f8f1e7';
       context.font = '600 18px sans-serif';
       context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', 1002, 1862);
@@ -1043,7 +1060,9 @@
       // Interactive Rating Picker
       document.querySelectorAll('#ratingPicker .star-btn').forEach(btn => {
         btn.addEventListener('click', () => {
-          const r = Number(btn.dataset.star);
+          const star = Number(btn.dataset.star);
+          const current = Number($('formRatingVal').value) || 0;
+          const r = current === star - 0.5 ? star : star - 0.5;
           $('formRatingVal').value = r;
           updateRatingStarsUI(r);
         });
@@ -1076,6 +1095,7 @@
         $('searchInput').value = '';
         $('yearFilter').value = 'all';
         $('formatFilter').value = 'all';
+        $('sortSelect').value = 'newest';
         renderCollection();
       });
       $('collectionGrid').addEventListener('click', event => {

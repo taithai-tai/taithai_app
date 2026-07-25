@@ -238,7 +238,7 @@ function cloudMovieCollection(movies) {
     cinema: String(movie.cinema || "").slice(0, 80),
     seat: String(movie.seat || "").slice(0, 40),
     companion: String(movie.companion || "").slice(0, 80),
-    rating: Math.min(5, Math.max(0, Number(movie.rating) || 0)),
+    rating: Math.min(5, Math.max(0, Math.round((Number(movie.rating) || 0) * 2) / 2)),
     note: String(movie.note || "").slice(0, 1000),
     posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
     ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",

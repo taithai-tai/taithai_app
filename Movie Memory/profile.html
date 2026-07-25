@@ -59,10 +59,10 @@
     }, 12000);
   </script>
   <script type="module">
-    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260725-8";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260726-1";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-    const stars=value=>"★".repeat(Number(value)||0)+"☆".repeat(5-(Number(value)||0));
+    const stars=value=>{const rating=Math.min(5,Math.max(0,Math.round((Number(value)||0)*2)/2)),full=Math.floor(rating),half=rating%1!==0;return"★".repeat(full)+(half?"½":"")+"☆".repeat(5-Math.ceil(rating))};
     const date=value=>{try{return new Intl.DateTimeFormat("th-TH",{day:"numeric",month:"short",year:"numeric"}).format(new Date(value+"T12:00:00"))}catch{return "ไม่ระบุวันที่"}};
     function usernameFromUrl(){
       const query=new URLSearchParams(location.search).get("username");

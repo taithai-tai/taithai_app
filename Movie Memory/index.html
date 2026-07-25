@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260726-2">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260726-4">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260726-2';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260726-4';
     }
   </script>
 </head>
@@ -133,6 +133,8 @@
       <select class="control" id="sortSelect" aria-label="เรียงลำดับ">
         <option value="newest">ดูล่าสุดก่อน</option>
         <option value="oldest">เก่าสุดก่อน</option>
+        <option value="release-newest">ปีฉายใหม่ → เก่า</option>
+        <option value="release-oldest">ปีฉายเก่า → ใหม่</option>
         <option value="rating">คะแนนสูงสุด</option>
         <option value="title">ชื่อ A–Z</option>
       </select>
@@ -345,11 +347,12 @@
           <div class="form-col-full">
             <label>คะแนนของคุณ</label>
             <div class="rating-stars-picker" id="ratingPicker">
-              <span class="star-btn" data-star="1">★</span>
-              <span class="star-btn" data-star="2">★</span>
-              <span class="star-btn" data-star="3">★</span>
-              <span class="star-btn" data-star="4">★</span>
-              <span class="star-btn" data-star="5">★</span>
+              <button class="star-btn" type="button" data-star="1" aria-label="ให้คะแนนดาวดวงที่ 1">★</button>
+              <button class="star-btn" type="button" data-star="2" aria-label="ให้คะแนนดาวดวงที่ 2">★</button>
+              <button class="star-btn" type="button" data-star="3" aria-label="ให้คะแนนดาวดวงที่ 3">★</button>
+              <button class="star-btn" type="button" data-star="4" aria-label="ให้คะแนนดาวดวงที่ 4">★</button>
+              <button class="star-btn" type="button" data-star="5" aria-label="ให้คะแนนดาวดวงที่ 5">★</button>
+              <output class="rating-value-label" id="ratingValueLabel">0 / 5</output>
             </div>
             <input type="hidden" id="formRatingVal" value="0">
           </div>
@@ -469,9 +472,9 @@
         });
       });
     }
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260726-11"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260726-13"><\/script>`);
     document.write(`<script src="${authBridgePath}"><\/script>`);
-    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260725-11"><\/script>`);
+    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260726-1"><\/script>`);
   </script>
 </body>
 </html>

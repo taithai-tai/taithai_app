@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260725-9";
+    } from "../firebase-auth.js?v=20260726-1";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
