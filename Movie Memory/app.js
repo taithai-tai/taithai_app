@@ -575,6 +575,30 @@
       return lines;
     }
 
+    function formatStoryDate(dateString) {
+      if (!dateString) return 'Date not specified';
+      try {
+        return new Intl.DateTimeFormat('en-GB', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric'
+        }).format(new Date(`${dateString}T12:00:00`));
+      } catch {
+        return dateString;
+      }
+    }
+
+    function roundedCanvasRect(context, x, y, width, height, radius) {
+      const r = Math.min(radius, width / 2, height / 2);
+      context.beginPath();
+      context.moveTo(x + r, y);
+      context.arcTo(x + width, y, x + width, y + height, r);
+      context.arcTo(x + width, y + height, x, y + height, r);
+      context.arcTo(x, y + height, x, y, r);
+      context.arcTo(x, y, x + width, y, r);
+      context.closePath();
+    }
+
     async function createMovieStory(movie) {
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
@@ -589,54 +613,75 @@
       context.fillStyle = background;
       context.fillRect(0, 0, 1080, 1920);
 
+      const posterX = 205;
+      const posterY = 90;
+      const posterWidth = 670;
+      const posterHeight = 1005;
+      context.save();
+      context.shadowColor = 'rgba(255,181,71,.32)';
+      context.shadowBlur = 70;
+      context.fillStyle = '#21160f';
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      context.fill();
+      context.restore();
+
+      context.save();
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      context.clip();
       if (poster) {
-        const posterHeight = 1460;
-        const scale = Math.max(1080 / poster.width, posterHeight / poster.height);
+        const scale = Math.max(posterWidth / poster.width, posterHeight / poster.height);
         const width = poster.width * scale;
         const height = poster.height * scale;
-        context.drawImage(poster, (1080 - width) / 2, 0, width, height);
+        context.drawImage(poster, posterX + ((posterWidth - width) / 2), posterY + ((posterHeight - height) / 2), width, height);
       } else {
         context.fillStyle = '#24160f';
-        context.fillRect(70, 80, 940, 1240);
+        context.fillRect(posterX, posterY, posterWidth, posterHeight);
         context.textAlign = 'center';
-        context.font = '180px sans-serif';
-        context.fillText('🎬', 540, 720);
+        context.font = '150px sans-serif';
+        context.fillText('🎬', 540, 650);
       }
+      context.restore();
 
-      const fade = context.createLinearGradient(0, 650, 0, 1920);
-      fade.addColorStop(0, 'rgba(13,10,8,0)');
-      fade.addColorStop(0.48, 'rgba(13,10,8,.34)');
-      fade.addColorStop(0.7, 'rgba(13,10,8,.92)');
-      fade.addColorStop(1, '#0d0a08');
-      context.fillStyle = fade;
-      context.fillRect(0, 0, 1080, 1920);
+      context.strokeStyle = 'rgba(255,181,71,.62)';
+      context.lineWidth = 4;
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      context.stroke();
 
       context.textAlign = 'center';
       context.fillStyle = '#ffb547';
-      context.font = '700 29px sans-serif';
-      context.fillText('MOVIE MEMORY  ·  WATCHED', 540, 1325);
+      context.font = '700 27px sans-serif';
+      context.fillText('MOVIE MEMORY  ·  WATCHED', 540, 1180);
 
       context.fillStyle = '#f8f1e7';
-      context.font = '700 76px sans-serif';
+      context.font = '700 72px sans-serif';
       const titleLines = wrapShareText(context, movie.title, 880, 3);
-      titleLines.forEach((line, index) => context.fillText(line, 540, 1430 + (index * 86)));
+      titleLines.forEach((line, index) => context.fillText(line, 540, 1285 + (index * 80)));
 
-      const titleBottom = 1430 + ((titleLines.length - 1) * 86);
+      const titleBottom = 1285 + ((titleLines.length - 1) * 80);
       const rating = Math.min(5, Math.max(0, Math.round(Number(movie.rating) || 0)));
       context.fillStyle = '#ffb547';
-      context.font = '700 54px sans-serif';
-      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, 540, titleBottom + 105);
+      context.font = '700 52px sans-serif';
+      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, 540, titleBottom + 95);
       context.fillStyle = '#f8f1e7';
       context.font = '600 28px sans-serif';
-      context.fillText(rating ? `${rating} / 5 ดาว` : 'ยังไม่ได้ให้คะแนน', 540, titleBottom + 155);
+      context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', 540, titleBottom + 145);
 
       context.fillStyle = '#b6a89b';
       context.font = '500 25px sans-serif';
-      const detail = [formatDate(movie.watchDate), movie.cinema || movie.format].filter(Boolean).join('  ·  ');
-      context.fillText(detail, 540, Math.min(1780, titleBottom + 225));
+      const detail = [formatStoryDate(movie.watchDate), movie.cinema || movie.format].filter(Boolean).join('  ·  ');
+      context.fillText(detail, 540, Math.min(1690, titleBottom + 215));
+
+      const linkText = 'taithai.app/Movie-Memory';
       context.fillStyle = '#ffb547';
-      context.font = '700 27px sans-serif';
-      context.fillText('taithai.app  ·  Movie Memory', 540, 1850);
+      context.font = '700 30px sans-serif';
+      context.fillText(`↗  ${linkText}`, 540, 1835);
+      const linkWidth = context.measureText(`↗  ${linkText}`).width;
+      context.strokeStyle = '#ffb547';
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(540 - (linkWidth / 2), 1847);
+      context.lineTo(540 + (linkWidth / 2), 1847);
+      context.stroke();
 
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.96));
     }
@@ -652,12 +697,15 @@
         if (!blob) throw new Error('STORY_FAILED');
         const fileName = `movie-memory-${String(movie.title).replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 45) || 'story'}.png`;
         const file = typeof File === 'function' ? new File([blob], fileName, { type: 'image/png' }) : null;
+        const movieMemoryUrl = 'https://taithai.app/Movie-Memory';
         if (file && navigator.canShare?.({ files: [file] })) {
-          await navigator.share({
+          const shareData = {
             files: [file],
-            title: `${movie.title} — ${Number(movie.rating) || 0}/5 ดาว`,
-            text: `หนังที่ฉันดู: ${movie.title}`
-          });
+            title: `${movie.title} — ${Number(movie.rating) || 0}/5 stars`,
+            text: `I watched: ${movie.title}\n${movieMemoryUrl}`
+          };
+          if (navigator.canShare({ ...shareData, url: movieMemoryUrl })) shareData.url = movieMemoryUrl;
+          await navigator.share(shareData);
         } else {
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');

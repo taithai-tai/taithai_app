@@ -32,6 +32,9 @@ async function resolveFile(requestPath) {
       return path.join(root, 'Movie Memory', assetName);
     }
   }
+  if (/^\/Movie-Memory\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'index.html');
+  }
   if (/^\/Movie-Memory\/(?:add|movie|settings|posters)\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'index.html');
   }
