@@ -6,8 +6,10 @@
       claimUsername,
       searchPublicProfiles,
       getPublicProfile,
-      publishMovieCollection
-    } from "../firebase-auth.js?v=20260725-7";
+      getMyMovieCollection,
+      subscribeMyMovieCollection,
+      saveMyMovieCollection
+    } from "../firebase-auth.js?v=20260725-9";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -25,23 +27,70 @@
     let myProfile = null;
     let peopleSearchTimer = null;
     let movieSyncTimer = null;
+    let movieCollectionUnsubscribe = null;
     const profileSearchCache = new Map();
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
     const movieSyncKey = uid => `movie_memory_public_sync_v2_${uid}`;
+    const accountMoviesKey = uid => `movie_memory_collection_${uid}`;
+    const legacyOwnerKey = "movie_memory_legacy_owner_uid";
+
+    function readStoredCollection(key) {
+      try {
+        const value = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(value) ? value : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function currentLocalCollection() {
+      return readStoredCollection("taithai_movie_memory_v2");
+    }
 
     function publicMovieFingerprint(collection) {
-      return JSON.stringify((Array.isArray(collection) ? collection : []).map(movie => [
-        movie.id, movie.title, movie.tmdbId, movie.watchDate, movie.releaseDate,
-        movie.format, movie.cinema, movie.rating,
-        /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : ""
-      ]));
+      return JSON.stringify((Array.isArray(collection) ? collection : []).map(movie => ({
+        id: movie.id,
+        title: movie.title,
+        tmdbId: movie.tmdbId,
+        watchDate: movie.watchDate,
+        releaseDate: movie.releaseDate,
+        format: movie.format,
+        cinema: movie.cinema,
+        seat: movie.seat,
+        companion: movie.companion,
+        rating: movie.rating,
+        note: movie.note,
+        posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
+        ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",
+        updatedAt: movie.updatedAt
+      })));
+    }
+
+    function mergeCloudWithLocal(cloudMovies, localMovies) {
+      const localById = new Map((Array.isArray(localMovies) ? localMovies : []).map(movie => [movie.id, movie]));
+      return (Array.isArray(cloudMovies) ? cloudMovies : []).map(movie => {
+        const local = localById.get(movie.id);
+        if (!local) return movie;
+        return {
+          ...movie,
+          posterImg: movie.posterImg || (/^data:image\//.test(local.posterImg || "") ? local.posterImg : ""),
+          ticketImg: movie.ticketImg || (/^data:image\//.test(local.ticketImg || "") ? local.ticketImg : "")
+        };
+      });
+    }
+
+    function mergeLegacyCollection(cloudMovies, localMovies) {
+      const merged = new Map((Array.isArray(cloudMovies) ? cloudMovies : []).map(movie => [movie.id, movie]));
+      (Array.isArray(localMovies) ? localMovies : []).forEach(movie => merged.set(movie.id, movie));
+      return [...merged.values()];
     }
 
     async function syncMoviesIfNeeded(user, collection) {
       if (!user) return;
       const fingerprint = publicMovieFingerprint(collection);
       if (localStorage.getItem(movieSyncKey(user.uid)) === fingerprint) return;
-      await publishMovieCollection(user, collection);
+      await saveMyMovieCollection(user, collection);
+      localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(collection));
       localStorage.setItem(movieSyncKey(user.uid), fingerprint);
     }
 
@@ -211,7 +260,12 @@
     }
 
     subscribeAuth(async (user) => {
+      const previousUser = signedInUser;
       signedInUser = user;
+      if (movieCollectionUnsubscribe) {
+        movieCollectionUnsubscribe();
+        movieCollectionUnsubscribe = null;
+      }
       if (user) {
         if (loginBtn) loginBtn.style.display = "none";
         if (userProfileBar) userProfileBar.style.display = "inline-flex";
@@ -228,6 +282,32 @@
           if (userEmail) userEmail.textContent = `@${cachedUsername}`;
         }
         try {
+          const cloudCollection = await getMyMovieCollection(user);
+          const accountCollection = readStoredCollection(accountMoviesKey(user.uid));
+          const legacyOwner = localStorage.getItem(legacyOwnerKey);
+          let syncedCollection;
+
+          if (cloudCollection.source === "private") {
+            syncedCollection = mergeCloudWithLocal(cloudCollection.movies, accountCollection);
+          } else if (cloudCollection.source === "legacy") {
+            const migratableLocal = (!legacyOwner || legacyOwner === user.uid)
+              ? currentLocalCollection()
+              : accountCollection;
+            syncedCollection = mergeLegacyCollection(cloudCollection.movies, migratableLocal);
+            localStorage.setItem(legacyOwnerKey, user.uid);
+          } else if (accountCollection.length) {
+            syncedCollection = accountCollection;
+          } else if (!legacyOwner || legacyOwner === user.uid) {
+            syncedCollection = currentLocalCollection();
+            localStorage.setItem(legacyOwnerKey, user.uid);
+          } else {
+            syncedCollection = [];
+          }
+
+          localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(syncedCollection));
+          localStorage.setItem("taithai_movie_memory_v2", JSON.stringify(syncedCollection));
+          window.dispatchEvent(new CustomEvent("movie-memory:replace", { detail: syncedCollection }));
+
           myProfile = await getMyPublicProfile(user);
           if (myProfile?.username) {
             localStorage.setItem(usernameCacheKey(user.uid), myProfile.username);
@@ -237,7 +317,14 @@
           } else {
             if (userEmail) userEmail.textContent = "ตั้งไอดีของคุณ";
           }
-          await syncMoviesIfNeeded(user, movies);
+          await syncMoviesIfNeeded(user, syncedCollection);
+          movieCollectionUnsubscribe = subscribeMyMovieCollection(user, remoteMovies => {
+            if (signedInUser?.uid !== user.uid) return;
+            const mergedMovies = mergeCloudWithLocal(remoteMovies, currentLocalCollection());
+            localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(mergedMovies));
+            localStorage.setItem(movieSyncKey(user.uid), publicMovieFingerprint(remoteMovies));
+            window.dispatchEvent(new CustomEvent("movie-memory:replace", { detail: mergedMovies }));
+          });
           if (!myProfile?.username && !cachedUsername) setTimeout(openUsernameSetup, 350);
         } catch (error) {
           console.warn("Profile sync failed:", error);
@@ -245,6 +332,10 @@
         }
       } else {
         myProfile = null;
+        if (previousUser) {
+          localStorage.setItem("taithai_movie_memory_v2", "[]");
+          window.dispatchEvent(new CustomEvent("movie-memory:replace", { detail: [] }));
+        }
         if (loginBtn) loginBtn.style.display = "inline-flex";
         if (userProfileBar) userProfileBar.style.display = "none";
         if (peopleSearchWrap) peopleSearchWrap.style.display = "none";

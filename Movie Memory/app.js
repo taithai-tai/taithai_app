@@ -95,6 +95,17 @@
       }
     }
 
+    window.addEventListener('movie-memory:replace', event => {
+      const incoming = Array.isArray(event.detail) ? event.detail : [];
+      movies = incoming.map(normalizeMovie);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+      } catch (error) {
+        showToast('ซิงก์ข้อมูลสำเร็จ แต่พื้นที่เก็บข้อมูลในเครื่องไม่เพียงพอ');
+      }
+      if (document.readyState !== 'loading') renderCollection();
+    });
+
     function showToast(msg) {
       const toast = $('toast');
       toast.textContent = msg;

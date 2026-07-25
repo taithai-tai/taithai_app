@@ -15,6 +15,7 @@ import {
   doc, 
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   orderBy,
   startAt,
@@ -226,9 +227,8 @@ export async function getPublicProfileByUsername(username) {
   return getPublicProfile(snapshot.docs[0].data().uid);
 }
 
-export async function publishMovieCollection(user, movies) {
-  if (!user) return;
-  const publicMovies = (Array.isArray(movies) ? movies : []).slice(0, 200).map(movie => ({
+function cloudMovieCollection(movies) {
+  return (Array.isArray(movies) ? movies : []).slice(0, 300).map(movie => ({
     id: String(movie.id || crypto.randomUUID()).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80),
     title: String(movie.title || "").slice(0, 100),
     tmdbId: Number(movie.tmdbId) || null,
@@ -236,8 +236,66 @@ export async function publishMovieCollection(user, movies) {
     releaseDate: String(movie.releaseDate || "").slice(0, 10),
     format: String(movie.format || "").slice(0, 40),
     cinema: String(movie.cinema || "").slice(0, 80),
+    seat: String(movie.seat || "").slice(0, 40),
+    companion: String(movie.companion || "").slice(0, 80),
     rating: Math.min(5, Math.max(0, Number(movie.rating) || 0)),
-    posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : ""
+    note: String(movie.note || "").slice(0, 1000),
+    posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
+    ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",
+    updatedAt: String(movie.updatedAt || "").slice(0, 40)
+  }));
+}
+
+export async function getMyMovieCollection(user) {
+  if (!user) return { exists: false, source: "none", movies: [] };
+  const userSnapshot = await getDoc(doc(db, "users", user.uid));
+  const privateMovies = userSnapshot.data()?.movieCollection;
+  if (Array.isArray(privateMovies)) {
+    return { exists: true, source: "private", movies: privateMovies };
+  }
+
+  // Import collections published by older Movie Memory versions once.
+  const publicSnapshot = await getDoc(doc(db, "publicProfiles", user.uid));
+  const legacyMovies = publicSnapshot.data()?.publicMovies;
+  return Array.isArray(legacyMovies)
+    ? { exists: true, source: "legacy", movies: legacyMovies }
+    : { exists: false, source: "none", movies: [] };
+}
+
+export function subscribeMyMovieCollection(user, callback) {
+  if (!user) return () => {};
+  return onSnapshot(doc(db, "users", user.uid), snapshot => {
+    const movies = snapshot.data()?.movieCollection;
+    if (Array.isArray(movies)) callback(movies);
+  }, error => {
+    console.warn("Movie collection live sync failed:", error);
+  });
+}
+
+export async function saveMyMovieCollection(user, movies) {
+  if (!user) throw new Error("LOGIN_REQUIRED");
+  const movieCollection = cloudMovieCollection(movies);
+  await setDoc(doc(db, "users", user.uid), {
+    uid: user.uid,
+    movieCollection,
+    movieCollectionUpdatedAt: serverTimestamp()
+  }, { merge: true });
+  await publishMovieCollection(user, movieCollection);
+  return movieCollection;
+}
+
+export async function publishMovieCollection(user, movies) {
+  if (!user) return;
+  const publicMovies = cloudMovieCollection(movies).slice(0, 200).map(movie => ({
+    id: movie.id,
+    title: movie.title,
+    tmdbId: movie.tmdbId,
+    watchDate: movie.watchDate,
+    releaseDate: movie.releaseDate,
+    format: movie.format,
+    cinema: movie.cinema,
+    rating: movie.rating,
+    posterImg: movie.posterImg
   }));
 
   await setDoc(doc(db, "publicProfiles", user.uid), {
