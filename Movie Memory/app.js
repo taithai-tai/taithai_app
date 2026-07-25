@@ -208,6 +208,11 @@
         $('yearFilter').value !== 'all' ||
         $('formatFilter').value !== 'all'
       );
+      const advancedFilterCount = Number($('yearFilter').value !== 'all') +
+        Number($('formatFilter').value !== 'all') +
+        Number($('sortSelect').value !== 'newest');
+      $('mobileFilterLabel').textContent = advancedFilterCount ? `ตัวกรอง · ${advancedFilterCount}` : 'ตัวกรอง';
+      $('mobileFilterToggle').classList.toggle('active', advancedFilterCount > 0);
 
       $('resultSummary').textContent = movies.length
         ? filtersActive
@@ -540,6 +545,136 @@
       openAsPage($('inspectModal'));
     }
 
+    function loadShareImage(src) {
+      return new Promise(resolve => {
+        if (!src) return resolve(null);
+        const image = new Image();
+        image.crossOrigin = 'anonymous';
+        image.onload = () => resolve(image);
+        image.onerror = () => resolve(null);
+        image.src = src;
+      });
+    }
+
+    function wrapShareText(context, text, maxWidth, maxLines = 3) {
+      const source = String(text || '');
+      const segments = source.includes(' ') ? source.split(/(\s+)/) : Array.from(source);
+      const lines = [];
+      let line = '';
+      for (const segment of segments) {
+        const candidate = line + segment;
+        if (line && context.measureText(candidate).width > maxWidth) {
+          lines.push(line.trim());
+          line = segment.trimStart();
+          if (lines.length === maxLines) break;
+        } else {
+          line = candidate;
+        }
+      }
+      if (line && lines.length < maxLines) lines.push(line.trim());
+      return lines;
+    }
+
+    async function createMovieStory(movie) {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const context = canvas.getContext('2d');
+      const poster = await loadShareImage(movie.posterImg || movie.ticketImg || '');
+
+      const background = context.createLinearGradient(0, 0, 1080, 1920);
+      background.addColorStop(0, '#3a1c0d');
+      background.addColorStop(0.58, '#130d09');
+      background.addColorStop(1, '#090706');
+      context.fillStyle = background;
+      context.fillRect(0, 0, 1080, 1920);
+
+      if (poster) {
+        const posterHeight = 1460;
+        const scale = Math.max(1080 / poster.width, posterHeight / poster.height);
+        const width = poster.width * scale;
+        const height = poster.height * scale;
+        context.drawImage(poster, (1080 - width) / 2, 0, width, height);
+      } else {
+        context.fillStyle = '#24160f';
+        context.fillRect(70, 80, 940, 1240);
+        context.textAlign = 'center';
+        context.font = '180px sans-serif';
+        context.fillText('🎬', 540, 720);
+      }
+
+      const fade = context.createLinearGradient(0, 650, 0, 1920);
+      fade.addColorStop(0, 'rgba(13,10,8,0)');
+      fade.addColorStop(0.48, 'rgba(13,10,8,.34)');
+      fade.addColorStop(0.7, 'rgba(13,10,8,.92)');
+      fade.addColorStop(1, '#0d0a08');
+      context.fillStyle = fade;
+      context.fillRect(0, 0, 1080, 1920);
+
+      context.textAlign = 'center';
+      context.fillStyle = '#ffb547';
+      context.font = '700 29px sans-serif';
+      context.fillText('MOVIE MEMORY  ·  WATCHED', 540, 1325);
+
+      context.fillStyle = '#f8f1e7';
+      context.font = '700 76px sans-serif';
+      const titleLines = wrapShareText(context, movie.title, 880, 3);
+      titleLines.forEach((line, index) => context.fillText(line, 540, 1430 + (index * 86)));
+
+      const titleBottom = 1430 + ((titleLines.length - 1) * 86);
+      const rating = Math.min(5, Math.max(0, Math.round(Number(movie.rating) || 0)));
+      context.fillStyle = '#ffb547';
+      context.font = '700 54px sans-serif';
+      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, 540, titleBottom + 105);
+      context.fillStyle = '#f8f1e7';
+      context.font = '600 28px sans-serif';
+      context.fillText(rating ? `${rating} / 5 ดาว` : 'ยังไม่ได้ให้คะแนน', 540, titleBottom + 155);
+
+      context.fillStyle = '#b6a89b';
+      context.font = '500 25px sans-serif';
+      const detail = [formatDate(movie.watchDate), movie.cinema || movie.format].filter(Boolean).join('  ·  ');
+      context.fillText(detail, 540, Math.min(1780, titleBottom + 225));
+      context.fillStyle = '#ffb547';
+      context.font = '700 27px sans-serif';
+      context.fillText('taithai.app  ·  Movie Memory', 540, 1850);
+
+      return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.96));
+    }
+
+    async function shareInspectedMovie() {
+      const movie = movies.find(item => item.id === inspectingMovieId);
+      if (!movie) return;
+      const button = $('inspectShareBtn');
+      button.disabled = true;
+      button.textContent = 'กำลังสร้างภาพ…';
+      try {
+        const blob = await createMovieStory(movie);
+        if (!blob) throw new Error('STORY_FAILED');
+        const fileName = `movie-memory-${String(movie.title).replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 45) || 'story'}.png`;
+        const file = typeof File === 'function' ? new File([blob], fileName, { type: 'image/png' }) : null;
+        if (file && navigator.canShare?.({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: `${movie.title} — ${Number(movie.rating) || 0}/5 ดาว`,
+            text: `หนังที่ฉันดู: ${movie.title}`
+          });
+        } else {
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = fileName;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          showToast('✓ บันทึกภาพแล้ว นำไปลง IG Story ได้เลย');
+        }
+      } catch (error) {
+        if (error?.name !== 'AbortError') showToast('สร้างภาพสำหรับแชร์ไม่สำเร็จ กรุณาลองใหม่');
+      } finally {
+        button.disabled = false;
+        button.textContent = '✦ แชร์ลง IG Story';
+      }
+    }
+
     async function openPosterPicker(asRoute = false) {
       const movie = movies.find(m => m.id === inspectingMovieId);
       if (!movie) {
@@ -799,6 +934,11 @@
 
       // Filter & Toolbar Controls
       $('searchInput').addEventListener('input', renderCollection);
+      $('mobileFilterToggle').addEventListener('click', () => {
+        const toolbar = document.querySelector('.toolbar');
+        const expanded = toolbar.classList.toggle('filters-open');
+        $('mobileFilterToggle').setAttribute('aria-expanded', String(expanded));
+      });
       $('yearFilter').addEventListener('change', renderCollection);
       $('formatFilter').addEventListener('change', renderCollection);
       $('sortSelect').addEventListener('change', renderCollection);
@@ -845,6 +985,7 @@
       $('closeInspectBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectCloseBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
+      $('inspectShareBtn').addEventListener('click', shareInspectedMovie);
       $('changePosterBtn').addEventListener('click', () => openPosterPicker());
       $('closePosterPickerBtn').addEventListener('click', () => {
         if (!IS_FILE_MODE && currentRoute() === 'posters' && inspectingMovieId) {

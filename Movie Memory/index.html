@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260725-9">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260726-2">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260725-9';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260726-2';
     }
   </script>
 </head>
@@ -114,6 +114,10 @@
         <input class="control" id="searchInput" type="search" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." autocomplete="off">
       </div>
 
+      <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-expanded="false" aria-controls="yearFilter formatFilter sortSelect">
+        <span>⚙️</span><span id="mobileFilterLabel">ตัวกรอง</span>
+      </button>
+
       <select class="control" id="yearFilter" aria-label="กรองตามปีที่ดู">
         <option value="all">ทุกปี</option>
       </select>
@@ -134,16 +138,16 @@
       </select>
 
       <div class="view-toggle">
-        <button class="view-btn active" id="viewGridBtn" type="button" title="แสดงแบบตารางโปสเตอร์">▦ Grid</button>
-        <button class="view-btn" id="viewListBtn" type="button" title="แสดงแบบรายการ">☷ List</button>
-        <button class="view-btn" id="viewTicketBtn" type="button" title="แสดงแบบตั๋วหนัง">🎟️ Ticket</button>
+        <button class="view-btn active" id="viewGridBtn" type="button" title="แสดงแบบตารางโปสเตอร์">▦ โปสเตอร์</button>
+        <button class="view-btn" id="viewListBtn" type="button" title="แสดงแบบรายการ">☷ รายการ</button>
+        <button class="view-btn" id="viewTicketBtn" type="button" title="แสดงแบบตั๋วหนัง">🎟️ ตั๋ว</button>
       </div>
     </section>
 
     <div class="collection-head">
       <div>
         <h2>คอลเลกชันของฉัน</h2>
-        <p id="resultSummary">ยังไม่มีหนังในคอลเลกชัน</p>
+        <p id="resultSummary" aria-live="polite">ยังไม่มีหนังในคอลเลกชัน</p>
       </div>
       <button class="clear-filter-btn" id="clearFiltersBtn" type="button" hidden>ล้างตัวกรอง ×</button>
     </div>
@@ -416,7 +420,10 @@
 
     <div class="modal-footer">
       <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไขบันทึก</button>
-      <button class="btn btn-primary" id="inspectCloseBtn" type="button">ตกลง</button>
+      <div class="inspect-footer-actions">
+        <button class="btn inspect-share-btn" id="inspectShareBtn" type="button">✦ แชร์ลง IG Story</button>
+        <button class="btn btn-ghost" id="inspectCloseBtn" type="button">ปิด</button>
+      </div>
     </div>
   </dialog>
 
@@ -456,12 +463,13 @@
               title: movie.title,
               posterImg: /^https:\/\//i.test(movie.posterImg || '') ? movie.posterImg : ''
             })) : [];
-            window.name = `movie-memory-game:${JSON.stringify(gameMovies)}`;
+            const transferredMovies = encodeURIComponent(JSON.stringify(gameMovies));
+            link.href = `./game.html#movies=${transferredMovies}`;
           } catch {}
         });
       });
     }
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260725-9"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260726-2"><\/script>`);
     document.write(`<script src="${authBridgePath}"><\/script>`);
     document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260725-11"><\/script>`);
   </script>

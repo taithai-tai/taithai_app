@@ -256,6 +256,12 @@
       transition: border-color 0.2s, box-shadow 0.2s;
     }
     .search-wrap .control { padding-left: 44px; }
+    .mobile-filter-toggle {
+      display:none; align-items:center; justify-content:center; gap:6px;
+      min-height:48px; padding:0 14px; border:1px solid var(--border); border-radius:14px;
+      background:var(--bg); color:var(--cream); font-family:inherit; font-size:12px; font-weight:600; cursor:pointer;
+    }
+    .mobile-filter-toggle.active { border-color:var(--gold); color:var(--gold); background:rgba(255,181,71,.08); }
     .control:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 181, 71, 0.12); }
     select.control {
       width: auto; cursor: pointer; min-width: 130px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23a69788' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
@@ -576,6 +582,13 @@
     .inspect-meta-item strong { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
     .inspect-meta-item span { font-size: 14px; font-weight: 600; color: var(--cream); }
     .inspect-quote { background: var(--surface-card); padding: 16px; border-radius: var(--radius); border-left: 3px solid var(--gold); font-style: italic; color: #e6d8cb; }
+    .inspect-footer-actions { display:flex; align-items:center; gap:10px; margin-left:auto; }
+    .inspect-share-btn {
+      color:#1a0f05; border:0;
+      background:linear-gradient(135deg,var(--gold),var(--orange));
+      box-shadow:0 9px 24px rgba(244,119,59,.22);
+    }
+    .inspect-share-btn:disabled { opacity:.65; cursor:wait; }
 
     .poster-picker-body { padding: 20px 24px 26px; overflow-y: auto; }
     .poster-picker-help { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
@@ -630,10 +643,15 @@
       .quote-box { display: none; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .toolbar { padding: 10px; border-radius: 18px; gap: 8px; margin-bottom: 22px; }
-      .search-wrap { flex-basis: 100%; }
+      .toolbar { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; }
+      .search-wrap { min-width:0; }
       .search-wrap .control { min-height: 48px; font-size: 16px; }
-      .toolbar > select.control { flex: 1; min-width: 0; width: calc(50% - 4px); }
-      .view-toggle { width: 100%; }
+      .mobile-filter-toggle { display:inline-flex; }
+      .toolbar > select.control { display:none; min-width:0; width:100%; }
+      .toolbar.filters-open > select.control { display:block; }
+      .toolbar.filters-open #yearFilter, .toolbar.filters-open #formatFilter { grid-column:auto; }
+      .toolbar.filters-open #sortSelect { grid-column:1/-1; }
+      .view-toggle { width: 100%; grid-column:1/-1; }
       .view-btn { flex: 1; justify-content: center; }
       .collection-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
       .collection-grid.ticket-view { grid-template-columns: 1fr; }
@@ -694,6 +712,9 @@
       #cancelModalBtn { padding-inline:12px; }
       .modal-footer #deleteEntryBtn { width:46px; flex:none; padding:0; font-size:0; }
       .modal-footer #deleteEntryBtn::before { content:"🗑️"; font-size:18px; }
+      #inspectModal .modal-footer { display:grid; grid-template-columns:auto 1fr; }
+      #inspectModal .inspect-footer-actions { width:100%; display:grid; grid-template-columns:1fr auto; gap:7px; }
+      #inspectModal .modal-footer .btn { font-size:11px; padding-inline:11px; white-space:nowrap; }
       .profile-form { flex-direction: column; }
       .profile-form .control, .profile-form .btn { width: 100%; min-height: 48px; }
       .profile-dialog-body { padding: 18px 16px 24px; }
@@ -728,6 +749,7 @@
       .stat-val { font-size: 23px; }
       .stat-lbl { font-size:10px; line-height:1.35; }
       .toolbar > select.control { min-height:44px; padding-left:12px; font-size:12px; }
+      .mobile-filter-toggle { min-height:48px; padding-inline:12px; }
       .view-toggle { min-height:44px; }
       .view-btn { min-height:38px; padding:7px 8px; font-size:11px; }
       .collection-head { margin:2px 2px 13px; align-items:center; }

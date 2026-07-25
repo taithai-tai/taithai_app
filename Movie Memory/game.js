@@ -4,8 +4,10 @@ let allMovies=[],round=[],roundWinners=[],pairIndex=0,roundNumber=1,choicesMade=
 
 function loadMovies(){
   try{
+    const hashMovies=location.hash.startsWith('#movies=')?decodeURIComponent(location.hash.slice('#movies='.length)):'';
     const transferred=window.name.startsWith('movie-memory-game:')?window.name.slice('movie-memory-game:'.length):'';
-    const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||localStorage.getItem('taithai_movie_memory_v1')||transferred||'[]');
+    const parsed=JSON.parse(hashMovies||localStorage.getItem(STORAGE_KEY)||localStorage.getItem('taithai_movie_memory_v1')||transferred||'[]');
+    if(hashMovies){try{history.replaceState(null,'',location.pathname+location.search)}catch{}}
     return Array.isArray(parsed)?parsed.filter(movie=>movie&&movie.title):[];
   }catch{return[]}
 }
