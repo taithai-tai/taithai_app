@@ -644,6 +644,18 @@
       context.closePath();
     }
 
+    function englishStoryPlace(movie) {
+      if (movie.cinema) return movie.cinema;
+      const formats = {
+        'โรงภาพยนตร์': 'Cinema',
+        'Streaming': 'Streaming',
+        'แผ่น / Digital': 'Disc / Digital',
+        'เทศกาลหนัง': 'Film Festival',
+        'อื่น ๆ': 'Other'
+      };
+      return formats[movie.format] || movie.format || 'Not specified';
+    }
+
     async function createMovieStory(movie, shareDetails) {
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
@@ -652,26 +664,46 @@
       const poster = shareDetails.poster;
 
       const background = context.createLinearGradient(0, 0, 1080, 1920);
-      background.addColorStop(0, '#3a1c0d');
-      background.addColorStop(0.58, '#130d09');
-      background.addColorStop(1, '#090706');
+      background.addColorStop(0, '#1d110a');
+      background.addColorStop(0.42, '#0e0b09');
+      background.addColorStop(1, '#070605');
       context.fillStyle = background;
       context.fillRect(0, 0, 1080, 1920);
 
-      const posterX = 160;
-      const posterY = 80;
-      const posterWidth = 760;
-      const posterHeight = 1140;
+      context.strokeStyle = 'rgba(255,181,71,.32)';
+      context.lineWidth = 2;
+      context.beginPath();
+      context.moveTo(90, 92);
+      context.lineTo(385, 92);
+      context.moveTo(695, 92);
+      context.lineTo(990, 92);
+      context.stroke();
+      context.textAlign = 'center';
+      context.fillStyle = '#ffb547';
+      context.font = '700 20px sans-serif';
+      context.fillText('TAITHAI', 540, 100);
+      context.fillStyle = '#f8f1e7';
+      context.font = '700 45px sans-serif';
+      context.fillText('MOVIE MEMORY', 540, 168);
+      context.fillStyle = '#8d8075';
+      context.font = '500 17px sans-serif';
+      context.fillText('PERSONAL CINEMA ARCHIVE', 540, 202);
+
+      const posterX = 150;
+      const posterY = 242;
+      const posterWidth = 780;
+      const posterHeight = 1170;
       context.save();
-      context.shadowColor = 'rgba(255,181,71,.32)';
-      context.shadowBlur = 70;
+      context.shadowColor = 'rgba(0,0,0,.72)';
+      context.shadowBlur = 85;
+      context.shadowOffsetY = 35;
       context.fillStyle = '#21160f';
-      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 32);
       context.fill();
       context.restore();
 
       context.save();
-      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 32);
       context.clip();
       if (poster) {
         const scale = Math.max(posterWidth / poster.width, posterHeight / poster.height);
@@ -687,56 +719,67 @@
       }
       context.restore();
 
-      context.strokeStyle = 'rgba(255,181,71,.62)';
-      context.lineWidth = 4;
-      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
+      context.strokeStyle = 'rgba(255,181,71,.52)';
+      context.lineWidth = 3;
+      roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 32);
       context.stroke();
 
       const rating = Math.min(5, Math.max(0, Math.round(Number(movie.rating) || 0)));
-      const ratingBoxWidth = 300;
-      const ratingBoxHeight = 112;
-      const ratingBoxX = posterX + posterWidth - ratingBoxWidth - 24;
-      const ratingBoxY = posterY + posterHeight - ratingBoxHeight - 24;
-      context.fillStyle = 'rgba(13,10,8,.86)';
-      roundedCanvasRect(context, ratingBoxX, ratingBoxY, ratingBoxWidth, ratingBoxHeight, 24);
+      const ratingBoxWidth = 314;
+      const ratingBoxHeight = 118;
+      const ratingBoxX = posterX + posterWidth - ratingBoxWidth - 22;
+      const ratingBoxY = posterY + posterHeight - ratingBoxHeight - 22;
+      context.fillStyle = 'rgba(8,7,6,.9)';
+      roundedCanvasRect(context, ratingBoxX, ratingBoxY, ratingBoxWidth, ratingBoxHeight, 20);
       context.fill();
-      context.strokeStyle = 'rgba(255,181,71,.55)';
+      context.strokeStyle = 'rgba(255,181,71,.72)';
       context.lineWidth = 2;
-      roundedCanvasRect(context, ratingBoxX, ratingBoxY, ratingBoxWidth, ratingBoxHeight, 24);
+      roundedCanvasRect(context, ratingBoxX, ratingBoxY, ratingBoxWidth, ratingBoxHeight, 20);
       context.stroke();
       context.textAlign = 'center';
       context.fillStyle = '#ffb547';
-      context.font = '700 40px sans-serif';
-      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, ratingBoxX + (ratingBoxWidth / 2), ratingBoxY + 49);
+      context.font = '700 42px sans-serif';
+      context.fillText(`${'★'.repeat(rating)}${'☆'.repeat(5 - rating)}`, ratingBoxX + (ratingBoxWidth / 2), ratingBoxY + 51);
       context.fillStyle = '#f8f1e7';
       context.font = '600 22px sans-serif';
-      context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', ratingBoxX + (ratingBoxWidth / 2), ratingBoxY + 84);
+      context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', ratingBoxX + (ratingBoxWidth / 2), ratingBoxY + 89);
 
       if (poster?.shareObjectUrl) URL.revokeObjectURL(poster.shareObjectUrl);
 
       context.textAlign = 'center';
-      context.fillStyle = '#ffb547';
-      context.font = '700 27px sans-serif';
-      context.fillText('MOVIE MEMORY  ·  WATCHED', 540, 1315);
-
-      context.fillStyle = '#b6a89b';
-      context.font = '500 28px sans-serif';
-      context.fillText(formatStoryDate(movie.watchDate), 540, 1380);
       context.fillStyle = '#f8f1e7';
-      context.font = '600 28px sans-serif';
-      context.fillText(movie.cinema || movie.format || 'Movie Memory', 540, 1435);
+      context.font = '700 27px sans-serif';
+      context.fillText('WATCHED', 540, 1490);
+      context.fillStyle = '#ffb547';
+      context.font = '700 40px sans-serif';
+      context.fillText(formatStoryDate(movie.watchDate).toUpperCase(), 540, 1546);
+      context.fillStyle = '#8d8075';
+      context.font = '600 18px sans-serif';
+      context.fillText('AT', 540, 1601);
+      context.fillStyle = '#f8f1e7';
+      context.font = '600 29px sans-serif';
+      const storyPlace = englishStoryPlace(movie);
+      if (context.measureText(storyPlace).width > 820) context.font = '600 23px sans-serif';
+      context.fillText(storyPlace, 540, 1646);
+      context.fillStyle = '#8d8075';
+      context.font = '500 19px sans-serif';
+      context.fillText('A FILM WORTH REMEMBERING', 540, 1710);
 
       const linkText = 'taithai.app/Movie-Memory';
-      context.fillStyle = '#ffb547';
-      context.font = '700 30px sans-serif';
-      context.fillText(`↗  ${linkText}`, 540, 1835);
-      const linkWidth = context.measureText(`↗  ${linkText}`).width;
-      context.strokeStyle = '#ffb547';
+      const linkBoxX = 257;
+      const linkBoxY = 1770;
+      const linkBoxWidth = 566;
+      const linkBoxHeight = 88;
+      context.fillStyle = 'rgba(255,181,71,.1)';
+      roundedCanvasRect(context, linkBoxX, linkBoxY, linkBoxWidth, linkBoxHeight, 44);
+      context.fill();
+      context.strokeStyle = 'rgba(255,181,71,.55)';
       context.lineWidth = 2;
-      context.beginPath();
-      context.moveTo(540 - (linkWidth / 2), 1847);
-      context.lineTo(540 + (linkWidth / 2), 1847);
+      roundedCanvasRect(context, linkBoxX, linkBoxY, linkBoxWidth, linkBoxHeight, 44);
       context.stroke();
+      context.fillStyle = '#ffb547';
+      context.font = '700 27px sans-serif';
+      context.fillText(`↗  ${linkText}`, 540, 1826);
 
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.96));
     }
