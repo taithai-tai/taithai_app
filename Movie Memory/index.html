@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260725-7">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260725-9">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260725-7';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260725-9';
     }
   </script>
 </head>
@@ -33,6 +33,9 @@
         </a>
 
         <div class="nav-actions">
+          <a class="game-nav-btn" href="/Movie-Memory/game/" title="เล่นเกมเลือกหนังเรื่องโปรด">
+            <span>🎮</span><span class="game-nav-label">เกมเลือกหนัง</span>
+          </a>
           <div class="people-search" id="peopleSearchWrap" style="display:none">
             <span class="search-icon">⌕</span>
             <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดีของเพื่อน..." autocomplete="off">
@@ -72,6 +75,11 @@
         <div class="eyebrow">🎬 Personal Cinema Vault</div>
         <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
         <p class="hero-copy">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
+        <a class="hero-game-btn" href="/Movie-Memory/game/">
+          <span class="hero-game-icon">🎮</span>
+          <span><strong>เล่นเกมเลือกหนังเรื่องโปรด</strong><small>เลือกซ้าย–ขวา จนเจอหนังอันดับหนึ่งของคุณ</small></span>
+          <span class="hero-game-arrow">→</span>
+        </a>
       </div>
       <div class="quote-box">
         “หนังจบลง... แต่ความรู้สึกและตั๋วใบนั้นจะคงอยู่ตลอดไป”

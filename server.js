@@ -28,7 +28,7 @@ async function resolveFile(requestPath) {
   const pathname = decodeURIComponent(requestPath.split('?')[0]);
   if (pathname.startsWith('/movie-memory-assets/')) {
     const assetName = path.basename(pathname);
-    if (['styles.css', 'app.js', 'account.js', 'account-loader.js'].includes(assetName)) {
+    if (['styles.css', 'app.js', 'account.js', 'account-loader.js', 'game.css', 'game.js'].includes(assetName)) {
       return path.join(root, 'Movie Memory', assetName);
     }
   }
@@ -37,6 +37,9 @@ async function resolveFile(requestPath) {
   }
   if (/^\/Movie-Memory\/profile\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'profile.html');
+  }
+  if (/^\/Movie-Memory\/game\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'game.html');
   }
   if (/^\/Movie-Memory\/@[^/]+\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'profile.html');

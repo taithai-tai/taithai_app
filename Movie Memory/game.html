@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0a08">
+  <title>เกมเลือกหนังเรื่องโปรด — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/movie-memory-assets/game.css?v=20260725-1">
+</head>
+<body>
+  <div class="ambient one"></div><div class="ambient two"></div>
+  <header>
+    <a class="back-link" href="/Movie%20Memory/">← กลับไปคอลเลกชัน</a>
+    <div class="game-brand"><span>🎞️</span> Movie Memory</div>
+    <button class="restart-header" id="restartHeaderBtn" type="button" hidden>เริ่มใหม่</button>
+  </header>
+  <main>
+    <section class="intro" id="introView">
+      <div class="kicker">🎮 MOVIE BATTLE</div>
+      <h1>หนังเรื่องไหนคือ<br><em>เรื่องโปรดที่สุด</em>ของคุณ?</h1>
+      <p>เลือกหนังระหว่างฝั่งซ้ายและขวาไปเรื่อย ๆ จนเหลือผู้ชนะเพียงเรื่องเดียว</p>
+      <div class="intro-count" id="introCount"></div>
+      <button class="primary-btn" id="startGameBtn" type="button">เริ่มเลือกหนัง ✨</button>
+      <a class="add-movie-link" id="addMovieLink" href="/Movie-Memory/add/" hidden>เพิ่มหนังให้ครบอย่างน้อย 2 เรื่อง</a>
+    </section>
+
+    <section class="battle" id="battleView" hidden>
+      <div class="battle-top">
+        <div><span id="roundLabel">รอบที่ 1</span><strong>เลือกเรื่องที่ชอบมากกว่า</strong></div>
+        <span id="progressLabel"></span>
+      </div>
+      <div class="progress"><i id="progressBar"></i></div>
+      <div class="versus-grid">
+        <button class="movie-choice left" id="leftChoice" type="button">
+          <img id="leftPoster" alt=""><div class="choice-fade"></div>
+          <div class="choice-copy"><small>ฝั่งซ้าย</small><h2 id="leftTitle"></h2><span>แตะเพื่อเลือก</span></div>
+        </button>
+        <div class="vs-badge">VS</div>
+        <button class="movie-choice right" id="rightChoice" type="button">
+          <img id="rightPoster" alt=""><div class="choice-fade"></div>
+          <div class="choice-copy"><small>ฝั่งขวา</small><h2 id="rightTitle"></h2><span>แตะเพื่อเลือก</span></div>
+        </button>
+      </div>
+    </section>
+
+    <section class="result" id="resultView" hidden>
+      <div class="confetti">✦　✧　✦</div>
+      <div class="winner-card">
+        <img id="winnerPoster" alt=""><div class="winner-fade"></div>
+        <div class="winner-copy"><small>🏆 YOUR FAVORITE MOVIE</small><h1 id="winnerTitle"></h1><p>หนังที่คุณเลือกจนเป็นผู้ชนะ</p></div>
+      </div>
+      <div class="result-actions">
+        <button class="primary-btn" id="shareStoryBtn" type="button">แชร์ลง IG Story</button>
+        <button class="secondary-btn" id="restartBtn" type="button">เล่นอีกครั้ง</button>
+      </div>
+      <p class="share-help" id="shareHelp">ระบบจะสร้างภาพแนวตั้ง 1080×1920 สำหรับ Instagram Story</p>
+    </section>
+  </main>
+  <canvas id="storyCanvas" width="1080" height="1920" hidden></canvas>
+  <script src="/movie-memory-assets/game.js?v=20260725-1"></script>
+</body>
+</html>

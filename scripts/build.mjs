@@ -39,7 +39,7 @@ for (const entry of entries) {
 const movieMemorySource = path.join(root, 'Movie Memory');
 const movieMemoryAssets = path.join(output, 'movie-memory-assets');
 await mkdir(movieMemoryAssets, { recursive: true });
-for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js']) {
+for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js', 'game.css', 'game.js']) {
   await cp(path.join(movieMemorySource, asset), path.join(movieMemoryAssets, asset));
 }
 
@@ -50,6 +50,9 @@ for (const route of ['add', 'movie', 'settings', 'posters']) {
   await mkdir(routeDirectory, { recursive: true });
   await cp(path.join(movieMemorySource, 'index.html'), path.join(routeDirectory, 'index.html'));
 }
+const gameRoute = path.join(movieMemoryRoutes, 'game');
+await mkdir(gameRoute, { recursive: true });
+await cp(path.join(movieMemorySource, 'game.html'), path.join(gameRoute, 'index.html'));
 const profileRoute = path.join(movieMemoryRoutes, 'profile');
 await mkdir(profileRoute, { recursive: true });
 await cp(path.join(movieMemorySource, 'profile.html'), path.join(profileRoute, 'index.html'));
