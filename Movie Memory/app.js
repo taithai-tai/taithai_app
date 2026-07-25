@@ -800,22 +800,22 @@
       context.strokeStyle = 'rgba(255,181,71,.28)';
       context.lineWidth = 2;
       context.beginPath();
-      context.moveTo(78, 1775);
-      context.lineTo(1002, 1775);
+      context.moveTo(78, 1725);
+      context.lineTo(1002, 1725);
       context.stroke();
 
       context.textAlign = 'left';
       context.fillStyle = '#ffb547';
       context.font = '700 24px sans-serif';
-      context.fillText(`↗  ${linkText}`, 78, 1845);
+      context.fillText(`↗  ${linkText}`, 78, 1788);
 
       context.textAlign = 'right';
       context.fillStyle = '#ffb547';
       context.font = '700 36px sans-serif';
-      context.fillText(formatStars(rating), 1002, 1828);
+      context.fillText(formatStars(rating), 1002, 1768);
       context.fillStyle = '#f8f1e7';
       context.font = '600 18px sans-serif';
-      context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', 1002, 1862);
+      context.fillText(rating ? `${rating} / 5 STARS` : 'NOT RATED', 1002, 1803);
 
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.96));
     }
