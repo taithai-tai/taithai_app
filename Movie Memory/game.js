@@ -45,8 +45,38 @@ function finish(movie){
   $('winnerPoster').style.display=poster(movie)?'block':'none';
   $('progressBar').style.width='100%';show('resultView');
 }
-function loadImage(src){
-  return new Promise(resolve=>{if(!src){resolve(null);return}const img=new Image();img.crossOrigin='anonymous';img.onload=()=>resolve(img);img.onerror=()=>resolve(null);img.src=src});
+function decodeImage(src,timeoutMs=4500){
+  return new Promise(resolve=>{
+    if(!src){resolve(null);return}
+    const img=new Image();let settled=false;
+    const finish=value=>{if(settled)return;settled=true;clearTimeout(timeout);img.onload=null;img.onerror=null;resolve(value)};
+    const timeout=setTimeout(()=>finish(null),timeoutMs);
+    img.onload=()=>finish(img);img.onerror=()=>finish(null);img.src=src;
+  });
+}
+async function loadImage(src){
+  if(!src)return null;
+  if(/^data:image\//i.test(src))return decodeImage(src);
+  const candidates=[];
+  try{
+    const source=new URL(src);
+    if(source.hostname==='image.tmdb.org'&&source.pathname.startsWith('/t/p/')){
+      const proxyBase=location.protocol==='file:'?'http://localhost:3000':'';
+      candidates.push({url:`${proxyBase}/api/movie-poster?url=${encodeURIComponent(source.href)}`,useCors:Boolean(proxyBase)});
+    }
+    candidates.push({url:source.href,useCors:true});
+  }catch{candidates.push({url:src,useCors:true})}
+  for(const candidate of candidates){
+    const image=await new Promise(resolve=>{
+      const img=new Image();let settled=false;
+      const finish=value=>{if(settled)return;settled=true;clearTimeout(timeout);img.onload=null;img.onerror=null;resolve(value)};
+      const timeout=setTimeout(()=>finish(null),4500);
+      if(candidate.useCors)img.crossOrigin='anonymous';
+      img.onload=()=>finish(img);img.onerror=()=>finish(null);img.src=candidate.url;
+    });
+    if(image)return image;
+  }
+  return null;
 }
 function wrapText(ctx,text,maxWidth){
   const segments=String(text).includes(' ')?String(text).split(/(\s+)/):Array.from(String(text));

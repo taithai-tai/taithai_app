@@ -91,6 +91,7 @@
     function saveMoviesToStorage() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(movies));
+        localStorage.setItem('movie_memory_local_dirty', '1');
         window.dispatchEvent(new CustomEvent('movie-memory:changed', { detail: movies }));
       } catch (e) {
         showToast('⚠️ พื้นที่จัดเก็บเต็ม! ลองลดขนาดรูปภาพ');
@@ -569,13 +570,35 @@
       openAsPage($('inspectModal'));
     }
 
-    function decodeShareImage(src, useCors = false) {
+    async function fetchJsonWithTimeout(url, options = {}, timeoutMs = 4500) {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
+      try {
+        const response = await fetch(url, { ...options, signal: controller.signal });
+        if (!response.ok) throw new Error('REQUEST_FAILED');
+        return await response.json();
+      } finally {
+        clearTimeout(timeout);
+      }
+    }
+
+    function decodeShareImage(src, useCors = false, timeoutMs = 4500) {
       return new Promise(resolve => {
         if (!src) return resolve(null);
         const image = new Image();
+        let settled = false;
+        const finish = value => {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timeout);
+          image.onload = null;
+          image.onerror = null;
+          resolve(value);
+        };
+        const timeout = setTimeout(() => finish(null), timeoutMs);
         if (useCors) image.crossOrigin = 'anonymous';
-        image.onload = () => resolve(image);
-        image.onerror = () => resolve(null);
+        image.onload = () => finish(image);
+        image.onerror = () => finish(null);
         image.src = src;
       });
     }
@@ -583,70 +606,62 @@
     async function loadShareImage(src) {
       if (!src) return null;
       if (/^data:image\//i.test(src)) return decodeShareImage(src);
+      const candidates = [];
       try {
-        const response = await fetch(src, { mode: 'cors', cache: 'force-cache' });
-        if (!response.ok) throw new Error('IMAGE_FETCH_FAILED');
-        const blob = await response.blob();
-        const objectUrl = URL.createObjectURL(blob);
-        const image = await decodeShareImage(objectUrl);
-        if (image) image.shareObjectUrl = objectUrl;
-        else URL.revokeObjectURL(objectUrl);
-        return image;
+        const sourceUrl = new URL(src);
+        if (sourceUrl.hostname === 'image.tmdb.org' && sourceUrl.pathname.startsWith('/t/p/')) {
+          const proxyBases = window.location.protocol === 'file:'
+            ? ['http://localhost:3000', 'https://taithai.app']
+            : [''];
+          proxyBases.forEach(proxyBase => {
+            candidates.push({
+              url: `${proxyBase}/api/movie-poster?url=${encodeURIComponent(sourceUrl.href)}`,
+              useCors: Boolean(proxyBase)
+            });
+          });
+          candidates.push({ url: sourceUrl.href, useCors: true });
+        } else {
+          candidates.push({ url: src, useCors: true });
+        }
       } catch {
-        try {
-          const sourceUrl = new URL(src);
-          if (sourceUrl.hostname === 'image.tmdb.org' && sourceUrl.pathname.startsWith('/t/p/')) {
-            const proxyBases = window.location.protocol === 'file:'
-              ? ['http://localhost:3000', 'https://taithai.app']
-              : [''];
-            for (const proxyBase of proxyBases) {
-              try {
-                const proxyUrl = `${proxyBase}/api/movie-poster?url=${encodeURIComponent(sourceUrl.href)}`;
-                const response = await fetch(proxyUrl, { mode: 'cors', cache: 'force-cache' });
-                if (!response.ok) continue;
-                const blob = await response.blob();
-                const objectUrl = URL.createObjectURL(blob);
-                const image = await decodeShareImage(objectUrl);
-                if (image) {
-                  image.shareObjectUrl = objectUrl;
-                  return image;
-                }
-                URL.revokeObjectURL(objectUrl);
-              } catch {}
-            }
-          }
-        } catch {}
-        return null;
+        candidates.push({ url: src, useCors: true });
       }
+      for (const candidate of candidates) {
+        const image = await decodeShareImage(candidate.url, candidate.useCors);
+        if (image) return image;
+      }
+      return null;
     }
 
     async function resolveShareDetails(movie) {
       let englishTitle = movie.title || 'Untitled Movie';
       let tmdbPoster = '';
-      try {
-        let details = null;
-        if (movie.tmdbId) {
-          const response = await fetch(`${BASE_URL}/movie/${encodeURIComponent(movie.tmdbId)}?api_key=${API_KEY}&language=en-US`);
-          if (response.ok) {
-            details = await response.json();
+      const detailsPromise = (async () => {
+        try {
+          let details = null;
+          if (movie.tmdbId) {
+            details = await fetchJsonWithTimeout(`${BASE_URL}/movie/${encodeURIComponent(movie.tmdbId)}?api_key=${API_KEY}&language=en-US`);
+          } else if (movie.title) {
+            const search = await fetchJsonWithTimeout(`${BASE_URL}/search/movie?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(movie.title)}&page=1`);
+            details = search.results?.[0] || null;
           }
-        } else if (movie.title) {
-          const response = await fetch(`${BASE_URL}/search/movie?api_key=${API_KEY}&language=en-US&query=${encodeURIComponent(movie.title)}&page=1`);
-          if (response.ok) {
-            const results = await response.json();
-            details = results.results?.[0] || null;
-          }
+          return details;
+        } catch {
+          return null;
         }
-        if (details) {
-          englishTitle = details.title || details.original_title || englishTitle;
-          if (details.poster_path) tmdbPoster = `${IMG_URL}${details.poster_path}`;
-        }
-      } catch {}
-      let poster = null;
-      const posterCandidates = [...new Set([movie.posterImg, tmdbPoster, movie.ticketImg].filter(Boolean))];
+      })();
+
+      const primaryPoster = movie.posterImg || movie.ticketImg;
+      let poster = await loadShareImage(primaryPoster);
+      const details = await detailsPromise;
+      if (details) {
+        englishTitle = details.title || details.original_title || englishTitle;
+        if (details.poster_path) tmdbPoster = `${IMG_URL}${details.poster_path}`;
+      }
+      const posterCandidates = [...new Set([tmdbPoster, movie.ticketImg].filter(candidate => candidate && candidate !== primaryPoster))];
       for (const candidate of posterCandidates) {
-        poster = await loadShareImage(candidate);
         if (poster) break;
+        poster = await loadShareImage(candidate);
       }
       return {
         title: englishTitle,
@@ -1009,10 +1024,10 @@
       if (pendingDeleteMovieId === movie.id) return true;
       resetDeleteConfirmation();
       pendingDeleteMovieId = movie.id;
-      button.textContent = 'แตะอีกครั้งเพื่อยืนยัน';
+      button.textContent = 'ยืนยันลบหนัง';
       button.classList.add('confirm-delete');
-      showToast('แตะปุ่มลบอีกครั้งเพื่อยืนยัน');
-      pendingDeleteTimer = setTimeout(resetDeleteConfirmation, 5000);
+      showToast('แตะ “ยืนยันลบหนัง” ภายใน 10 วินาที');
+      pendingDeleteTimer = setTimeout(resetDeleteConfirmation, 10000);
       return false;
     }
 
@@ -1145,6 +1160,15 @@
           const r = current === star - 0.5 ? star : star - 0.5;
           $('formRatingVal').value = r;
           updateRatingStarsUI(r);
+          const editingId = $('formMovieId').value;
+          const editingMovie = movies.find(movie => movie.id === editingId);
+          if (editingMovie) {
+            editingMovie.rating = r;
+            editingMovie.updatedAt = new Date().toISOString();
+            saveMoviesToStorage();
+            renderCollection();
+            if (inspectingMovieId === editingMovie.id) $('inspectStarsTxt').textContent = formatStars(r);
+          }
         });
       });
 

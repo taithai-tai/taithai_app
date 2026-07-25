@@ -40,7 +40,6 @@ export const auth = getAuth(app);
 export const db = getFirestore(app, "ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb");
 const authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error("Could not enable persistent Firebase session:", error);
-  throw error;
 });
 
 const googleProvider = new GoogleAuthProvider();
@@ -51,7 +50,7 @@ googleProvider.setCustomParameters({
 // Check redirect results on load
 authReady.then(() => getRedirectResult(auth)).then(async (result) => {
   if (result && result.user) {
-    await saveUserProfile(result.user);
+    saveUserProfile(result.user);
   }
 }).catch((error) => {
   console.error("Redirect sign-in error:", error);
@@ -89,7 +88,7 @@ export async function loginWithGoogle() {
     await authReady;
     const result = await signInWithPopup(auth, googleProvider);
     if (result?.user) {
-      await saveUserProfile(result.user);
+      saveUserProfile(result.user);
       return result.user;
     }
     return null;
@@ -111,9 +110,9 @@ export async function logout() {
 export function subscribeAuth(callback) {
   let unsubscribe = () => {};
   authReady.then(() => {
-    unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) await saveUserProfile(user);
+    unsubscribe = onAuthStateChanged(auth, user => {
       callback(user);
+      if (user) saveUserProfile(user);
     });
   }).catch(() => callback(null));
   return () => unsubscribe();

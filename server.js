@@ -73,7 +73,12 @@ async function serveMoviePoster(requestUrl, res) {
       res.end('{"error":"Invalid poster URL"}');
       return;
     }
-    const upstream = await fetch(posterUrl, { headers: { Accept: 'image/*' } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const upstream = await fetch(posterUrl, {
+      headers: { Accept: 'image/*' },
+      signal: controller.signal
+    }).finally(() => clearTimeout(timeout));
     const contentType = upstream.headers.get('content-type') || '';
     if (!upstream.ok || !contentType.startsWith('image/')) throw new Error('POSTER_UNAVAILABLE');
     const image = Buffer.from(await upstream.arrayBuffer());

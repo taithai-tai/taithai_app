@@ -3,7 +3,7 @@ let accountModuleReady = false;
 
 function loadAccountModule() {
   if (!accountModulePromise) {
-    accountModulePromise = import("./account.js?v=20260726-1").then(module => {
+    accountModulePromise = import("./account.js?v=20260726-4").then(module => {
       accountModuleReady = true;
       return module;
     });
@@ -20,16 +20,8 @@ loginButton?.addEventListener("click", async event => {
   loginButton.click();
 }, { capture: true });
 
-const scheduleAccountLoad = () => {
-  if ("requestIdleCallback" in window) {
-    window.requestIdleCallback(loadAccountModule, { timeout: 1200 });
-  } else {
-    window.setTimeout(loadAccountModule, 300);
-  }
-};
-
-if (document.readyState === "complete") {
-  scheduleAccountLoad();
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadAccountModule, { once: true });
 } else {
-  window.addEventListener("load", scheduleAccountLoad, { once: true });
+  loadAccountModule();
 }

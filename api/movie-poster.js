@@ -10,7 +10,12 @@ export default async function handler(request, response) {
       return;
     }
 
-    const upstream = await fetch(posterUrl, { headers: { Accept: 'image/*' } });
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const upstream = await fetch(posterUrl, {
+      headers: { Accept: 'image/*' },
+      signal: controller.signal
+    }).finally(() => clearTimeout(timeout));
     const contentType = upstream.headers.get('content-type') || '';
     if (!upstream.ok || !contentType.startsWith('image/')) {
       response.status(502).json({ error: 'Poster is unavailable' });
@@ -29,6 +34,6 @@ export default async function handler(request, response) {
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.status(200).send(image);
   } catch {
-    response.status(400).json({ error: 'Invalid poster request' });
+    response.status(502).json({ error: 'Poster request failed' });
   }
 }

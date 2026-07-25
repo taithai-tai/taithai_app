@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260726-1";
+    } from "../firebase-auth.js?v=20260726-2";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -32,6 +32,7 @@
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
     const movieSyncKey = uid => `movie_memory_public_sync_v2_${uid}`;
     const accountMoviesKey = uid => `movie_memory_collection_${uid}`;
+    const pendingSyncKey = uid => `movie_memory_pending_sync_${uid}`;
     const legacyOwnerKey = "movie_memory_legacy_owner_uid";
 
     function readStoredCollection(key) {
@@ -88,10 +89,16 @@
     async function syncMoviesIfNeeded(user, collection) {
       if (!user) return;
       const fingerprint = publicMovieFingerprint(collection);
-      if (localStorage.getItem(movieSyncKey(user.uid)) === fingerprint) return;
+      if (localStorage.getItem(movieSyncKey(user.uid)) === fingerprint) {
+        localStorage.removeItem(pendingSyncKey(user.uid));
+        localStorage.removeItem("movie_memory_local_dirty");
+        return;
+      }
       await saveMyMovieCollection(user, collection);
       localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(collection));
       localStorage.setItem(movieSyncKey(user.uid), fingerprint);
+      localStorage.removeItem(pendingSyncKey(user.uid));
+      localStorage.removeItem("movie_memory_local_dirty");
     }
 
     function openUsernameSetup() {
@@ -225,11 +232,17 @@
 
     window.addEventListener("movie-memory:changed", event => {
       clearTimeout(movieSyncTimer);
+      if (signedInUser) {
+        const collection = Array.isArray(event.detail) ? event.detail : [];
+        localStorage.setItem(legacyOwnerKey, signedInUser.uid);
+        localStorage.setItem(accountMoviesKey(signedInUser.uid), JSON.stringify(collection));
+        localStorage.setItem(pendingSyncKey(signedInUser.uid), publicMovieFingerprint(collection));
+      }
       movieSyncTimer = setTimeout(() => {
         if (signedInUser) syncMoviesIfNeeded(signedInUser, event.detail).catch(() => {
           showToast("บันทึกในเครื่องแล้ว แต่ซิงก์โปรไฟล์ไม่สำเร็จ");
         });
-      }, 500);
+      }, 80);
     });
 
     if (loginBtn) {
@@ -284,10 +297,19 @@
         try {
           const cloudCollection = await getMyMovieCollection(user);
           const accountCollection = readStoredCollection(accountMoviesKey(user.uid));
+          const hasAccountCollection = localStorage.getItem(accountMoviesKey(user.uid)) !== null;
+          const hasPendingSync = localStorage.getItem(pendingSyncKey(user.uid)) !== null;
           const legacyOwner = localStorage.getItem(legacyOwnerKey);
+          const hasLocalDirty = localStorage.getItem("movie_memory_local_dirty") === "1"
+            && (!legacyOwner || legacyOwner === user.uid);
           let syncedCollection;
 
-          if (cloudCollection.source === "private") {
+          if (hasPendingSync && hasAccountCollection) {
+            syncedCollection = accountCollection;
+          } else if (hasLocalDirty) {
+            syncedCollection = currentLocalCollection();
+            localStorage.setItem(legacyOwnerKey, user.uid);
+          } else if (cloudCollection.source === "private") {
             syncedCollection = mergeCloudWithLocal(cloudCollection.movies, accountCollection);
           } else if (cloudCollection.source === "legacy") {
             const migratableLocal = (!legacyOwner || legacyOwner === user.uid)
@@ -320,6 +342,7 @@
           await syncMoviesIfNeeded(user, syncedCollection);
           movieCollectionUnsubscribe = subscribeMyMovieCollection(user, remoteMovies => {
             if (signedInUser?.uid !== user.uid) return;
+            if (localStorage.getItem(pendingSyncKey(user.uid)) !== null) return;
             const mergedMovies = mergeCloudWithLocal(remoteMovies, currentLocalCollection());
             localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(mergedMovies));
             localStorage.setItem(movieSyncKey(user.uid), publicMovieFingerprint(remoteMovies));
