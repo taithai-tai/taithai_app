@@ -92,7 +92,7 @@
       const params = new URLSearchParams({ uid: profile.uid });
       window.location.href = window.location.protocol === "file:"
         ? `./profile.html?username=${encodeURIComponent(username)}&${params.toString()}`
-        : `/Movie-Memory/@${encodeURIComponent(username)}/?${params.toString()}`;
+        : `/Movie-Memory/profile/?username=${encodeURIComponent(username)}&${params.toString()}`;
     }
 
     document.getElementById("closeProfileBtn").addEventListener("click", () => {

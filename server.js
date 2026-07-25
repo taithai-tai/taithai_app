@@ -35,6 +35,9 @@ async function resolveFile(requestPath) {
   if (/^\/Movie-Memory\/(?:add|movie|settings|posters)\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'index.html');
   }
+  if (/^\/Movie-Memory\/profile\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'profile.html');
+  }
   if (/^\/Movie-Memory\/@[^/]+\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'profile.html');
   }

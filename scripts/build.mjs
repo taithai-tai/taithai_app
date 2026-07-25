@@ -43,4 +43,15 @@ for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js'])
   await cp(path.join(movieMemorySource, asset), path.join(movieMemoryAssets, asset));
 }
 
+// Materialize every app route as a real static page so Vercel does not need rewrites.
+const movieMemoryRoutes = path.join(output, 'Movie-Memory');
+for (const route of ['add', 'movie', 'settings', 'posters']) {
+  const routeDirectory = path.join(movieMemoryRoutes, route);
+  await mkdir(routeDirectory, { recursive: true });
+  await cp(path.join(movieMemorySource, 'index.html'), path.join(routeDirectory, 'index.html'));
+}
+const profileRoute = path.join(movieMemoryRoutes, 'profile');
+await mkdir(profileRoute, { recursive: true });
+await cp(path.join(movieMemorySource, 'profile.html'), path.join(profileRoute, 'index.html'));
+
 console.log('Static site prepared in public/');
