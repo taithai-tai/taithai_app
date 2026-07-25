@@ -545,15 +545,46 @@
       openAsPage($('inspectModal'));
     }
 
-    function loadShareImage(src) {
+    function decodeShareImage(src, useCors = false) {
       return new Promise(resolve => {
         if (!src) return resolve(null);
         const image = new Image();
-        image.crossOrigin = 'anonymous';
+        if (useCors) image.crossOrigin = 'anonymous';
         image.onload = () => resolve(image);
         image.onerror = () => resolve(null);
         image.src = src;
       });
+    }
+
+    async function loadShareImage(src) {
+      if (!src) return null;
+      if (/^data:image\//i.test(src)) return decodeShareImage(src);
+      try {
+        const response = await fetch(src, { mode: 'cors', cache: 'force-cache' });
+        if (!response.ok) throw new Error('IMAGE_FETCH_FAILED');
+        const blob = await response.blob();
+        const objectUrl = URL.createObjectURL(blob);
+        const image = await decodeShareImage(objectUrl);
+        if (image) image.shareObjectUrl = objectUrl;
+        else URL.revokeObjectURL(objectUrl);
+        return image;
+      } catch {
+        return decodeShareImage(src, true);
+      }
+    }
+
+    async function resolveSharePoster(movie) {
+      let source = movie.posterImg || movie.ticketImg || '';
+      if (!source && movie.tmdbId) {
+        try {
+          const response = await fetch(`${BASE_URL}/movie/${encodeURIComponent(movie.tmdbId)}?api_key=${API_KEY}&language=en-US`);
+          if (response.ok) {
+            const details = await response.json();
+            if (details.poster_path) source = `${IMG_URL}${details.poster_path}`;
+          }
+        } catch {}
+      }
+      return loadShareImage(source);
     }
 
     function wrapShareText(context, text, maxWidth, maxLines = 3) {
@@ -604,7 +635,7 @@
       canvas.width = 1080;
       canvas.height = 1920;
       const context = canvas.getContext('2d');
-      const poster = await loadShareImage(movie.posterImg || movie.ticketImg || '');
+      const poster = await resolveSharePoster(movie);
 
       const background = context.createLinearGradient(0, 0, 1080, 1920);
       background.addColorStop(0, '#3a1c0d');
@@ -646,6 +677,7 @@
       context.lineWidth = 4;
       roundedCanvasRect(context, posterX, posterY, posterWidth, posterHeight, 44);
       context.stroke();
+      if (poster?.shareObjectUrl) URL.revokeObjectURL(poster.shareObjectUrl);
 
       context.textAlign = 'center';
       context.fillStyle = '#ffb547';
