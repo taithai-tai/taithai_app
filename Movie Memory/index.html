@@ -33,7 +33,7 @@
         </a>
 
         <div class="nav-actions">
-          <a class="game-nav-btn" href="/Movie-Memory/game/" title="เล่นเกมเลือกหนังเรื่องโปรด">
+          <a class="game-nav-btn game-page-link" href="./game.html" title="เล่นเกมเลือกหนังเรื่องโปรด">
             <span>🎮</span><span class="game-nav-label">เกมเลือกหนัง</span>
           </a>
           <div class="people-search" id="peopleSearchWrap" style="display:none">
@@ -75,7 +75,7 @@
         <div class="eyebrow">🎬 Personal Cinema Vault</div>
         <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
         <p class="hero-copy">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
-        <a class="hero-game-btn" href="/Movie-Memory/game/">
+        <a class="hero-game-btn game-page-link" href="./game.html">
           <span class="hero-game-icon">🎮</span>
           <span><strong>เล่นเกมเลือกหนังเรื่องโปรด</strong><small>เลือกซ้าย–ขวา จนเจอหนังอันดับหนึ่งของคุณ</small></span>
           <span class="hero-game-arrow">→</span>
@@ -442,6 +442,25 @@
     const isLocalFile = window.location.protocol === 'file:';
     const movieMemoryAssetBase = isLocalFile ? './' : '/movie-memory-assets/';
     const authBridgePath = isLocalFile ? '../local-auth-bridge.js' : '/local-auth-bridge.js';
+    if (!isLocalFile) {
+      document.querySelectorAll('.game-page-link').forEach(link => {
+        link.href = '/Movie-Memory/game/';
+      });
+    } else {
+      document.querySelectorAll('.game-page-link').forEach(link => {
+        link.addEventListener('click', () => {
+          try {
+            const savedMovies = JSON.parse(localStorage.getItem('taithai_movie_memory_v2') || localStorage.getItem('taithai_movie_memory_v1') || '[]');
+            const gameMovies = Array.isArray(savedMovies) ? savedMovies.map(movie => ({
+              id: movie.id,
+              title: movie.title,
+              posterImg: /^https:\/\//i.test(movie.posterImg || '') ? movie.posterImg : ''
+            })) : [];
+            window.name = `movie-memory-game:${JSON.stringify(gameMovies)}`;
+          } catch {}
+        });
+      });
+    }
     document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260725-8"><\/script>`);
     document.write(`<script src="${authBridgePath}"><\/script>`);
     document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260725-10"><\/script>`);

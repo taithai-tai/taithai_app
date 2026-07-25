@@ -8,12 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/movie-memory-assets/game.css?v=20260725-1">
+  <link id="gameStyles" rel="stylesheet" href="./game.css?v=20260725-2">
+  <script>
+    if (window.location.protocol !== 'file:') {
+      document.getElementById('gameStyles').href = '/movie-memory-assets/game.css?v=20260725-2';
+    }
+  </script>
 </head>
 <body>
   <div class="ambient one"></div><div class="ambient two"></div>
   <header>
-    <a class="back-link" href="/Movie%20Memory/">← กลับไปคอลเลกชัน</a>
+    <a class="back-link" id="backToCollection" href="./index.html">← กลับไปคอลเลกชัน</a>
     <div class="game-brand"><span>🎞️</span> Movie Memory</div>
     <button class="restart-header" id="restartHeaderBtn" type="button" hidden>เริ่มใหม่</button>
   </header>
@@ -24,7 +29,7 @@
       <p>เลือกหนังระหว่างฝั่งซ้ายและขวาไปเรื่อย ๆ จนเหลือผู้ชนะเพียงเรื่องเดียว</p>
       <div class="intro-count" id="introCount"></div>
       <button class="primary-btn" id="startGameBtn" type="button">เริ่มเลือกหนัง ✨</button>
-      <a class="add-movie-link" id="addMovieLink" href="/Movie-Memory/add/" hidden>เพิ่มหนังให้ครบอย่างน้อย 2 เรื่อง</a>
+      <a class="add-movie-link" id="addMovieLink" href="./index.html" hidden>เพิ่มหนังให้ครบอย่างน้อย 2 เรื่อง</a>
     </section>
 
     <section class="battle" id="battleView" hidden>
@@ -60,6 +65,13 @@
     </section>
   </main>
   <canvas id="storyCanvas" width="1080" height="1920" hidden></canvas>
-  <script src="/movie-memory-assets/game.js?v=20260725-1"></script>
+  <script>
+    const isLocalGameFile = window.location.protocol === 'file:';
+    if (!isLocalGameFile) {
+      document.getElementById('backToCollection').href = '/Movie%20Memory/';
+      document.getElementById('addMovieLink').href = '/Movie-Memory/add/';
+    }
+    document.write(`<script src="${isLocalGameFile ? './game.js' : '/movie-memory-assets/game.js'}?v=20260725-3"><\/script>`);
+  </script>
 </body>
 </html>

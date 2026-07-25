@@ -4,7 +4,8 @@ let allMovies=[],round=[],roundWinners=[],pairIndex=0,roundNumber=1,choicesMade=
 
 function loadMovies(){
   try{
-    const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||localStorage.getItem('taithai_movie_memory_v1')||'[]');
+    const transferred=window.name.startsWith('movie-memory-game:')?window.name.slice('movie-memory-game:'.length):'';
+    const parsed=JSON.parse(localStorage.getItem(STORAGE_KEY)||localStorage.getItem('taithai_movie_memory_v1')||transferred||'[]');
     return Array.isArray(parsed)?parsed.filter(movie=>movie&&movie.title):[];
   }catch{return[]}
 }
