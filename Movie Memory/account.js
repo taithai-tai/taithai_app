@@ -47,11 +47,19 @@
 
     function openUsernameSetup() {
       if (!signedInUser) return;
+      if (!window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
+        window.location.href = "/Movie-Memory/settings/";
+        return;
+      }
+      document.body.classList.add("route-page");
       document.getElementById("profileModalTitle").textContent = "ตั้งไอดีของคุณ";
       profileSetup.hidden = false;
       publicProfileView.hidden = true;
       document.getElementById("usernameInput").value = myProfile?.username || "";
-      profileModal.showModal();
+      const backButton = document.getElementById("closeProfileBtn");
+      backButton.textContent = "←";
+      backButton.title = "กลับ";
+      if (!profileModal.open) profileModal.show();
     }
 
     function renderPublicMovies(publicMovies) {
@@ -79,28 +87,18 @@
         showToast("เปิดโปรไฟล์นี้ไม่สำเร็จ");
         return;
       }
-      peopleSearchResults.hidden = true;
-      peopleSearchInput.value = "";
-      document.getElementById("profileModalTitle").textContent = "Movie Memory";
-      profileSetup.hidden = true;
-      publicProfileView.hidden = false;
-      document.getElementById("socialAvatar").src = profile.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`;
-      document.getElementById("socialName").textContent = profile.displayName || profile.username || "Movie Memory";
-      document.getElementById("socialUsername").textContent = profile.username ? `@${profile.username}` : "";
-      renderPublicMovies(profile.publicMovies);
-      if (!profileModal.open) profileModal.showModal();
-
-      if (!Array.isArray(profile.publicMovies)) {
-        try {
-          const fresh = await getPublicProfile(profile.uid);
-          renderPublicMovies(fresh.movies);
-        } catch (error) {
-          console.warn("Could not refresh this public profile:", error);
-        }
-      }
+      const username = profile.username || profile.uid;
+      const params = new URLSearchParams({ uid: profile.uid });
+      window.location.href = `/Movie-Memory/@${encodeURIComponent(username)}/?${params.toString()}`;
     }
 
-    document.getElementById("closeProfileBtn").addEventListener("click", () => profileModal.close());
+    document.getElementById("closeProfileBtn").addEventListener("click", () => {
+      if (window.location.pathname.includes("/Movie-Memory/settings")) {
+        window.location.href = "/Movie%20Memory/";
+      } else {
+        profileModal.close();
+      }
+    });
     userProfileBar.addEventListener("click", event => {
       if (event.target.closest("#logoutBtn")) return;
       if (myProfile?.username) {
@@ -246,3 +244,10 @@
         if (peopleSearchWrap) peopleSearchWrap.style.display = "none";
       }
     });
+
+    if (window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
+      subscribeAuth(user => {
+        if (user) openUsernameSetup();
+        else window.location.href = "/Movie%20Memory/";
+      });
+    }

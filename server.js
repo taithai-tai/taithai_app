@@ -26,6 +26,15 @@ function safePath(urlPath) {
 
 async function resolveFile(requestPath) {
   const pathname = decodeURIComponent(requestPath.split('?')[0]);
+  if (pathname.startsWith('/movie-memory-assets/')) {
+    const assetName = path.basename(pathname);
+    if (['styles.css', 'app.js', 'account.js', 'account-loader.js'].includes(assetName)) {
+      return path.join(root, 'Movie Memory', assetName);
+    }
+  }
+  if (/^\/Movie-Memory\/(?:add|movie|settings|posters)\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'index.html');
+  }
   if (/^\/Movie-Memory\/@[^/]+\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'profile.html');
   }

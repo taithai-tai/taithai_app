@@ -35,4 +35,12 @@ for (const entry of entries) {
   });
 }
 
+// Stable, space-free URLs for Movie Memory assets used by rewritten routes.
+const movieMemorySource = path.join(root, 'Movie Memory');
+const movieMemoryAssets = path.join(output, 'movie-memory-assets');
+await mkdir(movieMemoryAssets, { recursive: true });
+for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js']) {
+  await cp(path.join(movieMemorySource, asset), path.join(movieMemoryAssets, asset));
+}
+
 console.log('Static site prepared in public/');

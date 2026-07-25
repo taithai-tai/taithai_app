@@ -14,6 +14,26 @@
     let tmdbDebounceTimer = null;
     let inspectingMovieId = null;
     let posterChoices = [];
+    const APP_HOME = '/Movie%20Memory/';
+    const APP_ROUTES = '/Movie-Memory';
+    const currentRoute = () => {
+      const path = window.location.pathname.replace(/\/+$/, '');
+      if (path.endsWith('/Movie-Memory/add')) return 'add';
+      if (path.endsWith('/Movie-Memory/movie')) return 'movie';
+      if (path.endsWith('/Movie-Memory/posters')) return 'posters';
+      if (path.endsWith('/Movie-Memory/settings')) return 'settings';
+      return 'home';
+    };
+    const openAsPage = dialog => {
+      document.body.classList.add('route-page');
+      const backButton = dialog.querySelector('.close-modal-btn');
+      if (backButton) {
+        backButton.textContent = '←';
+        backButton.title = 'กลับ';
+      }
+      if (!dialog.open) dialog.show();
+    };
+    const goHome = () => { window.location.href = APP_HOME; };
 
     function safeText(value, maxLength = 500) {
       return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -206,7 +226,7 @@
         grid.innerHTML = filtered.map(m => {
           const displayImg = m.ticketImg || m.posterImg || '';
           return `
-            <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')" role="button" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
+            <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')" role="link" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
               <div class="ticket-stub-top">
                 <span class="ticket-cinema-badge">${escapeHtml(m.cinema || m.format || 'CINEMA')}</span>
                 <span style="font-size:11px; color:var(--gold); font-weight:700">${formatDate(m.watchDate)}</span>
@@ -232,7 +252,7 @@
         grid.innerHTML = filtered.map(m => {
           const displayImg = m.posterImg || m.ticketImg || '';
           return `
-            <div class="movie-card" onclick="openInspectDialog('${m.id}')" role="button" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
+            <div class="movie-card" onclick="openInspectDialog('${m.id}')" role="link" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
               <div class="poster-bg">
                 ${displayImg ? `<img src="${escapeHtml(displayImg)}" alt="${escapeHtml(m.title)}" loading="lazy" decoding="async">` : `<div class="no-poster-fill">🎬</div>`}
                 <div class="poster-overlay"></div>
@@ -262,16 +282,21 @@
     }
 
     // Dialog & Wizard Controls
-    function openAddDialog() {
+    function openAddDialog(asRoute = false) {
+      if (!asRoute && currentRoute() !== 'add') {
+        window.location.href = `${APP_ROUTES}/add/`;
+        return;
+      }
       resetForm();
       $('modalHeaderTitle').textContent = 'เพิ่มความทรงจำหนังใหม่';
       $('deleteEntryBtn').style.display = 'none';
       switchWizardStep(1);
-      $('addEditModal').showModal();
+      openAsPage($('addEditModal'));
     }
 
     function closeAddDialog() {
-      $('addEditModal').close();
+      if (currentRoute() === 'add') goHome();
+      else $('addEditModal').close();
     }
 
     function switchWizardStep(stepNum) {
@@ -464,14 +489,22 @@
 
       saveMoviesToStorage();
       renderCollection();
+      if (currentRoute() === 'add') sessionStorage.setItem('movie_memory_flash', '✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว');
       closeAddDialog();
       showToast('✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว');
     }
 
     // Inspector modal
-    function openInspectDialog(id) {
+    function openInspectDialog(id, asRoute = false) {
+      if (!asRoute && currentRoute() !== 'movie') {
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(id)}`;
+        return;
+      }
       const movie = movies.find(m => m.id === id);
-      if (!movie) return;
+      if (!movie) {
+        if (asRoute) goHome();
+        return;
+      }
 
       inspectingMovieId = id;
       const bgImg = movie.posterImg || movie.ticketImg || '';
@@ -487,16 +520,23 @@
       $('inspectSeatTxt').textContent = movie.seat || 'ไม่ระบุที่นั่ง';
       $('inspectCompanionTxt').textContent = movie.companion || 'ดูคนเดียว';
 
-      $('inspectModal').showModal();
+      openAsPage($('inspectModal'));
     }
 
-    async function openPosterPicker() {
+    async function openPosterPicker(asRoute = false) {
       const movie = movies.find(m => m.id === inspectingMovieId);
-      if (!movie) return;
+      if (!movie) {
+        if (asRoute) goHome();
+        return;
+      }
+      if (!asRoute && currentRoute() !== 'posters') {
+        window.location.href = `${APP_ROUTES}/posters/?id=${encodeURIComponent(movie.id)}`;
+        return;
+      }
 
       $('posterPickerTitle').textContent = movie.title;
       $('posterPickerGrid').innerHTML = '<div class="poster-picker-status">กำลังค้นหาโปสเตอร์จาก TMDB…</div>';
-      $('posterPickerModal').showModal();
+      openAsPage($('posterPickerModal'));
 
       try {
         let tmdbId = Number(movie.tmdbId) || null;
@@ -549,6 +589,10 @@
       renderCollection();
       $('inspectBgImg').src = posterUrl;
       $('inspectCoverImg').src = posterUrl;
+      if (currentRoute() === 'posters') {
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(movie.id)}`;
+        return;
+      }
       $('posterPickerModal').close();
       showToast('เปลี่ยนโปสเตอร์เรียบร้อยแล้ว');
     }
@@ -558,7 +602,11 @@
       const movie = movies.find(m => m.id === inspectingMovieId);
       if (!movie) return;
 
-      $('inspectModal').close();
+      if (currentRoute() !== 'add') {
+        window.location.href = `${APP_ROUTES}/add/?edit=${encodeURIComponent(movie.id)}`;
+        return;
+      }
+      if ($('inspectModal').open) $('inspectModal').close();
       
       $('formMovieId').value = movie.id;
       $('formTmdbId').value = movie.tmdbId || '';
@@ -593,7 +641,7 @@
       $('deleteEntryBtn').style.display = 'inline-flex';
 
       switchWizardStep(3);
-      $('addEditModal').showModal();
+      openAsPage($('addEditModal'));
     }
 
     function deleteCurrentMovie() {
@@ -604,6 +652,7 @@
         movies = movies.filter(m => m.id !== id);
         saveMoviesToStorage();
         renderCollection();
+        if (currentRoute() === 'add') sessionStorage.setItem('movie_memory_flash', '🗑️ ลบบันทึกเรียบร้อยแล้ว');
         closeAddDialog();
         showToast('🗑️ ลบบันทึกเรียบร้อยแล้ว');
       }
@@ -645,10 +694,34 @@
     // Event Listeners Setup
     document.addEventListener('DOMContentLoaded', () => {
       renderCollection();
+      const flashMessage = sessionStorage.getItem('movie_memory_flash');
+      if (flashMessage) {
+        sessionStorage.removeItem('movie_memory_flash');
+        setTimeout(() => showToast(flashMessage), 120);
+      }
+
+      const route = currentRoute();
+      const routeParams = new URLSearchParams(window.location.search);
+      if (route === 'add') {
+        const editId = routeParams.get('edit');
+        if (editId) {
+          inspectingMovieId = editId;
+          editInspectedMovie();
+        } else {
+          openAddDialog(true);
+        }
+      } else if (route === 'movie') {
+        openInspectDialog(routeParams.get('id'), true);
+      } else if (route === 'posters') {
+        inspectingMovieId = routeParams.get('id');
+        openPosterPicker(true);
+      } else if (route === 'settings') {
+        document.body.classList.add('route-page');
+      }
 
       // Modal Triggers
-      $('openAddModalBtn').addEventListener('click', openAddDialog);
-      $('mobileAddBtn').addEventListener('click', openAddDialog);
+      $('openAddModalBtn').addEventListener('click', () => openAddDialog());
+      $('mobileAddBtn').addEventListener('click', () => openAddDialog());
       $('closeModalBtn').addEventListener('click', closeAddDialog);
       $('cancelModalBtn').addEventListener('click', closeAddDialog);
       
@@ -752,11 +825,17 @@
       });
 
       // Inspector Controls
-      $('closeInspectBtn').addEventListener('click', () => $('inspectModal').close());
-      $('inspectCloseBtn').addEventListener('click', () => $('inspectModal').close());
+      $('closeInspectBtn').addEventListener('click', () => currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
+      $('inspectCloseBtn').addEventListener('click', () => currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
-      $('changePosterBtn').addEventListener('click', openPosterPicker);
-      $('closePosterPickerBtn').addEventListener('click', () => $('posterPickerModal').close());
+      $('changePosterBtn').addEventListener('click', () => openPosterPicker());
+      $('closePosterPickerBtn').addEventListener('click', () => {
+        if (currentRoute() === 'posters' && inspectingMovieId) {
+          window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(inspectingMovieId)}`;
+        } else {
+          $('posterPickerModal').close();
+        }
+      });
       $('posterPickerGrid').addEventListener('click', event => {
         const option = event.target.closest('[data-poster-index]');
         if (option) applyPoster(Number(option.dataset.posterIndex));

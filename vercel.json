@@ -5,6 +5,22 @@
   "trailingSlash": true,
   "rewrites": [
     {
+      "source": "/Movie-Memory/add",
+      "destination": "/Movie%20Memory/index.html"
+    },
+    {
+      "source": "/Movie-Memory/movie",
+      "destination": "/Movie%20Memory/index.html"
+    },
+    {
+      "source": "/Movie-Memory/settings",
+      "destination": "/Movie%20Memory/index.html"
+    },
+    {
+      "source": "/Movie-Memory/posters",
+      "destination": "/Movie%20Memory/index.html"
+    },
+    {
       "source": "/Movie-Memory/:username",
       "destination": "/Movie%20Memory/profile.html?username=:username"
     }

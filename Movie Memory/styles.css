@@ -33,6 +33,15 @@
       -webkit-font-smoothing: antialiased;
       overflow-x: hidden;
     }
+    body.route-page { overflow:hidden; }
+    body.route-page > header,
+    body.route-page > main,
+    body.route-page > .mobile-add-btn { display:none!important; }
+    body.route-page dialog[open] {
+      position:fixed; inset:0; width:100vw; height:100dvh; max-height:none;
+      margin:0; border:0; border-radius:0; box-shadow:none;
+    }
+    body.route-page dialog::backdrop { display:none; }
 
     /* Ambient FX */
     .grain {
