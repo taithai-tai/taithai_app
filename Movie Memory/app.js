@@ -473,8 +473,12 @@
       const btns = document.querySelectorAll('#ratingPicker .star-btn');
       btns.forEach((btn, idx) => {
         const star = idx + 1;
-        btn.classList.toggle('active', value >= star);
-        btn.classList.toggle('half', value === star - 0.5);
+        const isFull = value >= star;
+        const isHalf = value === star - 0.5;
+        btn.classList.toggle('active', isFull);
+        btn.classList.toggle('half', isHalf);
+        btn.textContent = isFull || isHalf ? '★' : '☆';
+        btn.setAttribute('aria-pressed', String(isFull || isHalf));
       });
       $('ratingValueLabel').textContent = `${value} / 5`;
     }
@@ -957,6 +961,26 @@
       }
     }
 
+    function deleteInspectedMovie() {
+      const movie = movies.find(item => item.id === inspectingMovieId);
+      if (!movie) return;
+      if (!confirm(`ลบ “${movie.title}” ออกจากคอลเลกชันใช่ไหม?`)) return;
+
+      movies = movies.filter(item => item.id !== movie.id);
+      saveMoviesToStorage();
+      renderCollection();
+      inspectingMovieId = null;
+
+      if (!IS_FILE_MODE && currentRoute() === 'movie') {
+        sessionStorage.setItem('movie_memory_flash', '🗑️ ลบหนังออกจากคอลเลกชันแล้ว');
+        goHome();
+      } else {
+        if ($('inspectModal').open) $('inspectModal').close();
+        document.body.classList.remove('route-page');
+        showToast('🗑️ ลบหนังออกจากคอลเลกชันแล้ว');
+      }
+    }
+
     // Image Upload Handlers for Ticket Upload
     function handleImageFileSelect(file, targetHiddenInputId, targetPreviewImgId, targetOverlayId) {
       if (!file) return;
@@ -1135,6 +1159,7 @@
       $('closeInspectBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectCloseBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
+      $('inspectDeleteBtn').addEventListener('click', deleteInspectedMovie);
       $('inspectShareBtn').addEventListener('click', shareInspectedMovie);
       $('changePosterBtn').addEventListener('click', () => openPosterPicker());
       $('closePosterPickerBtn').addEventListener('click', () => {
