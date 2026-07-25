@@ -9,6 +9,7 @@ const excluded = new Set([
   '.github',
   '.agents',
   '.codex',
+  'api',
   '.gitignore',
   'node_modules',
   'public',

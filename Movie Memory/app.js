@@ -14,6 +14,8 @@
     let tmdbDebounceTimer = null;
     let inspectingMovieId = null;
     let posterChoices = [];
+    let pendingDeleteMovieId = null;
+    let pendingDeleteTimer = null;
     const IS_FILE_MODE = window.location.protocol === 'file:';
     const APP_HOME = IS_FILE_MODE ? './index.html' : '/Movie%20Memory/';
     const APP_ROUTES = '/Movie-Memory';
@@ -550,6 +552,7 @@
       }
 
       inspectingMovieId = id;
+      resetDeleteConfirmation();
       const bgImg = movie.posterImg || movie.ticketImg || '';
       
       $('inspectBgImg').src = bgImg;
@@ -590,13 +593,36 @@
         else URL.revokeObjectURL(objectUrl);
         return image;
       } catch {
-        return decodeShareImage(src, true);
+        try {
+          const sourceUrl = new URL(src);
+          if (sourceUrl.hostname === 'image.tmdb.org' && sourceUrl.pathname.startsWith('/t/p/')) {
+            const proxyBases = window.location.protocol === 'file:'
+              ? ['http://localhost:3000', 'https://taithai.app']
+              : [''];
+            for (const proxyBase of proxyBases) {
+              try {
+                const proxyUrl = `${proxyBase}/api/movie-poster?url=${encodeURIComponent(sourceUrl.href)}`;
+                const response = await fetch(proxyUrl, { mode: 'cors', cache: 'force-cache' });
+                if (!response.ok) continue;
+                const blob = await response.blob();
+                const objectUrl = URL.createObjectURL(blob);
+                const image = await decodeShareImage(objectUrl);
+                if (image) {
+                  image.shareObjectUrl = objectUrl;
+                  return image;
+                }
+                URL.revokeObjectURL(objectUrl);
+              } catch {}
+            }
+          }
+        } catch {}
+        return null;
       }
     }
 
     async function resolveShareDetails(movie) {
-      let source = movie.posterImg || movie.ticketImg || '';
       let englishTitle = movie.title || 'Untitled Movie';
+      let tmdbPoster = '';
       try {
         let details = null;
         if (movie.tmdbId) {
@@ -613,12 +639,18 @@
         }
         if (details) {
           englishTitle = details.title || details.original_title || englishTitle;
-          if (!source && details.poster_path) source = `${IMG_URL}${details.poster_path}`;
+          if (details.poster_path) tmdbPoster = `${IMG_URL}${details.poster_path}`;
         }
       } catch {}
+      let poster = null;
+      const posterCandidates = [...new Set([movie.posterImg, tmdbPoster, movie.ticketImg].filter(Boolean))];
+      for (const candidate of posterCandidates) {
+        poster = await loadShareImage(candidate);
+        if (poster) break;
+      }
       return {
         title: englishTitle,
-        poster: await loadShareImage(source)
+        poster
       };
     }
 
@@ -950,26 +982,50 @@
     function deleteCurrentMovie() {
       const id = $('formMovieId').value;
       if (!id) return;
+      const movie = movies.find(item => item.id === id);
+      if (!movie || !confirmDeleteTap(movie, $('deleteEntryBtn'))) return;
+      movies = movies.filter(m => m.id !== id);
+      saveMoviesToStorage();
+      renderCollection();
+      resetDeleteConfirmation();
+      if (currentRoute() === 'add') sessionStorage.setItem('movie_memory_flash', '🗑️ ลบบันทึกเรียบร้อยแล้ว');
+      closeAddDialog();
+      showToast('🗑️ ลบบันทึกเรียบร้อยแล้ว');
+    }
 
-      if (confirm('คุณแน่ใจหรือไม่ว่าต้องการลบบันทึกตั๋วหนังเรื่องนี้?')) {
-        movies = movies.filter(m => m.id !== id);
-        saveMoviesToStorage();
-        renderCollection();
-        if (currentRoute() === 'add') sessionStorage.setItem('movie_memory_flash', '🗑️ ลบบันทึกเรียบร้อยแล้ว');
-        closeAddDialog();
-        showToast('🗑️ ลบบันทึกเรียบร้อยแล้ว');
+    function resetDeleteConfirmation() {
+      pendingDeleteMovieId = null;
+      clearTimeout(pendingDeleteTimer);
+      const inspectButton = $('inspectDeleteBtn');
+      const editButton = $('deleteEntryBtn');
+      if (inspectButton) {
+        inspectButton.textContent = '🗑️ ลบหนัง';
+        inspectButton.classList.remove('confirm-delete');
       }
+      if (editButton) editButton.textContent = '🗑️ ลบบันทึกนี้';
+    }
+
+    function confirmDeleteTap(movie, button) {
+      if (pendingDeleteMovieId === movie.id) return true;
+      resetDeleteConfirmation();
+      pendingDeleteMovieId = movie.id;
+      button.textContent = 'แตะอีกครั้งเพื่อยืนยัน';
+      button.classList.add('confirm-delete');
+      showToast('แตะปุ่มลบอีกครั้งเพื่อยืนยัน');
+      pendingDeleteTimer = setTimeout(resetDeleteConfirmation, 5000);
+      return false;
     }
 
     function deleteInspectedMovie() {
       const movie = movies.find(item => item.id === inspectingMovieId);
       if (!movie) return;
-      if (!confirm(`ลบ “${movie.title}” ออกจากคอลเลกชันใช่ไหม?`)) return;
+      if (!confirmDeleteTap(movie, $('inspectDeleteBtn'))) return;
 
       movies = movies.filter(item => item.id !== movie.id);
       saveMoviesToStorage();
       renderCollection();
       inspectingMovieId = null;
+      resetDeleteConfirmation();
 
       if (!IS_FILE_MODE && currentRoute() === 'movie') {
         sessionStorage.setItem('movie_memory_flash', '🗑️ ลบหนังออกจากคอลเลกชันแล้ว');

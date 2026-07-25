@@ -605,6 +605,7 @@
     .inspect-record-actions { display:flex; align-items:center; gap:8px; }
     .inspect-delete-btn { color:var(--danger); border-color:rgba(231,101,90,.38); }
     .inspect-delete-btn:hover { color:#fff; border-color:var(--danger); background:var(--danger); }
+    .inspect-delete-btn.confirm-delete { color:#fff; border-color:var(--danger); background:var(--danger); }
     .inspect-share-btn {
       color:#1a0f05; border:0;
       background:linear-gradient(135deg,var(--gold),var(--orange));

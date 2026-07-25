@@ -64,8 +64,38 @@ async function resolveFile(requestPath) {
   }
 }
 
+async function serveMoviePoster(requestUrl, res) {
+  try {
+    const request = new URL(requestUrl, `http://127.0.0.1:${port}`);
+    const posterUrl = new URL(request.searchParams.get('url') || '');
+    if (posterUrl.protocol !== 'https:' || posterUrl.hostname !== 'image.tmdb.org' || !posterUrl.pathname.startsWith('/t/p/')) {
+      res.writeHead(400, { 'Content-Type': 'application/json; charset=utf-8' });
+      res.end('{"error":"Invalid poster URL"}');
+      return;
+    }
+    const upstream = await fetch(posterUrl, { headers: { Accept: 'image/*' } });
+    const contentType = upstream.headers.get('content-type') || '';
+    if (!upstream.ok || !contentType.startsWith('image/')) throw new Error('POSTER_UNAVAILABLE');
+    const image = Buffer.from(await upstream.arrayBuffer());
+    res.writeHead(200, {
+      'Content-Type': contentType,
+      'Content-Length': image.length,
+      'Cache-Control': 'public, max-age=86400',
+      'Access-Control-Allow-Origin': '*'
+    });
+    res.end(image);
+  } catch {
+    res.writeHead(502, { 'Content-Type': 'application/json; charset=utf-8' });
+    res.end('{"error":"Poster is unavailable"}');
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
+    if ((req.url || '').startsWith('/api/movie-poster?')) {
+      await serveMoviePoster(req.url, res);
+      return;
+    }
     const file = await resolveFile(req.url || '/');
     const target = file || path.join(root, '404.html');
     const body = await readFile(target);
