@@ -14,7 +14,8 @@
     let tmdbDebounceTimer = null;
     let inspectingMovieId = null;
     let posterChoices = [];
-    const APP_HOME = '/Movie%20Memory/';
+    const IS_FILE_MODE = window.location.protocol === 'file:';
+    const APP_HOME = IS_FILE_MODE ? './index.html' : '/Movie%20Memory/';
     const APP_ROUTES = '/Movie-Memory';
     const currentRoute = () => {
       const path = window.location.pathname.replace(/\/+$/, '');
@@ -34,6 +35,10 @@
       if (!dialog.open) dialog.show();
     };
     const goHome = () => { window.location.href = APP_HOME; };
+    const closeLocalPage = dialog => {
+      dialog.close();
+      document.body.classList.remove('route-page');
+    };
 
     function safeText(value, maxLength = 500) {
       return typeof value === 'string' ? value.trim().slice(0, maxLength) : '';
@@ -283,7 +288,7 @@
 
     // Dialog & Wizard Controls
     function openAddDialog(asRoute = false) {
-      if (!asRoute && currentRoute() !== 'add') {
+      if (!IS_FILE_MODE && !asRoute && currentRoute() !== 'add') {
         window.location.href = `${APP_ROUTES}/add/`;
         return;
       }
@@ -295,7 +300,8 @@
     }
 
     function closeAddDialog() {
-      if (currentRoute() === 'add') goHome();
+      if (IS_FILE_MODE) closeLocalPage($('addEditModal'));
+      else if (currentRoute() === 'add') goHome();
       else $('addEditModal').close();
     }
 
@@ -496,7 +502,7 @@
 
     // Inspector modal
     function openInspectDialog(id, asRoute = false) {
-      if (!asRoute && currentRoute() !== 'movie') {
+      if (!IS_FILE_MODE && !asRoute && currentRoute() !== 'movie') {
         window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(id)}`;
         return;
       }
@@ -529,7 +535,7 @@
         if (asRoute) goHome();
         return;
       }
-      if (!asRoute && currentRoute() !== 'posters') {
+      if (!IS_FILE_MODE && !asRoute && currentRoute() !== 'posters') {
         window.location.href = `${APP_ROUTES}/posters/?id=${encodeURIComponent(movie.id)}`;
         return;
       }
@@ -589,7 +595,7 @@
       renderCollection();
       $('inspectBgImg').src = posterUrl;
       $('inspectCoverImg').src = posterUrl;
-      if (currentRoute() === 'posters') {
+      if (!IS_FILE_MODE && currentRoute() === 'posters') {
         window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(movie.id)}`;
         return;
       }
@@ -602,7 +608,7 @@
       const movie = movies.find(m => m.id === inspectingMovieId);
       if (!movie) return;
 
-      if (currentRoute() !== 'add') {
+      if (!IS_FILE_MODE && currentRoute() !== 'add') {
         window.location.href = `${APP_ROUTES}/add/?edit=${encodeURIComponent(movie.id)}`;
         return;
       }
@@ -825,15 +831,15 @@
       });
 
       // Inspector Controls
-      $('closeInspectBtn').addEventListener('click', () => currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
-      $('inspectCloseBtn').addEventListener('click', () => currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
+      $('closeInspectBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
+      $('inspectCloseBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
       $('changePosterBtn').addEventListener('click', () => openPosterPicker());
       $('closePosterPickerBtn').addEventListener('click', () => {
-        if (currentRoute() === 'posters' && inspectingMovieId) {
+        if (!IS_FILE_MODE && currentRoute() === 'posters' && inspectingMovieId) {
           window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(inspectingMovieId)}`;
         } else {
-          $('posterPickerModal').close();
+          IS_FILE_MODE ? closeLocalPage($('posterPickerModal')) : $('posterPickerModal').close();
         }
       });
       $('posterPickerGrid').addEventListener('click', event => {

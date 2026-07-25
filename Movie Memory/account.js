@@ -47,7 +47,8 @@
 
     function openUsernameSetup() {
       if (!signedInUser) return;
-      if (!window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
+      const fileMode = window.location.protocol === "file:";
+      if (!fileMode && !window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
         window.location.href = "/Movie-Memory/settings/";
         return;
       }
@@ -89,11 +90,16 @@
       }
       const username = profile.username || profile.uid;
       const params = new URLSearchParams({ uid: profile.uid });
-      window.location.href = `/Movie-Memory/@${encodeURIComponent(username)}/?${params.toString()}`;
+      window.location.href = window.location.protocol === "file:"
+        ? `./profile.html?username=${encodeURIComponent(username)}&${params.toString()}`
+        : `/Movie-Memory/@${encodeURIComponent(username)}/?${params.toString()}`;
     }
 
     document.getElementById("closeProfileBtn").addEventListener("click", () => {
-      if (window.location.pathname.includes("/Movie-Memory/settings")) {
+      if (window.location.protocol === "file:") {
+        profileModal.close();
+        document.body.classList.remove("route-page");
+      } else if (window.location.pathname.includes("/Movie-Memory/settings")) {
         window.location.href = "/Movie%20Memory/";
       } else {
         profileModal.close();
