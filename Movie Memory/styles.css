@@ -613,6 +613,57 @@
     }
     .inspect-share-btn:disabled { opacity:.65; cursor:wait; }
 
+
+    /* Story editor */
+    .story-editor-modal { width:min(960px,94vw); max-height:min(92vh,900px); }
+    .story-editor-subtitle { color:var(--muted); font-size:12px; margin-top:3px; }
+    .story-editor-body {
+      display:grid; grid-template-columns:minmax(280px, .82fr) minmax(260px, .58fr);
+      gap:28px; padding:24px 28px; overflow-y:auto; min-height:0;
+    }
+    .story-preview-shell {
+      position:relative; width:min(100%,360px); aspect-ratio:9/16; margin:auto;
+      display:grid; place-items:center; overflow:hidden; border-radius:24px; background:#0d0a08;
+      border:1px solid var(--border-gold); box-shadow:0 24px 70px rgba(0,0,0,.52);
+    }
+    .story-preview-shell img { width:100%; height:100%; object-fit:contain; display:block; }
+    .story-preview-loading {
+      position:absolute; inset:0; z-index:2; display:grid; place-items:center; padding:24px;
+      color:var(--cream); font-size:13px; text-align:center; background:rgba(13,10,8,.72);
+      backdrop-filter:blur(8px);
+    }
+    .story-preview-loading[hidden] { display:none; }
+    .story-editor-controls { display:flex; flex-direction:column; gap:16px; align-self:center; }
+    .story-control-label { color:var(--cream); font-size:18px; font-weight:700; }
+    .story-control-help { color:var(--muted); font-size:12px; line-height:1.55; margin-top:4px; }
+    .story-auto-color-btn {
+      width:100%; display:flex; align-items:center; gap:13px; padding:14px; text-align:left;
+      color:var(--cream); border:1px solid var(--border); border-radius:16px;
+      background:var(--surface-card); font:inherit; cursor:pointer; transition:.2s;
+    }
+    .story-auto-color-btn:hover, .story-auto-color-btn.active { border-color:var(--gold); background:var(--surface-hover); }
+    .story-auto-color-btn span:nth-child(2) { display:flex; flex-direction:column; gap:2px; }
+    .story-auto-color-btn small { color:var(--muted); font-size:10px; }
+    .story-auto-swatch { width:42px; height:42px; flex:none; border-radius:12px; background:#1d110a; border:2px solid rgba(255,255,255,.18); }
+    .story-color-picker {
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0;
+      padding:14px; border:1px solid var(--border); border-radius:16px; background:var(--surface-card);
+    }
+    .story-color-input-wrap { display:flex; align-items:center; gap:10px; }
+    #storyBackgroundColor {
+      width:46px; height:38px; padding:2px; border:1px solid var(--border); border-radius:10px;
+      background:transparent; cursor:pointer;
+    }
+    #storyBackgroundHex { min-width:72px; color:var(--gold); font:700 12px "Space Grotesk",sans-serif; }
+    .story-color-presets { display:flex; flex-wrap:wrap; gap:10px; }
+    .story-color-presets button {
+      width:38px; height:38px; padding:0; border:2px solid rgba(255,255,255,.16); border-radius:50%;
+      background:var(--swatch); box-shadow:inset 0 0 0 4px rgba(0,0,0,.12); cursor:pointer; transition:.2s;
+    }
+    .story-color-presets button:hover, .story-color-presets button.active { border-color:var(--gold); transform:scale(1.08); }
+    .story-editor-footer { justify-content:flex-end; gap:10px; }
+    .story-editor-footer .inspect-share-btn { min-width:170px; }
+
     .poster-picker-body { padding: 20px 24px 26px; overflow-y: auto; }
     .poster-picker-help { color: var(--muted); font-size: 13px; margin-bottom: 16px; }
     .poster-picker-grid {
