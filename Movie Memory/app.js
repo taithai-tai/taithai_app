@@ -734,6 +734,12 @@
       return formats[movie.format] || movie.format || 'Not specified';
     }
 
+    function getStoryOwnerId() {
+      const accountId = $('userEmail')?.textContent?.trim() || '';
+      if (/^@[a-zA-Z0-9._]{3,24}$/.test(accountId)) return accountId;
+      return '@guest';
+    }
+
     async function createMovieStory(movie, shareDetails, options = {}) {
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
@@ -813,14 +819,17 @@
       context.fillStyle = '#ffb547';
       context.font = '700 36px sans-serif';
       context.fillText(formatStoryDate(movie.watchDate).toUpperCase(), 540, 1562);
+      context.fillStyle = '#ffb547';
+      context.font = '700 22px sans-serif';
+      context.fillText(`FROM ${getStoryOwnerId()}`, 540, 1607);
       context.fillStyle = '#8d8075';
       context.font = '600 18px sans-serif';
-      context.fillText('AT', 540, 1620);
+      context.fillText('AT', 540, 1645);
       context.fillStyle = '#f8f1e7';
       context.font = '600 27px sans-serif';
       const storyPlace = englishStoryPlace(movie);
       if (context.measureText(storyPlace).width > 820) context.font = '600 23px sans-serif';
-      context.fillText(storyPlace, 540, 1665);
+      context.fillText(storyPlace, 540, 1690);
 
       const linkText = 'taithai.app/Movie-Memory';
       context.strokeStyle = 'rgba(255,181,71,.28)';
