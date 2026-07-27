@@ -697,6 +697,11 @@
       .catalog-list-grid { gap:10px; }
       .catalog-item-info { padding:9px; }
       .poster-picker-grid { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 9px; }
+      .story-editor-body { grid-template-columns:1fr; gap:18px; padding:16px 16px 22px; }
+      .story-preview-shell { width:min(58vw,270px); border-radius:18px; }
+      .story-editor-controls { width:100%; align-self:auto; gap:12px; }
+      .story-editor-footer { display:grid; grid-template-columns:auto 1fr; }
+      .story-editor-footer .inspect-share-btn { min-width:0; }
       .form-grid { grid-template-columns: 1fr; }
       .form-container { padding:14px 14px 24px; }
       .form-grid { gap:14px; }
