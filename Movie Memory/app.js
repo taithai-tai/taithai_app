@@ -5,6 +5,7 @@
     const IMG_URL = 'https://image.tmdb.org/t/p/w500';
 
     const $ = id => document.getElementById(id);
+    const ui = (key, fallback, variables = {}) => window.MovieMemoryPreferences?.t(key, variables) || fallback;
 
     let movies = loadMoviesFromStorage();
     let currentViewMode = localStorage.getItem('mm_view_mode') || 'grid';
@@ -37,7 +38,7 @@
       if (path.endsWith('/Movie-Memory/posters')) return 'posters';
       if (path.endsWith('/Movie-Memory/rewatch')) return 'rewatch';
       if (path.endsWith('/Movie-Memory/review')) return 'review';
-      if (path.endsWith('/Movie-Memory/settings')) return 'settings';
+      if (path.endsWith('/Movie-Memory/account')) return 'account';
       return 'home';
     };
     const openAsPage = dialog => {
@@ -183,10 +184,11 @@
     }
 
     function formatDate(dateStr) {
-      if (!dateStr) return 'ไม่ระบุวันที่';
+      if (!dateStr) return ui('date.unspecified', 'ไม่ระบุวันที่');
       try {
         const d = new Date(dateStr + 'T12:00:00');
-        return new Intl.DateTimeFormat('th-TH', { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
+        const locale = window.MovieMemoryPreferences?.get().language === 'en' ? 'en-GB' : 'th-TH';
+        return new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', year: 'numeric' }).format(d);
       } catch {
         return dateStr;
       }
@@ -264,7 +266,8 @@
       const selectedYear = yearFilter.value;
       const years = [...new Set(allViewings().map(viewing => (viewing.watchDate || '').slice(0, 4)).filter(Boolean))].sort().reverse();
       
-      yearFilter.innerHTML = '<option value="all">ทุกปี</option>' + years.map(y => `<option value="${y}">${Number(y) + 543}</option>`).join('');
+      const language = window.MovieMemoryPreferences?.get().language || 'th';
+      yearFilter.innerHTML = `<option value="all">${ui('home.allYears', 'ทุกปี')}</option>` + years.map(y => `<option value="${y}">${language === 'en' ? y : Number(y) + 543}</option>`).join('');
       if (years.includes(selectedYear) || selectedYear === 'all') {
         yearFilter.value = selectedYear;
       }
@@ -272,6 +275,10 @@
 
     function persistFilterSettings() {
       try {
+        if (window.MovieMemoryPreferences?.get().rememberFilters === false) {
+          localStorage.removeItem(FILTER_STORAGE_KEY);
+          return;
+        }
         localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
           search: $('searchInput').value,
           year: $('yearFilter').value,
@@ -283,6 +290,10 @@
 
     function restoreFilterSettings() {
       try {
+        if (window.MovieMemoryPreferences?.get().rememberFilters === false) {
+          resetFilterSettings();
+          return;
+        }
         const saved = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}');
         const setIfAvailable = (element, value, fallback) => {
           const hasOption = [...element.options].some(option => option.value === value);
@@ -322,14 +333,16 @@
       const advancedFilterCount = Number($('yearFilter').value !== 'all') +
         Number($('formatFilter').value !== 'all') +
         Number($('sortSelect').value !== 'newest');
-      $('mobileFilterLabel').textContent = advancedFilterCount ? `ตัวกรอง · ${advancedFilterCount}` : 'ตัวกรอง';
+      $('mobileFilterLabel').textContent = advancedFilterCount
+        ? ui('collection.filterCount', `ตัวกรอง · ${advancedFilterCount}`, { count: advancedFilterCount })
+        : ui('home.filter', 'ตัวกรอง');
       $('mobileFilterToggle').classList.toggle('active', advancedFilterCount > 0);
 
       $('resultSummary').textContent = movies.length
         ? filtersActive
-          ? `พบ ${filtered.length} จาก ${movies.length} เรื่อง`
-          : `${movies.length} เรื่อง · เก็บไว้เป็นความทรงจำแล้ว`
-        : 'ยังไม่มีหนังในคอลเลกชัน';
+          ? ui('collection.found', `พบ ${filtered.length} จาก ${movies.length} เรื่อง`, { shown: filtered.length, total: movies.length })
+          : ui('collection.saved', `${movies.length} เรื่อง · เก็บไว้เป็นความทรงจำแล้ว`, { total: movies.length })
+        : ui('collection.none', 'ยังไม่มีหนังในคอลเลกชัน');
       $('clearFiltersBtn').disabled = !filtersActive;
 
       grid.className = 'collection-grid';
@@ -344,9 +357,9 @@
         grid.innerHTML = `
           <div class="empty-state">
             <div class="empty-icon">${movies.length ? '🔎' : '🎬'}</div>
-            <h3>${movies.length ? 'ไม่พบหนังที่ค้นหา' : 'ยังไม่มีความทรงจำภาพยนตร์'}</h3>
-            <p>${movies.length ? 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองเพื่อดูหนังทั้งหมด' : 'เริ่มบันทึกหนังเรื่องแรก แล้วค่อย ๆ สร้างคอลเลกชันความทรงจำของคุณ'}</p>
-            <button class="btn btn-primary" type="button" data-empty-action="${movies.length ? 'clear' : 'add'}">${movies.length ? 'ล้างตัวกรอง' : '✨ ＋ เพิ่มหนังเรื่องแรก'}</button>
+            <h3>${movies.length ? ui('collection.search.none', 'ไม่พบหนังที่ค้นหา') : ui('collection.empty.title', 'ยังไม่มีความทรงจำภาพยนตร์')}</h3>
+            <p>${movies.length ? ui('collection.search.copy', 'ลองเปลี่ยนคำค้นหา หรือล้างตัวกรองเพื่อดูหนังทั้งหมด') : ui('collection.empty.copy', 'เริ่มบันทึกหนังเรื่องแรก แล้วค่อย ๆ สร้างคอลเลกชันความทรงจำของคุณ')}</p>
+            <button class="btn btn-primary" type="button" data-empty-action="${movies.length ? 'clear' : 'add'}">${movies.length ? ui('collection.search.clear', 'ล้างตัวกรอง') : ui('collection.empty.add', '✨ ＋ เพิ่มหนังเรื่องแรก')}</button>
           </div>
         `;
         return;
@@ -1488,8 +1501,49 @@
       reader.readAsDataURL(file);
     }
 
+    function setupFeatureScroller() {
+      const shell = $('featureShortcutsShell');
+      const scroller = $('featureShortcuts');
+      const previousButton = $('featureScrollPrev');
+      const nextButton = $('featureScrollNext');
+      if (!shell || !scroller || !previousButton || !nextButton) return;
+
+      let updateFrame = 0;
+      const updateControls = () => {
+        cancelAnimationFrame(updateFrame);
+        updateFrame = requestAnimationFrame(() => {
+          const maximumScroll = Math.max(0, scroller.scrollWidth - scroller.clientWidth);
+          const hasOverflow = maximumScroll > 4;
+          shell.classList.toggle('has-overflow', hasOverflow);
+          previousButton.disabled = !hasOverflow || scroller.scrollLeft <= 3;
+          nextButton.disabled = !hasOverflow || scroller.scrollLeft >= maximumScroll - 3;
+        });
+      };
+
+      const scrollOneCard = direction => {
+        const card = scroller.querySelector('.feature-shortcut-card');
+        if (!card) return;
+        const gap = Number.parseFloat(getComputedStyle(scroller).gap) || 0;
+        const distance = card.getBoundingClientRect().width + gap;
+        const reduceMotion = document.documentElement.dataset.mmMotion === 'reduced'
+          || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        scroller.scrollBy({
+          left: direction * distance,
+          behavior: reduceMotion ? 'auto' : 'smooth'
+        });
+      };
+
+      previousButton.addEventListener('click', () => scrollOneCard(-1));
+      nextButton.addEventListener('click', () => scrollOneCard(1));
+      scroller.addEventListener('scroll', updateControls, { passive: true });
+      window.addEventListener('resize', updateControls, { passive: true });
+      if ('ResizeObserver' in window) new ResizeObserver(updateControls).observe(scroller);
+      updateControls();
+    }
+
     // Event Listeners Setup
     document.addEventListener('DOMContentLoaded', () => {
+      setupFeatureScroller();
       renderCollection();
       restoreFilterSettings();
       renderCollection();
@@ -1520,7 +1574,7 @@
       } else if (route === 'review') {
         inspectingMovieId = routeParams.get('id');
         openReviewEditor(true);
-      } else if (route === 'settings') {
+      } else if (route === 'account') {
         document.body.classList.add('route-page');
       }
 
@@ -1651,17 +1705,20 @@
       // View Mode Toggle
       $('viewGridBtn').addEventListener('click', () => {
         currentViewMode = 'grid';
-        localStorage.setItem('mm_view_mode', 'grid');
+        if (window.MovieMemoryPreferences) window.MovieMemoryPreferences.update({ defaultView: 'grid' });
+        else localStorage.setItem('mm_view_mode', 'grid');
         renderCollection();
       });
       $('viewListBtn').addEventListener('click', () => {
         currentViewMode = 'list';
-        localStorage.setItem('mm_view_mode', 'list');
+        if (window.MovieMemoryPreferences) window.MovieMemoryPreferences.update({ defaultView: 'list' });
+        else localStorage.setItem('mm_view_mode', 'list');
         renderCollection();
       });
       $('viewTicketBtn').addEventListener('click', () => {
         currentViewMode = 'ticket';
-        localStorage.setItem('mm_view_mode', 'ticket');
+        if (window.MovieMemoryPreferences) window.MovieMemoryPreferences.update({ defaultView: 'ticket' });
+        else localStorage.setItem('mm_view_mode', 'ticket');
         renderCollection();
       });
 

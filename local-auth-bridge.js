@@ -20,7 +20,12 @@
     loginButton.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      window.location.href = getLocalUrl();
+      window.MovieMemoryAuthFeedback?.show();
+      window.requestAnimationFrame(function () {
+        window.setTimeout(function () {
+          window.location.href = getLocalUrl();
+        }, 45);
+      });
     }, true);
   });
 })();

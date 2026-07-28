@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Movie Memory">
+  <link rel="manifest" href="/movie-memory-assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/movie-memory-assets/app-icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/movie-memory-assets/app-icons/favicon-32.png">
+  <title>วิธีใช้งาน — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-7">
+  <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-1">
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-7";
+      document.getElementById("preferencesStyles").href = "/movie-memory-assets/preferences.css?v=20260728-1";
+    }
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260728-1"><\/script>`);
+  </script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="page-shell">
+      <nav class="page-nav">
+        <a class="page-brand back-to-memory" href="./index.html">
+          <span class="page-logo"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span>
+          <span>Movie Memory</span>
+        </a>
+        <a class="page-button back-to-memory" href="./index.html">← กลับคอลเลกชัน</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main page-shell">
+    <div class="page-kicker">◎ APP GUIDE</div>
+    <h1 class="page-title">เริ่มใช้ Movie Memory<br>ในไม่กี่<em>ขั้นตอน</em></h1>
+    <p class="page-intro">เก็บหนังที่เคยดูเป็นคอลเลกชันส่วนตัว บันทึกความทรงจำในแต่ละครั้ง และเปิดดูจากอุปกรณ์ไหนก็ได้เมื่อเข้าสู่ระบบด้วยบัญชีเดียวกัน</p>
+    <p class="tutorial-legend"><span></span>กรอบและป้ายสีส้มในภาพ คือปุ่มที่ต้องแตะในแต่ละขั้นตอน</p>
+
+    <section class="tutorial-grid" aria-label="ขั้นตอนการใช้งาน Movie Memory">
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-login" aria-hidden="true">
+          <div class="visual-app-bar">
+            <span class="visual-brand"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span>
+            <span class="visual-search-line">⌕ ค้นหาไอดี…</span>
+            <span class="visual-ui-button visual-focus">G&nbsp; เข้าสู่ระบบ</span>
+          </div>
+          <div class="visual-hero-lines"><i></i><i></i><i></i></div>
+          <span class="visual-callout callout-top-right">แตะปุ่มนี้</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">01</span>
+          <h2>เข้าสู่ระบบและตั้งไอดี</h2>
+          <ol class="tutorial-actions">
+            <li>แตะ <strong>เข้าสู่ระบบ</strong> ที่มุมขวาบน</li>
+            <li>เลือกบัญชี Google ที่ต้องการใช้</li>
+            <li>ตั้งไอดีครั้งแรก เพื่อให้เพื่อนค้นหาคุณได้</li>
+          </ol>
+        </div>
+      </article>
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-add" aria-hidden="true">
+          <div class="visual-app-bar">
+            <span class="visual-brand"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span>
+            <span class="visual-ui-button visual-focus">＋ เพิ่มหนัง</span>
+          </div>
+          <div class="visual-collection"><i></i><i></i><i></i></div>
+          <span class="visual-floating-add visual-focus">＋</span>
+          <span class="visual-callout callout-top-right">เริ่มเพิ่มตรงนี้</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">02</span>
+          <h2>ค้นหาและเพิ่มหนัง</h2>
+          <ol class="tutorial-actions">
+            <li>แตะ <strong>เพิ่มหนัง</strong> ด้านบน หรือปุ่ม ＋ บนมือถือ</li>
+            <li>เลือกค้นหาชื่อหนัง หรือเพิ่มจากภาพตั๋ว</li>
+            <li>แตะโปสเตอร์เรื่องที่ต้องการจากผลค้นหา</li>
+          </ol>
+        </div>
+      </article>
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-form" aria-hidden="true">
+          <div class="visual-dialog">
+            <div class="visual-dialog-head"><strong>บันทึกการดู</strong><span>×</span></div>
+            <div class="visual-form-row">
+              <img src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
+              <div><i>วันที่ดู</i><i>ดูที่ไหน</i><i>ดูกับใคร</i></div>
+            </div>
+            <div class="visual-stars">★ ★ ★ ★ ☆</div>
+            <span class="visual-save visual-focus">บันทึกหนัง</span>
+          </div>
+          <span class="visual-callout callout-save">แตะปุ่มสีส้ม</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">03</span>
+          <h2>บันทึกวันนั้นไว้</h2>
+          <ol class="tutorial-actions">
+            <li>กรอกวันที่ สถานที่ รูปแบบ และคนที่ดูด้วย</li>
+            <li>เพิ่มความรู้สึกและกดดาวได้ทีละครึ่งดวง</li>
+            <li>ตรวจข้อมูลแล้วแตะ <strong>บันทึกหนัง</strong></li>
+          </ol>
+        </div>
+      </article>
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-rewatch" aria-hidden="true">
+          <div class="visual-movie-detail">
+            <img src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
+            <div>
+              <strong>Movie Title</strong>
+              <span>ดูแล้ว 1 ครั้ง</span>
+              <i>★★★★½</i>
+              <b class="visual-focus">＋ ดูอีกครั้ง</b>
+            </div>
+          </div>
+          <span class="visual-callout callout-bottom-right">เพิ่มรอบการดู</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">04</span>
+          <h2>เพิ่มการดูซ้ำ</h2>
+          <ol class="tutorial-actions">
+            <li>แตะโปสเตอร์หนังจากคอลเลกชัน</li>
+            <li>เลือก <strong>ดูอีกครั้ง</strong> ในหน้ารายละเอียด</li>
+            <li>บันทึกข้อมูลเฉพาะรอบใหม่ โดยไม่สร้างหนังซ้ำ</li>
+          </ol>
+        </div>
+      </article>
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-share" aria-hidden="true">
+          <div class="visual-story">
+            <img src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
+            <span>★★★★½</span>
+            <small>taithai.app</small>
+          </div>
+          <div class="visual-share-actions">
+            <span>เปลี่ยนโปสเตอร์</span>
+            <strong class="visual-focus">แชร์ Story</strong>
+          </div>
+          <span class="visual-callout callout-bottom-right">สร้างภาพแชร์</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">05</span>
+          <h2>แต่งโปสเตอร์และแชร์</h2>
+          <ol class="tutorial-actions">
+            <li>เปิดหนังแล้วเลือก <strong>เปลี่ยนโปสเตอร์</strong> หากต้องการ</li>
+            <li>แตะ <strong>แชร์ Story</strong> และเลือกสีพื้นหลัง</li>
+            <li>บันทึกหรือส่งภาพไปยัง Instagram</li>
+          </ol>
+        </div>
+      </article>
+      <article class="tutorial-card">
+        <div class="tutorial-visual visual-explore" aria-hidden="true">
+          <div class="visual-people-search visual-focus">⌕ ค้นหา @ไอดีของเพื่อน</div>
+          <div class="visual-feature-pair">
+            <span><img src="./assets/feature-icons/dashboard.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/dashboard.jpg?v=20260728-2" alt=""><b>Dashboard</b></span>
+            <span><img src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt=""><b>เกมเลือกหนัง</b></span>
+          </div>
+          <span class="visual-callout callout-search">ค้นหาได้แม้ยังไม่ล็อกอิน</span>
+        </div>
+        <div class="tutorial-card-content">
+          <span class="tutorial-step">06</span>
+          <h2>สำรวจ Movie Memory</h2>
+          <ol class="tutorial-actions">
+            <li>แตะ <strong>Dashboard</strong> เพื่อดูสถิติของคุณ</li>
+            <li>เล่นเกมเลือกหนัง เพื่อหาหนังอันดับหนึ่ง</li>
+            <li>พิมพ์ @ไอดีด้านบน แล้วแตะโปรไฟล์ที่พบ</li>
+          </ol>
+        </div>
+      </article>
+    </section>
+
+    <section class="tutorial-cta">
+      <div>
+        <h2>พร้อมเก็บความทรงจำเรื่องแรกแล้วหรือยัง?</h2>
+        <p>เริ่มจากหนังเรื่องล่าสุดที่คุณเพิ่งดู แล้วค่อย ๆ สร้างคลังภาพยนตร์ของตัวเอง</p>
+      </div>
+      <a class="page-button primary add-movie-link" href="./index.html">＋ เพิ่มหนังเรื่องแรก</a>
+    </section>
+  </main>
+
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.querySelectorAll("[data-hosted-src]").forEach(image => image.src = image.dataset.hostedSrc);
+      document.querySelectorAll(".back-to-memory").forEach(link => link.href = "/Movie-Memory/");
+      document.querySelectorAll(".add-movie-link").forEach(link => link.href = "/Movie-Memory/add/");
+    }
+  </script>
+</body>
+</html>

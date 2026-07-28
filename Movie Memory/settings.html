@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Movie Memory">
+  <link rel="manifest" href="/movie-memory-assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/movie-memory-assets/app-icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/movie-memory-assets/app-icons/favicon-32.png">
+  <title>Settings — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-7">
+  <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-1">
+  <link id="settingsStyles" rel="stylesheet" href="./settings.css?v=20260728-1">
+  <script>
+    const isHostedSettings = window.location.protocol !== 'file:';
+    if (isHostedSettings) {
+      document.getElementById('featurePageStyles').href = '/movie-memory-assets/feature-pages.css?v=20260728-7';
+      document.getElementById('preferencesStyles').href = '/movie-memory-assets/preferences.css?v=20260728-1';
+      document.getElementById('settingsStyles').href = '/movie-memory-assets/settings.css?v=20260728-1';
+    }
+    document.write(`<script src="${isHostedSettings ? '/movie-memory-assets/' : './'}preferences.js?v=20260728-1"><\/script>`);
+  </script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="page-shell">
+      <nav class="page-nav">
+        <a class="page-brand back-to-memory" href="./index.html">
+          <span class="page-logo"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span>
+          <span>Movie Memory</span>
+        </a>
+        <a class="page-button back-to-memory" href="./index.html" data-mm-i18n="settings.back">← กลับคอลเลกชัน</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main page-shell settings-main">
+    <div class="page-kicker" data-mm-i18n="settings.kicker">⚙ PERSONALIZE</div>
+    <h1 class="page-title" data-mm-i18n-html="settings.title">ตั้งค่า Movie Memory<br>ให้เป็นแบบ<em>ของคุณ</em></h1>
+    <p class="page-intro" data-mm-i18n="settings.intro">ปรับภาษา ตัวอักษร สี การแสดงคอลเลกชัน และการเคลื่อนไหว ค่าที่เลือกจะถูกจำไว้ในอุปกรณ์นี้</p>
+
+    <div class="settings-layout">
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <div><h2 data-mm-i18n="settings.language.title">ภาษา</h2><p data-mm-i18n="settings.language.copy">เปลี่ยนภาษาของเมนูหลักและหน้าตั้งค่า</p></div>
+          <span class="settings-panel-icon">文</span>
+        </div>
+        <div class="settings-options two">
+          <button class="settings-choice" type="button" data-setting="language" data-value="th" aria-pressed="false">
+            <span class="settings-choice-mark">TH</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.thai">ไทย</strong><small>ภาษาไทย</small></span>
+          </button>
+          <button class="settings-choice" type="button" data-setting="language" data-value="en" aria-pressed="false">
+            <span class="settings-choice-mark">EN</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.english">English</strong><small>English</small></span>
+          </button>
+        </div>
+      </section>
+
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <div><h2 data-mm-i18n="settings.font.title">ฟอนต์</h2><p data-mm-i18n="settings.font.copy">เลือกบุคลิกตัวอักษรที่อ่านสบายสำหรับคุณ</p></div>
+          <span class="settings-panel-icon">Aa</span>
+        </div>
+        <div class="settings-options">
+          <button class="settings-choice" type="button" data-setting="font" data-value="system" aria-pressed="false">
+            <span class="settings-choice-mark">A</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.font.system">System</strong><small data-mm-i18n="settings.font.system.copy">ใช้ฟอนต์มาตรฐานของอุปกรณ์</small></span>
+          </button>
+          <button class="settings-choice" type="button" data-setting="font" data-value="noto" aria-pressed="false">
+            <span class="settings-choice-mark">ก</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.font.noto">Noto Sans Thai</strong><small data-mm-i18n="settings.font.noto.copy">อ่านภาษาไทยชัดและเป็นกลาง</small></span>
+          </button>
+          <button class="settings-choice" type="button" data-setting="font" data-value="modern" aria-pressed="false">
+            <span class="settings-choice-mark">M</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.font.modern">Modern</strong><small data-mm-i18n="settings.font.modern.copy">รูปทรงร่วมสมัยและกระชับ</small></span>
+          </button>
+        </div>
+        <div class="settings-field">
+          <span class="settings-label" data-mm-i18n="settings.accent.title">สีเน้น</span>
+          <div class="settings-options">
+            <button class="settings-choice" type="button" data-setting="accent" data-value="gold" aria-pressed="false">
+              <span class="settings-swatch" style="--swatch:#ff9f0a"></span><span class="settings-choice-copy"><strong data-mm-i18n="settings.accent.gold">Cinema Gold</strong></span>
+            </button>
+            <button class="settings-choice" type="button" data-setting="accent" data-value="rose" aria-pressed="false">
+              <span class="settings-swatch" style="--swatch:#ff375f"></span><span class="settings-choice-copy"><strong data-mm-i18n="settings.accent.rose">Rose</strong></span>
+            </button>
+            <button class="settings-choice" type="button" data-setting="accent" data-value="blue" aria-pressed="false">
+              <span class="settings-swatch" style="--swatch:#0a84ff"></span><span class="settings-choice-copy"><strong data-mm-i18n="settings.accent.blue">Electric Blue</strong></span>
+            </button>
+          </div>
+        </div>
+        <div class="settings-field">
+          <div class="settings-preview">
+            <small data-mm-i18n="settings.preview.label">ตัวอย่าง</small>
+            <strong data-mm-i18n="settings.preview.title">Your Movie Memory</strong>
+            <span data-mm-i18n="settings.preview.copy">ทุกเรื่องที่ดู คือหนึ่งความทรงจำ</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <div><h2 data-mm-i18n="settings.collection.title">คอลเลกชัน</h2><p data-mm-i18n="settings.collection.copy">กำหนดหน้าตาเริ่มต้นเมื่อเปิดแอป</p></div>
+          <span class="settings-panel-icon">▦</span>
+        </div>
+        <div class="settings-field">
+          <span class="settings-label" data-mm-i18n="settings.view.title">รูปแบบเริ่มต้น</span>
+          <div class="settings-options">
+            <button class="settings-choice" type="button" data-setting="defaultView" data-value="grid" aria-pressed="false"><span class="settings-choice-mark">▦</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.view.grid">โปสเตอร์</strong></span></button>
+            <button class="settings-choice" type="button" data-setting="defaultView" data-value="list" aria-pressed="false"><span class="settings-choice-mark">☷</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.view.list">รายการ</strong></span></button>
+            <button class="settings-choice" type="button" data-setting="defaultView" data-value="ticket" aria-pressed="false"><span class="settings-choice-mark">🎟</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.view.ticket">ตั๋วหนัง</strong></span></button>
+          </div>
+        </div>
+        <div class="settings-field">
+          <span class="settings-label" data-mm-i18n="settings.density.title">ระยะห่าง</span>
+          <div class="settings-options two">
+            <button class="settings-choice" type="button" data-setting="density" data-value="comfortable" aria-pressed="false"><span class="settings-choice-mark">↔</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.density.comfortable">สบายตา</strong></span></button>
+            <button class="settings-choice" type="button" data-setting="density" data-value="compact" aria-pressed="false"><span class="settings-choice-mark">≡</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.density.compact">กระชับ</strong></span></button>
+          </div>
+        </div>
+        <div class="settings-field settings-switch-row">
+          <span class="settings-switch-copy"><strong data-mm-i18n="settings.remember.title">จำตัวกรองล่าสุด</strong><small data-mm-i18n="settings.remember.copy">เก็บคำค้นหา การเรียง และตัวกรองไว้เมื่อกลับมาใหม่</small></span>
+          <button class="settings-switch" id="rememberFiltersSwitch" type="button" role="switch" aria-checked="true" aria-label="จำตัวกรองล่าสุด" data-mm-i18n-aria-label="settings.remember.title"></button>
+        </div>
+      </section>
+
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <div><h2 data-mm-i18n="settings.motion.title">การเคลื่อนไหว</h2><p data-mm-i18n="settings.motion.copy">ปรับแอนิเมชันให้เหมาะกับการใช้งาน</p></div>
+          <span class="settings-panel-icon">◌</span>
+        </div>
+        <div class="settings-options">
+          <button class="settings-choice" type="button" data-setting="motion" data-value="system" aria-pressed="false"><span class="settings-choice-mark">◐</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.motion.system">ตามอุปกรณ์</strong></span></button>
+          <button class="settings-choice" type="button" data-setting="motion" data-value="full" aria-pressed="false"><span class="settings-choice-mark">✦</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.motion.full">เต็มรูปแบบ</strong></span></button>
+          <button class="settings-choice" type="button" data-setting="motion" data-value="reduced" aria-pressed="false"><span class="settings-choice-mark">—</span><span class="settings-choice-copy"><strong data-mm-i18n="settings.motion.reduced">ลดการเคลื่อนไหว</strong></span></button>
+        </div>
+      </section>
+
+      <section class="settings-panel">
+        <div class="settings-panel-head">
+          <div><h2 data-mm-i18n="settings.account.title">บัญชีและข้อมูล</h2><p data-mm-i18n="settings.account.copy">จัดการไอดีโปรไฟล์และล้างค่าที่บันทึกไว้</p></div>
+          <span class="settings-panel-icon">◎</span>
+        </div>
+        <div class="settings-actions">
+          <a class="page-button account-settings-link" href="./index.html" data-mm-i18n="settings.account.button">จัดการไอดีโปรไฟล์</a>
+          <button class="page-button" id="resetFiltersBtn" type="button" data-mm-i18n="settings.filters.reset">ล้างตัวกรองที่จำไว้</button>
+          <button class="page-button settings-danger" id="resetPreferencesBtn" type="button" data-mm-i18n="settings.reset">คืนค่าการตั้งค่าทั้งหมด</button>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <div class="settings-toast" id="settingsToast" role="status" aria-live="polite"></div>
+  <script>
+    if (window.location.protocol !== 'file:') {
+      document.querySelectorAll('[data-hosted-src]').forEach(image => image.src = image.dataset.hostedSrc);
+      document.querySelectorAll('.back-to-memory').forEach(link => link.href = '/Movie-Memory/');
+      document.querySelectorAll('.account-settings-link').forEach(link => link.href = '/Movie-Memory/account/');
+    }
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}settings.js?v=20260728-1"><\/script>`);
+  </script>
+</body>
+</html>

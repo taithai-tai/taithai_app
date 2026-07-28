@@ -11,6 +11,7 @@ const mimeTypes = {
   '.json': 'application/json; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.webmanifest': 'application/manifest+json; charset=utf-8',
   '.png': 'image/png',
   '.jpg': 'image/jpeg',
   '.jpeg': 'image/jpeg',
@@ -29,19 +30,28 @@ async function resolveFile(requestPath) {
   if (pathname.startsWith('/movie-memory-assets/')) {
     if (pathname.startsWith('/movie-memory-assets/feature-icons/')) {
       const iconName = path.basename(pathname);
-      if (['brand.jpg', 'game.jpg', 'install.jpg', 'dashboard.jpg'].includes(iconName)) {
+      if (['brand.jpg', 'game.jpg', 'install.jpg', 'dashboard.jpg', 'tutorial.jpg', 'settings.jpg'].includes(iconName)) {
         return path.join(root, 'Movie Memory', 'assets', 'feature-icons', iconName);
       }
     }
+    if (pathname.startsWith('/movie-memory-assets/app-icons/')) {
+      const iconName = path.basename(pathname);
+      if (['favicon-32.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'].includes(iconName)) {
+        return path.join(root, 'Movie Memory', 'assets', 'app-icons', iconName);
+      }
+    }
     const assetName = path.basename(pathname);
-    if (['styles.css', 'app.js', 'account.js', 'account-loader.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js'].includes(assetName)) {
+    if (assetName === 'manifest.webmanifest') {
+      return path.join(root, 'Movie Memory', 'manifest.webmanifest');
+    }
+    if (['styles.css', 'app.js', 'account.js', 'account-loader.js', 'auth-feedback.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js', 'preferences.css', 'preferences.js', 'settings.css', 'settings.js'].includes(assetName)) {
       return path.join(root, 'Movie Memory', assetName);
     }
   }
   if (/^\/Movie-Memory\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'index.html');
   }
-  if (/^\/Movie-Memory\/(?:add|movie|settings|posters|rewatch|review)\/?$/.test(pathname)) {
+  if (/^\/Movie-Memory\/(?:add|movie|account|posters|rewatch|review)\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'index.html');
   }
   if (/^\/Movie-Memory\/profile\/?$/.test(pathname)) {
@@ -55,6 +65,12 @@ async function resolveFile(requestPath) {
   }
   if (/^\/Movie-Memory\/install\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'install.html');
+  }
+  if (/^\/Movie-Memory\/settings\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'settings.html');
+  }
+  if (/^\/Movie-Memory\/tutorial\/?$/.test(pathname)) {
+    return path.join(root, 'Movie Memory', 'tutorial.html');
   }
   if (/^\/Movie-Memory\/@[^/]+\/?$/.test(pathname)) {
     return path.join(root, 'Movie Memory', 'profile.html');

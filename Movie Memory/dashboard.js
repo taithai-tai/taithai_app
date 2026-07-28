@@ -104,12 +104,21 @@
 
   if (window.location.protocol === "file:") return;
 
-  import("/firebase-auth.js?v=20260728-1").then(authApi => {
+  import("/firebase-auth.js?v=20260728-2").then(authApi => {
     $("dashboardLoginBtn").addEventListener("click", async () => {
+      const feedback = window.MovieMemoryAuthFeedback;
       try {
         $("dashboardLoginBtn").disabled = true;
+        feedback?.show();
         await authApi.loginWithGoogle();
-      } catch {
+        feedback?.setStage("finishing");
+        window.setTimeout(() => feedback?.hide(), 650);
+      } catch (error) {
+        if (error?.code === "auth/popup-closed-by-user" || error?.code === "auth/cancelled-popup-request") {
+          feedback?.hide();
+        } else {
+          feedback?.error();
+        }
         $("dashboardSyncNote").textContent = "เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง";
       } finally {
         $("dashboardLoginBtn").disabled = false;

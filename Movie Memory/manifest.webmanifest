@@ -1,0 +1,46 @@
+{
+  "id": "/Movie-Memory/",
+  "name": "Movie Memory",
+  "short_name": "Movie Memory",
+  "description": "บันทึกหนัง ตั๋ว ความรู้สึก และความทรงจำจากการชมภาพยนตร์",
+  "lang": "th",
+  "start_url": "/Movie-Memory/",
+  "scope": "/Movie-Memory/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "background_color": "#000000",
+  "theme_color": "#000000",
+  "categories": ["entertainment", "lifestyle"],
+  "icons": [
+    {
+      "src": "/movie-memory-assets/app-icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/movie-memory-assets/app-icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/movie-memory-assets/app-icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "เพิ่มหนัง",
+      "short_name": "เพิ่มหนัง",
+      "url": "/Movie-Memory/add/"
+    },
+    {
+      "name": "ดู Dashboard",
+      "short_name": "Dashboard",
+      "url": "/Movie-Memory/dashboard/"
+    }
+  ]
+}

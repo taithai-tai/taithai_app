@@ -3,23 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0d0a08">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Movie Memory">
+  <link rel="manifest" href="/movie-memory-assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/movie-memory-assets/app-icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/movie-memory-assets/app-icons/favicon-32.png">
   <title>Dashboard — Movie Memory</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://accounts.google.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-4">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-6">
+  <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-2">
   <script>
     if (window.location.protocol !== "file:") {
-      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-4";
+      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-6";
+      document.getElementById("preferencesStyles").href = "/movie-memory-assets/preferences.css?v=20260728-2";
     }
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260728-1"><\/script>`);
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}auth-feedback.js?v=20260728-1"><\/script>`);
   </script>
 </head>
 <body>
   <header class="page-header">
     <div class="page-shell">
       <nav class="page-nav">
-        <a class="page-brand back-to-memory" href="./index.html"><span class="page-logo">🎞️</span><span>Movie Memory</span></a>
+        <a class="page-brand back-to-memory" href="./index.html"><span class="page-logo"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span><span>Movie Memory</span></a>
         <div class="page-actions">
           <div class="account-badge" id="dashboardAccount" hidden>
             <img id="dashboardAvatar" alt="">
@@ -67,10 +80,11 @@
 
   <script>
     if (window.location.protocol !== "file:") {
+      document.querySelectorAll("[data-hosted-src]").forEach(image => image.src = image.dataset.hostedSrc);
       document.querySelectorAll(".back-to-memory").forEach(link => link.href = "/Movie%20Memory/");
       document.querySelectorAll(".add-movie-link").forEach(link => link.href = "/Movie-Memory/add/");
     }
-    document.write(`<script src="${window.location.protocol === "file:" ? "./dashboard.js" : "/movie-memory-assets/dashboard.js"}?v=20260728-4"><\/script>`);
+    document.write(`<script src="${window.location.protocol === "file:" ? "./dashboard.js" : "/movie-memory-assets/dashboard.js"}?v=20260728-5"><\/script>`);
   </script>
 </body>
 </html>

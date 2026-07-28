@@ -2,29 +2,12 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/fireba
 import { 
   getAuth, 
   signInWithPopup,
-  getRedirectResult,
   GoogleAuthProvider, 
   browserLocalPersistence,
   setPersistence,
   signOut, 
   onAuthStateChanged 
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { 
-  getFirestore, 
-  collection,
-  doc, 
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  orderBy,
-  startAt,
-  endAt,
-  limit,
-  runTransaction,
-  setDoc, 
-  serverTimestamp 
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBnHpQONClba7a9G0uM36cI1jcfz5jTVEA",
@@ -37,7 +20,50 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app, "ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb");
+export let db = null;
+let collection;
+let doc;
+let getDoc;
+let getDocs;
+let onSnapshot;
+let query;
+let orderBy;
+let startAt;
+let endAt;
+let limit;
+let runTransaction;
+let setDoc;
+let serverTimestamp;
+let firestoreReady = null;
+function ensureFirestore() {
+  if (!firestoreReady) {
+    firestoreReady = import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
+      .then(module => {
+        ({
+          collection,
+          doc,
+          getDoc,
+          getDocs,
+          onSnapshot,
+          query,
+          orderBy,
+          startAt,
+          endAt,
+          limit,
+          runTransaction,
+          setDoc,
+          serverTimestamp
+        } = module);
+        db = module.getFirestore(app, "ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb");
+        return db;
+      })
+      .catch(error => {
+        firestoreReady = null;
+        throw error;
+      });
+  }
+  return firestoreReady;
+}
 const authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error("Could not enable persistent Firebase session:", error);
 });
@@ -47,18 +73,10 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
-// Check redirect results on load
-authReady.then(() => getRedirectResult(auth)).then(async (result) => {
-  if (result && result.user) {
-    saveUserProfile(result.user);
-  }
-}).catch((error) => {
-  console.error("Redirect sign-in error:", error);
-});
-
 async function saveUserProfile(user) {
   if (!user) return;
   try {
+    await ensureFirestore();
     const userRef = doc(db, "users", user.uid);
     await setDoc(userRef, {
       uid: user.uid,
@@ -124,6 +142,7 @@ function normalizeUsername(value) {
 
 export async function getMyPublicProfile(user) {
   if (!user) return null;
+  await ensureFirestore();
   try {
     const snapshot = await getDoc(doc(db, "publicProfiles", user.uid));
     if (snapshot.exists() && snapshot.data()?.username) return snapshot.data();
@@ -136,6 +155,7 @@ export async function getMyPublicProfile(user) {
 
 export async function claimUsername(user, requestedUsername) {
   if (!user) throw new Error("LOGIN_REQUIRED");
+  await ensureFirestore();
   const username = normalizeUsername(requestedUsername);
   if (!/^[a-z0-9._ก-๙]{3,24}$/u.test(username)) throw new Error("INVALID_USERNAME");
 
@@ -175,6 +195,7 @@ export async function claimUsername(user, requestedUsername) {
 export async function searchPublicProfiles(searchText) {
   const term = normalizeUsername(searchText);
   if (!term) return [];
+  await ensureFirestore();
   const profilesQuery = query(
     collection(db, "publicProfiles"),
     orderBy("usernameLower"),
@@ -189,6 +210,7 @@ export async function searchPublicProfiles(searchText) {
 }
 
 export async function getPublicProfile(uid) {
+  await ensureFirestore();
   const profileSnap = await getDoc(doc(db, "publicProfiles", uid));
   if (!profileSnap.exists()) throw new Error("PROFILE_NOT_FOUND");
   const profile = profileSnap.data();
@@ -214,6 +236,7 @@ export async function getPublicProfile(uid) {
 export async function getPublicProfileByUsername(username) {
   const normalized = normalizeUsername(username).replace(/^@/, "");
   if (!normalized) throw new Error("PROFILE_NOT_FOUND");
+  await ensureFirestore();
   const profileQuery = query(
     collection(db, "publicProfiles"),
     orderBy("usernameLower"),
@@ -258,6 +281,7 @@ function cloudMovieCollection(movies) {
 
 export async function getMyMovieCollection(user) {
   if (!user) return { exists: false, source: "none", movies: [] };
+  await ensureFirestore();
   const userSnapshot = await getDoc(doc(db, "users", user.uid));
   const privateMovies = userSnapshot.data()?.movieCollection;
   if (Array.isArray(privateMovies)) {
@@ -274,16 +298,28 @@ export async function getMyMovieCollection(user) {
 
 export function subscribeMyMovieCollection(user, callback) {
   if (!user) return () => {};
-  return onSnapshot(doc(db, "users", user.uid), snapshot => {
-    const movies = snapshot.data()?.movieCollection;
-    if (Array.isArray(movies)) callback(movies);
-  }, error => {
-    console.warn("Movie collection live sync failed:", error);
+  let unsubscribe = () => {};
+  let stopped = false;
+  ensureFirestore().then(() => {
+    if (stopped) return;
+    unsubscribe = onSnapshot(doc(db, "users", user.uid), snapshot => {
+      const movies = snapshot.data()?.movieCollection;
+      if (Array.isArray(movies)) callback(movies);
+    }, error => {
+      console.warn("Movie collection live sync failed:", error);
+    });
+  }).catch(error => {
+    console.warn("Movie collection live sync could not start:", error);
   });
+  return () => {
+    stopped = true;
+    unsubscribe();
+  };
 }
 
 export async function saveMyMovieCollection(user, movies) {
   if (!user) throw new Error("LOGIN_REQUIRED");
+  await ensureFirestore();
   const movieCollection = cloudMovieCollection(movies);
   await setDoc(doc(db, "users", user.uid), {
     uid: user.uid,
@@ -296,6 +332,7 @@ export async function saveMyMovieCollection(user, movies) {
 
 export async function publishMovieCollection(user, movies) {
   if (!user) return;
+  await ensureFirestore();
   const publicMovies = cloudMovieCollection(movies).slice(0, 200).map(movie => ({
     id: movie.id,
     title: movie.title,

@@ -3,16 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0d0a08">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Movie Memory">
+  <link rel="manifest" href="/movie-memory-assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/movie-memory-assets/app-icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/movie-memory-assets/app-icons/favicon-32.png">
   <title>Movie Memory — สมุดบันทึกและเก็บตั๋วหนังความทรงจำ</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="//www.gstatic.com">
+  <link rel="preconnect" href="https://accounts.google.com">
+  <link rel="dns-prefetch" href="//accounts.google.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260728-6">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260728-11">
+  <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-2">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260728-6';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260728-11';
+      document.getElementById('preferencesStyles').href = '/movie-memory-assets/preferences.css?v=20260728-2';
     }
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260728-3"><\/script>`);
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}auth-feedback.js?v=20260728-1"><\/script>`);
   </script>
 </head>
 <body>
@@ -37,7 +52,7 @@
         <div class="nav-actions">
           <div class="people-search" id="peopleSearchWrap">
             <span class="search-icon">⌕</span>
-            <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดี..." aria-label="ค้นหาไอดี Movie Memory" autocomplete="off">
+            <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดี..." data-mm-i18n-placeholder="home.people.placeholder" aria-label="ค้นหาไอดี Movie Memory" autocomplete="off">
             <div class="people-results" id="peopleSearchResults" hidden></div>
           </div>
           <button id="googleLoginBtn" class="google-login-btn">
@@ -47,7 +62,7 @@
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
             </svg>
-            <span>เข้าสู่ระบบด้วย Google</span>
+            <span data-mm-i18n="home.login">ล็อกอิน</span>
           </button>
 
           <div id="userProfileBar" class="user-profile-bar" style="display: none;">
@@ -59,7 +74,7 @@
             <button id="logoutBtn" class="logout-btn">ออกจากระบบ</button>
           </div>
 
-          <button class="btn btn-primary" id="openAddModalBtn" type="button">
+          <button class="btn btn-primary" id="openAddModalBtn" type="button" data-mm-i18n="home.add">
             ✨ ＋ เพิ่มบันทึกหนัง
           </button>
         </div>
@@ -71,36 +86,58 @@
   <main class="shell">
     <section class="hero">
       <div>
-        <div class="eyebrow">🎬 Personal Cinema Vault</div>
-        <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
-        <p class="hero-copy">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
-        <div class="feature-shortcuts" aria-label="เมนูพิเศษ">
-          <a class="feature-shortcut-card game-page-link" href="./game.html">
-            <img class="feature-shortcut-icon game" src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
-            <span class="feature-shortcut-copy">
-              <strong>เกมเลือกหนัง</strong>
-              <small>เลือกซ้าย–ขวา หาหนังอันดับหนึ่ง</small>
-            </span>
-          </a>
-          <a class="feature-shortcut-card install-page-link" href="./install.html">
-            <img class="feature-shortcut-icon install" src="./assets/feature-icons/install.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/install.jpg?v=20260728-2" alt="">
-            <span class="feature-shortcut-copy">
-              <strong>เพิ่มไอคอนแอป</strong>
-              <small>วิธีติดไว้บนหน้าจอโทรศัพท์</small>
-            </span>
-          </a>
-          <a class="feature-shortcut-card dashboard-page-link" href="./dashboard.html">
-            <img class="feature-shortcut-icon dashboard" src="./assets/feature-icons/dashboard.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/dashboard.jpg?v=20260728-2" alt="">
-            <span class="feature-shortcut-copy">
-              <strong>Dashboard</strong>
-              <small>ดูสถิติการชมทั้งหมดของคุณ</small>
-            </span>
-          </a>
+        <div class="eyebrow" data-mm-i18n="home.eyebrow">🎬 Personal Cinema Vault</div>
+        <h1 data-mm-i18n-html="home.title">ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
+        <p class="hero-copy" data-mm-i18n="home.intro">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
+        <div class="feature-shortcuts-shell" id="featureShortcutsShell">
+          <button class="feature-scroll-btn previous" id="featureScrollPrev" type="button" aria-label="เลื่อนเมนูไปทางซ้าย" data-mm-i18n-aria-label="feature.scroll.prev">
+            <span aria-hidden="true">‹</span>
+          </button>
+          <div class="feature-shortcuts" id="featureShortcuts" aria-label="เมนูพิเศษ">
+            <a class="feature-shortcut-card tutorial-page-link is-primary" href="./tutorial.html">
+              <img class="feature-shortcut-icon tutorial" src="./assets/feature-icons/tutorial.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/tutorial.jpg?v=20260728-1" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.tutorial.title">วิธีใช้งาน</strong>
+                <small data-mm-i18n="feature.tutorial.copy">เรียนรู้การบันทึกหนังแบบรวดเร็ว</small>
+              </span>
+            </a>
+            <a class="feature-shortcut-card install-page-link" href="./install.html">
+              <img class="feature-shortcut-icon install" src="./assets/feature-icons/install.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/install.jpg?v=20260728-2" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.install.title">เพิ่มไอคอนแอป</strong>
+                <small data-mm-i18n="feature.install.copy">วิธีติดไว้บนหน้าจอโทรศัพท์</small>
+              </span>
+            </a>
+            <a class="feature-shortcut-card game-page-link" href="./game.html">
+              <img class="feature-shortcut-icon game" src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.game.title">เกมเลือกหนัง</strong>
+                <small data-mm-i18n="feature.game.copy">เลือกซ้าย–ขวา หาหนังอันดับหนึ่ง</small>
+              </span>
+            </a>
+            <a class="feature-shortcut-card dashboard-page-link" href="./dashboard.html">
+              <img class="feature-shortcut-icon dashboard" src="./assets/feature-icons/dashboard.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/dashboard.jpg?v=20260728-2" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.dashboard.title">Dashboard</strong>
+                <small data-mm-i18n="feature.dashboard.copy">ดูสถิติการชมทั้งหมดของคุณ</small>
+              </span>
+            </a>
+            <a class="feature-shortcut-card settings-page-link" href="./settings.html">
+              <img class="feature-shortcut-icon settings" src="./assets/feature-icons/settings.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/settings.jpg?v=20260728-1" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.settings.title">Settings</strong>
+                <small data-mm-i18n="feature.settings.copy">ภาษา ฟอนต์ และรูปแบบของแอป</small>
+              </span>
+            </a>
+          </div>
+          <button class="feature-scroll-btn next" id="featureScrollNext" type="button" aria-label="เลื่อนเมนูไปทางขวา" data-mm-i18n-aria-label="feature.scroll.next">
+            <span aria-hidden="true">›</span>
+          </button>
         </div>
       </div>
       <div class="quote-box">
-        “หนังจบลง... แต่ความรู้สึกและตั๋วใบนั้นจะคงอยู่ตลอดไป”
-        <strong>— บันทึกการชมภาพยนตร์ของคุณ</strong>
+        <span data-mm-i18n="home.quote">“หนังจบลง... แต่ความรู้สึกและตั๋วใบนั้นจะคงอยู่ตลอดไป”</span>
+        <strong data-mm-i18n="home.quote.by">— บันทึกการชมภาพยนตร์ของคุณ</strong>
       </div>
     </section>
 
@@ -108,19 +145,19 @@
     <section class="toolbar">
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input class="control" id="searchInput" type="search" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." autocomplete="off">
+        <input class="control" id="searchInput" type="search" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." data-mm-i18n-placeholder="home.search.placeholder" autocomplete="off">
       </div>
 
       <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-expanded="false" aria-controls="yearFilter formatFilter sortSelect">
-        <span>⚙️</span><span id="mobileFilterLabel">ตัวกรอง</span>
+        <span>⚙️</span><span id="mobileFilterLabel" data-mm-i18n="home.filter">ตัวกรอง</span>
       </button>
 
       <select class="control" id="yearFilter" aria-label="กรองตามปีที่ดู">
-        <option value="all">ทุกปี</option>
+        <option value="all" data-mm-i18n="home.allYears">ทุกปี</option>
       </select>
 
       <select class="control" id="formatFilter" aria-label="กรองตามรูปแบบ">
-        <option value="all">ทุกรูปแบบ</option>
+        <option value="all" data-mm-i18n="home.allFormats">ทุกรูปแบบ</option>
         <option value="โรงภาพยนตร์">โรงภาพยนตร์</option>
         <option value="Streaming">Streaming</option>
         <option value="แผ่น / Digital">แผ่น / Digital</option>
@@ -128,27 +165,27 @@
       </select>
 
       <select class="control" id="sortSelect" aria-label="เรียงลำดับ">
-        <option value="newest">ดูล่าสุดก่อน</option>
-        <option value="oldest">เก่าสุดก่อน</option>
-        <option value="release-newest">ปีฉายใหม่ → เก่า</option>
-        <option value="release-oldest">ปีฉายเก่า → ใหม่</option>
-        <option value="rating">คะแนนสูงสุด</option>
-        <option value="title">ชื่อ A–Z</option>
+        <option value="newest" data-mm-i18n="home.sort.newest">ดูล่าสุดก่อน</option>
+        <option value="oldest" data-mm-i18n="home.sort.oldest">เก่าสุดก่อน</option>
+        <option value="release-newest" data-mm-i18n="home.sort.releaseNewest">ปีฉายใหม่ → เก่า</option>
+        <option value="release-oldest" data-mm-i18n="home.sort.releaseOldest">ปีฉายเก่า → ใหม่</option>
+        <option value="rating" data-mm-i18n="home.sort.rating">คะแนนสูงสุด</option>
+        <option value="title" data-mm-i18n="home.sort.title">ชื่อ A–Z</option>
       </select>
 
       <div class="view-toggle">
-        <button class="view-btn active" id="viewGridBtn" type="button" title="แสดงแบบตารางโปสเตอร์">▦ โปสเตอร์</button>
-        <button class="view-btn" id="viewListBtn" type="button" title="แสดงแบบรายการ">☷ รายการ</button>
-        <button class="view-btn" id="viewTicketBtn" type="button" title="แสดงแบบตั๋วหนัง">🎟️ ตั๋ว</button>
+        <button class="view-btn active" id="viewGridBtn" type="button" title="แสดงแบบตารางโปสเตอร์" data-mm-i18n="home.view.grid">▦ โปสเตอร์</button>
+        <button class="view-btn" id="viewListBtn" type="button" title="แสดงแบบรายการ" data-mm-i18n="home.view.list">☷ รายการ</button>
+        <button class="view-btn" id="viewTicketBtn" type="button" title="แสดงแบบตั๋วหนัง" data-mm-i18n="home.view.ticket">🎟️ ตั๋ว</button>
       </div>
     </section>
 
     <div class="collection-head">
       <div>
-        <h2>คอลเลกชันของฉัน</h2>
+        <h2 data-mm-i18n="home.collection">คอลเลกชันของฉัน</h2>
         <p id="resultSummary" aria-live="polite">ยังไม่มีหนังในคอลเลกชัน</p>
       </div>
-      <button class="clear-filter-btn" id="clearFiltersBtn" type="button">↻ รีเซ็ตตัวกรอง</button>
+      <button class="clear-filter-btn" id="clearFiltersBtn" type="button" data-mm-i18n="home.resetFilters">↻ รีเซ็ตตัวกรอง</button>
     </div>
 
     <!-- Movie Collection Display -->
@@ -156,7 +193,7 @@
   </main>
 
   <button class="mobile-add-btn" id="mobileAddBtn" type="button" aria-label="เพิ่มบันทึกหนัง">
-    <span>＋</span><span>เพิ่มหนัง</span>
+    <span>＋</span><span data-mm-i18n="home.mobileAdd">เพิ่มหนัง</span>
   </button>
 
   <dialog id="profileModal">
@@ -594,6 +631,12 @@
       document.querySelectorAll('.dashboard-page-link').forEach(link => {
         link.href = '/Movie-Memory/dashboard/';
       });
+      document.querySelectorAll('.tutorial-page-link').forEach(link => {
+        link.href = '/Movie-Memory/tutorial/';
+      });
+      document.querySelectorAll('.settings-page-link').forEach(link => {
+        link.href = '/Movie-Memory/settings/';
+      });
     } else {
       document.querySelectorAll('.game-page-link').forEach(link => {
         link.addEventListener('click', () => {
@@ -610,9 +653,9 @@
         });
       });
     }
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260728-4"><\/script>`);
     document.write(`<script src="${authBridgePath}"><\/script>`);
-    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260728-3"><\/script>`);
+    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260728-4"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260728-5"><\/script>`);
   </script>
 </body>
 </html>

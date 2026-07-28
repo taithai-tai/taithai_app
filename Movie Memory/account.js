@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260728-1";
+    } from "../firebase-auth.js?v=20260728-2";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -23,6 +23,7 @@
     const profileModal = document.getElementById("profileModal");
     const profileSetup = document.getElementById("profileSetup");
     const publicProfileView = document.getElementById("publicProfileView");
+    const authFeedback = window.MovieMemoryAuthFeedback;
     let signedInUser = null;
     let myProfile = null;
     let peopleSearchTimer = null;
@@ -125,8 +126,8 @@
     function openUsernameSetup() {
       if (!signedInUser) return;
       const fileMode = window.location.protocol === "file:";
-      if (!fileMode && !window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
-        window.location.href = "/Movie-Memory/settings/";
+      if (!fileMode && !window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/account")) {
+        window.location.href = "/Movie-Memory/account/";
         return;
       }
       document.body.classList.add("route-page");
@@ -176,7 +177,7 @@
       if (window.location.protocol === "file:") {
         profileModal.close();
         document.body.classList.remove("route-page");
-      } else if (window.location.pathname.includes("/Movie-Memory/settings")) {
+      } else if (window.location.pathname.includes("/Movie-Memory/account")) {
         window.location.href = "/Movie%20Memory/";
       } else {
         profileModal.close();
@@ -272,11 +273,19 @@
         try {
           loginBtn.style.opacity = "0.7";
           loginBtn.disabled = true;
+          authFeedback?.show();
           await loginWithGoogle();
+          authFeedback?.setStage("finishing");
+          window.setTimeout(() => authFeedback?.hide(), 650);
         } catch (err) {
           console.error("Google Login Error:", err);
-          const detail = err?.code ? ` (${err.code})` : '';
-          showToast(`เข้าสู่ระบบไม่สำเร็จ${detail}`);
+          if (err?.code === "auth/popup-closed-by-user" || err?.code === "auth/cancelled-popup-request") {
+            authFeedback?.hide();
+          } else {
+            authFeedback?.error();
+            const detail = err?.code ? ` (${err.code})` : '';
+            showToast(`เข้าสู่ระบบไม่สำเร็จ${detail}`);
+          }
         } finally {
           loginBtn.style.opacity = "1";
           loginBtn.disabled = false;
@@ -385,7 +394,7 @@
       }
     });
 
-    if (window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/settings")) {
+    if (window.location.pathname.replace(/\/+$/, "").endsWith("/Movie-Memory/account")) {
       subscribeAuth(user => {
         if (user) openUsernameSetup();
         else window.location.href = "/Movie%20Memory/";
