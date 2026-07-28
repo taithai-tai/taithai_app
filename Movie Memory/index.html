@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260726-6">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260727-2">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260726-6';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260727-2';
     }
   </script>
 </head>
@@ -430,6 +430,51 @@
         <button class="btn inspect-share-btn" id="inspectShareBtn" type="button">✦ แชร์ลง IG Story</button>
         <button class="btn btn-ghost" id="inspectCloseBtn" type="button">ปิด</button>
       </div>
+    </div>
+  </dialog>
+
+
+  <dialog id="storyEditorModal" class="story-editor-modal">
+    <div class="modal-header">
+      <div>
+        <h2>แต่งภาพก่อนแชร์</h2>
+        <p class="story-editor-subtitle">เลือกฉากหลังให้เข้ากับโปสเตอร์ แล้วดูตัวอย่างก่อนแชร์</p>
+      </div>
+      <button class="close-modal-btn" id="closeStoryEditorBtn" type="button" title="ปิดหน้าต่าง">×</button>
+    </div>
+    <div class="story-editor-body">
+      <div class="story-preview-shell" id="storyPreviewShell" aria-live="polite">
+        <div class="story-preview-loading" id="storyPreviewLoading">กำลังสร้างตัวอย่าง…</div>
+        <img id="storyPreviewImg" alt="ตัวอย่างภาพสำหรับ Instagram Story">
+      </div>
+      <aside class="story-editor-controls">
+        <div>
+          <span class="story-control-label">ฉากหลัง</span>
+          <p class="story-control-help">เลือกสีด้วยตัวเอง หรือใช้สีเฉลี่ยจากโปสเตอร์</p>
+        </div>
+        <button class="story-auto-color-btn" id="storyAverageColorBtn" type="button">
+          <span class="story-auto-swatch" id="storyAverageSwatch"></span>
+          <span><strong>ใช้สีจากโปสเตอร์</strong><small>เฉลี่ยค่าสีให้อัตโนมัติ</small></span>
+        </button>
+        <label class="story-color-picker" for="storyBackgroundColor">
+          <span>เลือกสีเอง</span>
+          <span class="story-color-input-wrap">
+            <input id="storyBackgroundColor" type="color" value="#1d110a">
+            <output id="storyBackgroundHex">#1D110A</output>
+          </span>
+        </label>
+        <div class="story-color-presets" aria-label="สีฉากหลังแนะนำ">
+          <button type="button" data-story-color="#1d110a" style="--swatch:#1d110a" aria-label="น้ำตาลเข้ม"></button>
+          <button type="button" data-story-color="#101827" style="--swatch:#101827" aria-label="น้ำเงินเข้ม"></button>
+          <button type="button" data-story-color="#1b1025" style="--swatch:#1b1025" aria-label="ม่วงเข้ม"></button>
+          <button type="button" data-story-color="#102019" style="--swatch:#102019" aria-label="เขียวเข้ม"></button>
+          <button type="button" data-story-color="#181818" style="--swatch:#181818" aria-label="ดำ"></button>
+        </div>
+      </aside>
+    </div>
+    <div class="modal-footer story-editor-footer">
+      <button class="btn btn-ghost" id="cancelStoryEditorBtn" type="button">ยกเลิก</button>
+      <button class="btn inspect-share-btn" id="confirmStoryShareBtn" type="button">✦ แชร์ภาพนี้</button>
     </div>
   </dialog>
 

@@ -16,6 +16,16 @@
     let posterChoices = [];
     let pendingDeleteMovieId = null;
     let pendingDeleteTimer = null;
+    let storyEditorState = {
+      movie: null,
+      shareDetails: null,
+      averageColor: '#1d110a',
+      backgroundColor: '#1d110a',
+      previewBlob: null,
+      previewUrl: '',
+      renderTimer: null,
+      renderVersion: 0
+    };
     const IS_FILE_MODE = window.location.protocol === 'file:';
     const APP_HOME = IS_FILE_MODE ? './index.html' : '/Movie%20Memory/';
     const APP_ROUTES = '/Movie-Memory';
@@ -724,17 +734,24 @@
       return formats[movie.format] || movie.format || 'Not specified';
     }
 
-    async function createMovieStory(movie, shareDetails) {
+    function getStoryOwnerId() {
+      const accountId = $('userEmail')?.textContent?.trim() || '';
+      if (/^@[a-zA-Z0-9._]{3,24}$/.test(accountId)) return accountId;
+      return '@guest';
+    }
+
+    async function createMovieStory(movie, shareDetails, options = {}) {
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
       canvas.height = 1920;
       const context = canvas.getContext('2d');
       const poster = shareDetails.poster;
 
+      const baseColor = normalizeStoryColor(options.backgroundColor || '#1d110a');
       const background = context.createLinearGradient(0, 0, 1080, 1920);
-      background.addColorStop(0, '#1d110a');
-      background.addColorStop(0.42, '#0e0b09');
-      background.addColorStop(1, '#070605');
+      background.addColorStop(0, mixStoryColor(baseColor, '#ffffff', 0.12));
+      background.addColorStop(0.45, mixStoryColor(baseColor, '#000000', 0.18));
+      background.addColorStop(1, mixStoryColor(baseColor, '#000000', 0.52));
       context.fillStyle = background;
       context.fillRect(0, 0, 1080, 1920);
 
@@ -802,14 +819,17 @@
       context.fillStyle = '#ffb547';
       context.font = '700 36px sans-serif';
       context.fillText(formatStoryDate(movie.watchDate).toUpperCase(), 540, 1562);
+      context.fillStyle = '#ffb547';
+      context.font = '700 22px sans-serif';
+      context.fillText(`FROM ${getStoryOwnerId()}`, 540, 1607);
       context.fillStyle = '#8d8075';
       context.font = '600 18px sans-serif';
-      context.fillText('AT', 540, 1620);
+      context.fillText('AT', 540, 1645);
       context.fillStyle = '#f8f1e7';
       context.font = '600 27px sans-serif';
       const storyPlace = englishStoryPlace(movie);
       if (context.measureText(storyPlace).width > 820) context.font = '600 23px sans-serif';
-      context.fillText(storyPlace, 540, 1665);
+      context.fillText(storyPlace, 540, 1690);
 
       const linkText = 'taithai.app/Movie-Memory';
       context.strokeStyle = 'rgba(255,181,71,.28)';
@@ -835,15 +855,154 @@
       return new Promise(resolve => canvas.toBlob(resolve, 'image/png', 0.96));
     }
 
-    async function shareInspectedMovie() {
+    function normalizeStoryColor(color) {
+      return /^#[0-9a-f]{6}$/i.test(color || '') ? color.toLowerCase() : '#1d110a';
+    }
+
+    function storyHexToRgb(color) {
+      const value = normalizeStoryColor(color).slice(1);
+      return {
+        r: parseInt(value.slice(0, 2), 16),
+        g: parseInt(value.slice(2, 4), 16),
+        b: parseInt(value.slice(4, 6), 16)
+      };
+    }
+
+    function storyRgbToHex(r, g, b) {
+      return '#' + [r, g, b].map(value => Math.max(0, Math.min(255, Math.round(value))).toString(16).padStart(2, '0')).join('');
+    }
+
+    function mixStoryColor(first, second, amount) {
+      const a = storyHexToRgb(first);
+      const b = storyHexToRgb(second);
+      return storyRgbToHex(
+        a.r + ((b.r - a.r) * amount),
+        a.g + ((b.g - a.g) * amount),
+        a.b + ((b.b - a.b) * amount)
+      );
+    }
+
+    function averagePosterColor(image) {
+      if (!image) return '#1d110a';
+      try {
+        const sample = document.createElement('canvas');
+        sample.width = 48;
+        sample.height = 72;
+        const context = sample.getContext('2d', { willReadFrequently: true });
+        context.drawImage(image, 0, 0, sample.width, sample.height);
+        const pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+        let red = 0;
+        let green = 0;
+        let blue = 0;
+        let weight = 0;
+        for (let index = 0; index < pixels.length; index += 16) {
+          if (pixels[index + 3] < 128) continue;
+          const brightness = (pixels[index] + pixels[index + 1] + pixels[index + 2]) / 765;
+          const pixelWeight = 0.45 + (1 - Math.abs(brightness - 0.5)) * 0.55;
+          red += pixels[index] * pixelWeight;
+          green += pixels[index + 1] * pixelWeight;
+          blue += pixels[index + 2] * pixelWeight;
+          weight += pixelWeight;
+        }
+        if (!weight) return '#1d110a';
+        const average = storyRgbToHex(red / weight, green / weight, blue / weight);
+        return mixStoryColor(average, '#000000', 0.34);
+      } catch {
+        return '#1d110a';
+      }
+    }
+
+    function setStoryBackground(color, source = 'custom') {
+      const normalized = normalizeStoryColor(color);
+      storyEditorState.backgroundColor = normalized;
+      $('storyBackgroundColor').value = normalized;
+      $('storyBackgroundHex').textContent = normalized.toUpperCase();
+      $('storyAverageColorBtn').classList.toggle('active', source === 'average');
+      document.querySelectorAll('[data-story-color]').forEach(button => {
+        button.classList.toggle('active', button.dataset.storyColor.toLowerCase() === normalized);
+      });
+      scheduleStoryPreview();
+    }
+
+    function cleanupStoryPreview() {
+      clearTimeout(storyEditorState.renderTimer);
+      storyEditorState.renderVersion += 1;
+      if (storyEditorState.previewUrl) URL.revokeObjectURL(storyEditorState.previewUrl);
+      storyEditorState.previewUrl = '';
+      storyEditorState.previewBlob = null;
+    }
+
+    async function renderStoryPreview() {
+      const movie = storyEditorState.movie;
+      const shareDetails = storyEditorState.shareDetails;
+      if (!movie || !shareDetails) return;
+      const version = ++storyEditorState.renderVersion;
+      $('storyPreviewLoading').hidden = false;
+      try {
+        const blob = await createMovieStory(movie, shareDetails, {
+          backgroundColor: storyEditorState.backgroundColor
+        });
+        if (!blob || version !== storyEditorState.renderVersion) return;
+        if (storyEditorState.previewUrl) URL.revokeObjectURL(storyEditorState.previewUrl);
+        storyEditorState.previewBlob = blob;
+        storyEditorState.previewUrl = URL.createObjectURL(blob);
+        $('storyPreviewImg').src = storyEditorState.previewUrl;
+      } catch {
+        showToast('สร้างตัวอย่างไม่สำเร็จ กรุณาลองใหม่');
+      } finally {
+        if (version === storyEditorState.renderVersion) $('storyPreviewLoading').hidden = true;
+      }
+    }
+
+    function scheduleStoryPreview() {
+      clearTimeout(storyEditorState.renderTimer);
+      storyEditorState.renderTimer = setTimeout(renderStoryPreview, 120);
+    }
+
+    async function openStoryEditor() {
       const movie = movies.find(item => item.id === inspectingMovieId);
       if (!movie) return;
       const button = $('inspectShareBtn');
       button.disabled = true;
-      button.textContent = 'กำลังสร้างภาพ…';
+      button.textContent = 'กำลังเตรียมภาพ…';
+      cleanupStoryPreview();
+      $('storyPreviewImg').removeAttribute('src');
+      $('storyPreviewLoading').hidden = false;
       try {
         const shareDetails = await resolveShareDetails(movie);
-        const blob = await createMovieStory(movie, shareDetails);
+        const averageColor = averagePosterColor(shareDetails.poster);
+        storyEditorState.movie = movie;
+        storyEditorState.shareDetails = shareDetails;
+        storyEditorState.averageColor = averageColor;
+        $('storyAverageSwatch').style.background = averageColor;
+        if (!$('storyEditorModal').open) $('storyEditorModal').showModal();
+        setStoryBackground(averageColor, 'average');
+      } catch {
+        showToast('เตรียมภาพสำหรับแชร์ไม่สำเร็จ กรุณาลองใหม่');
+      } finally {
+        button.disabled = false;
+        button.textContent = '✦ แชร์ลง IG Story';
+      }
+    }
+
+    function closeStoryEditor() {
+      if ($('storyEditorModal').open) $('storyEditorModal').close();
+      cleanupStoryPreview();
+      storyEditorState.movie = null;
+      storyEditorState.shareDetails = null;
+    }
+
+    async function shareEditedStory() {
+      const movie = storyEditorState.movie;
+      const shareDetails = storyEditorState.shareDetails;
+      if (!movie || !shareDetails) return;
+      const button = $('confirmStoryShareBtn');
+      button.disabled = true;
+      button.textContent = 'กำลังสร้างภาพ…';
+      try {
+        const blob = storyEditorState.previewBlob || await createMovieStory(movie, shareDetails, {
+          backgroundColor: storyEditorState.backgroundColor
+        });
         if (!blob) throw new Error('STORY_FAILED');
         const fileName = `movie-memory-${String(movie.title).replace(/[^\p{L}\p{N}]+/gu, '-').slice(0, 45) || 'story'}.png`;
         const file = typeof File === 'function' ? new File([blob], fileName, { type: 'image/png' }) : null;
@@ -869,7 +1028,7 @@
         if (error?.name !== 'AbortError') showToast('สร้างภาพสำหรับแชร์ไม่สำเร็จ กรุณาลองใหม่');
       } finally {
         button.disabled = false;
-        button.textContent = '✦ แชร์ลง IG Story';
+        button.textContent = '✦ แชร์ภาพนี้';
       }
     }
 
@@ -1240,7 +1399,19 @@
       $('inspectCloseBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectEditBtn').addEventListener('click', editInspectedMovie);
       $('inspectDeleteBtn').addEventListener('click', deleteInspectedMovie);
-      $('inspectShareBtn').addEventListener('click', shareInspectedMovie);
+      $('inspectShareBtn').addEventListener('click', openStoryEditor);
+      $('closeStoryEditorBtn').addEventListener('click', closeStoryEditor);
+      $('cancelStoryEditorBtn').addEventListener('click', closeStoryEditor);
+      $('confirmStoryShareBtn').addEventListener('click', shareEditedStory);
+      $('storyAverageColorBtn').addEventListener('click', () => setStoryBackground(storyEditorState.averageColor, 'average'));
+      $('storyBackgroundColor').addEventListener('input', event => setStoryBackground(event.target.value, 'custom'));
+      document.querySelectorAll('[data-story-color]').forEach(button => {
+        button.addEventListener('click', () => setStoryBackground(button.dataset.storyColor, 'preset'));
+      });
+      $('storyEditorModal').addEventListener('cancel', event => {
+        event.preventDefault();
+        closeStoryEditor();
+      });
       $('changePosterBtn').addEventListener('click', () => openPosterPicker());
       $('closePosterPickerBtn').addEventListener('click', () => {
         if (!IS_FILE_MODE && currentRoute() === 'posters' && inspectingMovieId) {
