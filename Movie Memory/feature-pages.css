@@ -1,0 +1,158 @@
+:root {
+  --bg: #0d0a08;
+  --surface: #17120e;
+  --card: #211914;
+  --card-strong: #2a1f18;
+  --line: #3a2a1e;
+  --gold: #ffb547;
+  --gold-light: #ffd285;
+  --orange: #f4773b;
+  --cream: #f8f1e7;
+  --muted: #a69788;
+  --success: #68c77a;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html { color-scheme: dark; }
+body {
+  min-height: 100vh; margin: 0; overflow-x: hidden;
+  color: var(--cream); background:
+    radial-gradient(circle at 86% -10%, rgba(244, 119, 59, .22), transparent 34rem),
+    radial-gradient(circle at -10% 85%, rgba(255, 181, 71, .1), transparent 34rem),
+    var(--bg);
+  font-family: "Noto Sans Thai", "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+button { font: inherit; }
+.page-shell { width: min(1120px, calc(100% - 36px)); margin-inline: auto; }
+
+.page-header {
+  position: sticky; top: 0; z-index: 20; border-bottom: 1px solid rgba(255, 255, 255, .07);
+  background: rgba(13, 10, 8, .86); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+}
+.page-nav { min-height: 72px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.page-brand { display: inline-flex; align-items: center; gap: 11px; text-decoration: none; font: 700 19px "Space Grotesk", sans-serif; }
+.page-logo {
+  width: 43px; height: 43px; display: grid; place-items: center; border: 1px solid #8a642d;
+  border-radius: 14px; background: linear-gradient(145deg, #2b1d13, #17100b); font-size: 21px;
+}
+.page-actions { display: flex; align-items: center; gap: 9px; }
+.page-button {
+  min-height: 42px; padding: 9px 16px; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  border: 1px solid var(--line); border-radius: 999px; color: var(--cream); background: rgba(255, 255, 255, .05);
+  font-weight: 600; font-size: 13px; text-decoration: none; cursor: pointer;
+}
+.page-button:hover { border-color: var(--gold); color: var(--gold); }
+.page-button.primary { color: #1b1007; border-color: var(--gold); background: linear-gradient(135deg, var(--gold), var(--orange)); }
+.account-badge {
+  display: inline-flex; align-items: center; gap: 9px; max-width: 220px; padding: 5px 12px 5px 5px;
+  border: 1px solid #8a642d; border-radius: 999px; background: var(--card);
+}
+.account-badge img { width: 31px; height: 31px; border-radius: 50%; object-fit: cover; background: var(--surface); }
+.account-badge span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; font-weight: 600; }
+
+.page-main { padding: 52px 0 84px; }
+.page-kicker {
+  display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border: 1px solid rgba(255, 181, 71, .2);
+  border-radius: 999px; color: var(--gold); background: rgba(255, 181, 71, .07);
+  font: 700 10px "Space Grotesk", sans-serif; letter-spacing: .18em;
+}
+.page-title { max-width: 800px; margin: 14px 0 8px; font-size: clamp(34px, 6vw, 62px); line-height: 1.08; letter-spacing: -.04em; }
+.page-title em { color: var(--gold); font-style: normal; }
+.page-intro { max-width: 670px; margin: 0; color: var(--muted); line-height: 1.75; }
+.sync-note { min-height: 22px; margin: 12px 0 0; color: var(--muted); font-size: 12px; }
+.sync-note.ready { color: var(--success); }
+
+.dashboard-stats { margin: 34px 0 18px; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 11px; }
+.dashboard-stat {
+  min-width: 0; padding: 18px; border: 1px solid var(--line); border-radius: 19px;
+  background: linear-gradient(145deg, rgba(38, 29, 23, .9), rgba(23, 18, 14, .94));
+}
+.dashboard-stat strong {
+  display: block; overflow-wrap: anywhere; color: var(--cream);
+  font: 700 clamp(24px, 3vw, 34px) "Space Grotesk", sans-serif; line-height: 1.15;
+}
+.dashboard-stat strong.gold { color: var(--gold); }
+.dashboard-stat span { display: block; margin-top: 6px; color: var(--muted); font-size: 11px; line-height: 1.45; }
+
+.dashboard-panels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+.dashboard-panel {
+  min-width: 0; padding: 23px; border: 1px solid var(--line); border-radius: 23px;
+  background: rgba(23, 18, 14, .88); box-shadow: 0 18px 42px rgba(0, 0, 0, .22);
+}
+.panel-head { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 21px; }
+.panel-head h2 { margin: 0; font-size: 19px; }
+.panel-head span { color: var(--muted); font-size: 11px; }
+.breakdown-list { display: grid; gap: 14px; }
+.breakdown-row { display: grid; grid-template-columns: minmax(90px, auto) 1fr auto; align-items: center; gap: 12px; }
+.breakdown-label { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 12px; }
+.breakdown-track { height: 7px; overflow: hidden; border-radius: 999px; background: #0d0a08; }
+.breakdown-track i { display: block; width: var(--bar-size); height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--gold), var(--orange)); }
+.breakdown-count { color: var(--gold); font: 700 12px "Space Grotesk", sans-serif; }
+.dashboard-empty {
+  grid-column: 1 / -1; min-height: 230px; padding: 30px; display: grid; place-content: center; justify-items: center;
+  border: 1px dashed var(--line); border-radius: 23px; color: var(--muted); text-align: center;
+}
+.dashboard-empty span { font-size: 48px; }
+.dashboard-empty h2 { margin: 8px 0 4px; color: var(--cream); font-size: 20px; }
+.dashboard-empty p { margin: 0 0 18px; }
+
+.guide-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 34px; }
+.guide-card {
+  position: relative; padding: 25px; border: 1px solid var(--line); border-radius: 25px;
+  background: linear-gradient(145deg, rgba(38, 29, 23, .92), rgba(23, 18, 14, .94));
+}
+.guide-card.recommended { border-color: var(--gold); box-shadow: 0 15px 42px rgba(244, 119, 59, .12); }
+.guide-badge {
+  position: absolute; top: 16px; right: 16px; display: none; padding: 4px 9px;
+  border-radius: 999px; color: #1b1007; background: var(--gold); font-size: 9px; font-weight: 700;
+}
+.guide-card.recommended .guide-badge { display: block; }
+.guide-icon { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 19px; background: rgba(255, 181, 71, .11); font-size: 31px; }
+.guide-card h2 { margin: 16px 0 4px; font-size: 22px; }
+.guide-card > p { margin: 0 0 22px; color: var(--muted); font-size: 13px; }
+.guide-steps { list-style: none; padding: 0; margin: 0; display: grid; gap: 13px; counter-reset: guide; }
+.guide-steps li { counter-increment: guide; display: grid; grid-template-columns: 34px 1fr; align-items: start; gap: 11px; line-height: 1.55; font-size: 13px; }
+.guide-steps li::before {
+  content: counter(guide); width: 30px; height: 30px; display: grid; place-items: center;
+  border: 1px solid #8a642d; border-radius: 10px; color: var(--gold); background: #160f0b;
+  font: 700 12px "Space Grotesk", sans-serif;
+}
+.install-note {
+  margin-top: 16px; padding: 18px 20px; display: flex; align-items: flex-start; gap: 13px;
+  border: 1px solid rgba(255, 181, 71, .2); border-radius: 18px; background: rgba(255, 181, 71, .06);
+}
+.install-note strong { display: block; font-size: 13px; }
+.install-note p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.6; }
+.install-status { margin-top: 20px; color: var(--success); font-weight: 600; font-size: 13px; }
+
+@media (max-width: 880px) {
+  .dashboard-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-stat:first-child { grid-column: span 2; }
+  .dashboard-panels, .guide-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 560px) {
+  .page-shell { width: calc(100% - 20px); }
+  .page-nav { min-height: 64px; }
+  .page-brand > span:last-child { display: none; }
+  .page-logo { width: 40px; height: 40px; }
+  .page-button { min-height: 40px; padding: 8px 11px; font-size: 11px; white-space: nowrap; }
+  .page-button.login-copy span { display: none; }
+  .account-badge { max-width: 150px; }
+  .page-main { padding: 30px 0 calc(60px + env(safe-area-inset-bottom)); }
+  .page-title { font-size: 36px; }
+  .page-intro { font-size: 13px; }
+  .dashboard-stats { margin-top: 25px; gap: 8px; }
+  .dashboard-stat { padding: 14px; border-radius: 16px; }
+  .dashboard-stat strong { font-size: 26px; }
+  .dashboard-panel { padding: 18px 14px; border-radius: 19px; }
+  .breakdown-row { grid-template-columns: minmax(74px, auto) 1fr auto; gap: 9px; }
+  .guide-grid { margin-top: 25px; gap: 11px; }
+  .guide-card { padding: 20px 17px; border-radius: 21px; }
+  .guide-card h2 { font-size: 20px; }
+  .install-note { padding: 15px; }
+}

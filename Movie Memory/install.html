@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0a08">
+  <title>เพิ่ม Movie Memory บนหน้าจอโทรศัพท์</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-4">
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-4";
+    }
+  </script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="page-shell">
+      <nav class="page-nav">
+        <a class="page-brand back-to-memory" href="./index.html"><span class="page-logo">🎞️</span><span>Movie Memory</span></a>
+        <a class="page-button back-to-memory" href="./index.html">← กลับคอลเลกชัน</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main page-shell">
+    <div class="page-kicker">📲 ADD TO HOME SCREEN</div>
+    <h1 class="page-title">เปิด Movie Memory<br>เหมือนเป็น<em>แอป</em></h1>
+    <p class="page-intro">เพิ่มไอคอนไว้บนหน้าจอโทรศัพท์ แล้วเปิดคอลเลกชันได้ทันทีโดยไม่ต้องค้นหาลิงก์ใหม่ทุกครั้ง</p>
+
+    <section class="guide-grid">
+      <article class="guide-card" id="iosGuide">
+        <span class="guide-badge">เหมาะกับเครื่องนี้</span>
+        <div class="guide-icon"></div>
+        <h2>iPhone และ iPad</h2>
+        <p>เปิดเว็บไซต์นี้ด้วย Safari แล้วทำตามขั้นตอน</p>
+        <ol class="guide-steps">
+          <li><span>แตะปุ่ม <strong>แชร์</strong> รูปสี่เหลี่ยมมีลูกศรชี้ขึ้นที่แถบ Safari</span></li>
+          <li><span>เลื่อนเมนูแล้วเลือก <strong>เพิ่มไปยังหน้าจอโฮม</strong></span></li>
+          <li><span>ตรวจสอบชื่อ Movie Memory แล้วแตะ <strong>เพิ่ม</strong></span></li>
+        </ol>
+      </article>
+
+      <article class="guide-card" id="androidGuide">
+        <span class="guide-badge">เหมาะกับเครื่องนี้</span>
+        <div class="guide-icon">🤖</div>
+        <h2>Android</h2>
+        <p>เปิดเว็บไซต์นี้ด้วย Chrome แล้วทำตามขั้นตอน</p>
+        <ol class="guide-steps">
+          <li><span>แตะเมนู <strong>⋮</strong> ด้านขวาบนของ Chrome</span></li>
+          <li><span>เลือก <strong>เพิ่มลงในหน้าจอหลัก</strong> หรือ <strong>ติดตั้งแอป</strong></span></li>
+          <li><span>แตะ <strong>เพิ่ม</strong> หรือ <strong>ติดตั้ง</strong> เพื่อยืนยัน</span></li>
+        </ol>
+      </article>
+    </section>
+
+    <aside class="install-note">
+      <span>💡</span>
+      <div>
+        <strong>ควรเพิ่มจากเว็บไซต์ที่ดีพลอยแล้ว</strong>
+        <p>เปิด <span id="appAddress">taithai.app/Movie-Memory/</span> บนโทรศัพท์ก่อนเพิ่มไอคอน เพื่อให้การเข้าสู่ระบบและการซิงก์ข้อมูลทำงานครบถ้วน</p>
+      </div>
+    </aside>
+    <p class="install-status" id="installStatus" hidden>✓ ตอนนี้คุณกำลังเปิด Movie Memory จากไอคอนบนหน้าจอแล้ว</p>
+  </main>
+
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.querySelectorAll(".back-to-memory").forEach(link => link.href = "/Movie%20Memory/");
+    }
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    document.getElementById("installStatus").hidden = !standalone;
+    const isAppleMobile = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    if (isAppleMobile) document.getElementById("iosGuide").classList.add("recommended");
+    if (isAndroid) document.getElementById("androidGuide").classList.add("recommended");
+  </script>
+</body>
+</html>

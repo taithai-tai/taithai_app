@@ -59,7 +59,7 @@
     }, 12000);
   </script>
   <script type="module">
-    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260726-2";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260728-1";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const stars=value=>{const rating=Math.min(5,Math.max(0,Math.round((Number(value)||0)*2)/2)),full=Math.floor(rating),half=rating%1!==0;return"★".repeat(full)+(half?"½":"")+"☆".repeat(5-Math.ceil(rating))};
@@ -87,7 +87,7 @@
         document.title=`@${profile.username} — Movie Memory`;
         const rated=movies.filter(movie=>Number(movie.rating)>0);
         const average=rated.length?(rated.reduce((sum,movie)=>sum+Number(movie.rating),0)/rated.length).toFixed(1):"—";
-        const currentYear=String(new Date().getFullYear());
+        const totalWatches=movies.reduce((sum,movie)=>sum+Math.max(1,Number(movie.watchCount)||0),0);
         content.innerHTML=`
           <section class="profile-head">
             <img class="avatar" src="${escapeHtml(profile.photoURL||`https://api.dicebear.com/7.x/bottts/svg?seed=${profile.uid}`)}" alt="" decoding="async">
@@ -95,14 +95,14 @@
           </section>
           <section class="stats">
             <div class="stat"><strong>${movies.length}</strong><span>เรื่องที่ดูทั้งหมด</span></div>
-            <div class="stat"><strong>${movies.filter(movie=>(movie.watchDate||"").startsWith(currentYear)).length}</strong><span>เรื่องที่ดูในปีนี้</span></div>
+            <div class="stat"><strong>${totalWatches}</strong><span>จำนวนครั้งที่รับชม</span></div>
             <div class="stat"><strong>${average}</strong><span>คะแนนเฉลี่ยจาก 5</span></div>
           </section>
           <div class="section-title"><h2>คอลเลกชันภาพยนตร์</h2><span>${movies.length} เรื่อง</span></div>
           <section class="grid">${movies.length?movies.map(movie=>`
             <article class="movie">
               ${movie.posterImg?`<img class="poster" src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}" loading="lazy" decoding="async">`:`<div class="placeholder">🎬</div>`}
-              <div class="info"><h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3><div class="meta">${date(movie.watchDate)} · ${escapeHtml(movie.format)}</div><div class="stars">${stars(movie.rating)}</div></div>
+              <div class="info"><h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3><div class="meta">${date(movie.watchDate)} · ดู ${Math.max(1,Number(movie.watchCount)||0)} ครั้ง</div><div class="stars">${stars(movie.rating)}</div></div>
             </article>`).join(""):`<div class="empty">บัญชีนี้ยังไม่มีภาพยนตร์ในคอลเลกชัน</div>`}</section>`;
       }catch(error){
         const timedOut=error?.message==="LOAD_TIMEOUT";

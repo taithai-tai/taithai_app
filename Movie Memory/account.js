@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260726-2";
+    } from "../firebase-auth.js?v=20260728-1";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -63,6 +63,17 @@
         note: movie.note,
         posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
         ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",
+        viewings: (Array.isArray(movie.viewings) ? movie.viewings : []).map(viewing => ({
+          id: viewing.id,
+          watchDate: viewing.watchDate,
+          format: viewing.format,
+          cinema: viewing.cinema,
+          seat: viewing.seat,
+          companion: viewing.companion,
+          memory: viewing.memory,
+          ticketImg: /^https:\/\//.test(viewing.ticketImg || "") ? viewing.ticketImg : "",
+          createdAt: viewing.createdAt
+        })),
         updatedAt: movie.updatedAt
       })));
     }
@@ -72,10 +83,20 @@
       return (Array.isArray(cloudMovies) ? cloudMovies : []).map(movie => {
         const local = localById.get(movie.id);
         if (!local) return movie;
+        const localViewings = new Map((Array.isArray(local.viewings) ? local.viewings : []).map(viewing => [viewing.id, viewing]));
         return {
           ...movie,
           posterImg: movie.posterImg || (/^data:image\//.test(local.posterImg || "") ? local.posterImg : ""),
-          ticketImg: movie.ticketImg || (/^data:image\//.test(local.ticketImg || "") ? local.ticketImg : "")
+          ticketImg: movie.ticketImg || (/^data:image\//.test(local.ticketImg || "") ? local.ticketImg : ""),
+          viewings: Array.isArray(movie.viewings) && movie.viewings.length
+            ? movie.viewings.map(viewing => {
+                const localViewing = localViewings.get(viewing.id);
+                return {
+                  ...viewing,
+                  ticketImg: viewing.ticketImg || (/^data:image\//.test(localViewing?.ticketImg || "") ? localViewing.ticketImg : "")
+                };
+              })
+            : (Array.isArray(local.viewings) ? local.viewings : [])
         };
       });
     }
@@ -128,7 +149,7 @@
             : '<div class="social-movie-placeholder">🎬</div>'}
           <div class="social-movie-info">
             <strong>${escapeHtml(movie.title || "ไม่มีชื่อหนัง")}</strong>
-            <small>${formatDate(movie.watchDate)} · ${formatStars(movie.rating)}</small>
+            <small>${formatDate(movie.watchDate)} · ดู ${Math.max(1, Number(movie.watchCount) || (Array.isArray(movie.viewings) ? movie.viewings.length : 0))} ครั้ง · ${formatStars(movie.rating)}</small>
           </div>
         </article>
       `).join("") : `
@@ -216,7 +237,8 @@
             </button>
           `).join("") : '<div style="padding:14px;color:var(--muted)">ไม่พบบัญชีนี้</div>';
           peopleSearchResults.hidden = false;
-        } catch {
+        } catch (error) {
+          console.warn("Public profile search failed:", error);
           peopleSearchResults.innerHTML = '<div style="padding:14px;color:var(--muted)">ค้นหาไม่สำเร็จ ลองใหม่อีกครั้ง</div>';
           peopleSearchResults.hidden = false;
         }
@@ -288,7 +310,6 @@
 
         if (userAvatar) userAvatar.src = photo;
         if (userName) userName.textContent = name;
-        if (peopleSearchWrap) peopleSearchWrap.style.display = "block";
         const cachedUsername = localStorage.getItem(usernameCacheKey(user.uid));
         if (cachedUsername) {
           myProfile = { uid: user.uid, username: cachedUsername };
@@ -361,7 +382,6 @@
         }
         if (loginBtn) loginBtn.style.display = "inline-flex";
         if (userProfileBar) userProfileBar.style.display = "none";
-        if (peopleSearchWrap) peopleSearchWrap.style.display = "none";
       }
     });
 

@@ -241,6 +241,17 @@ function cloudMovieCollection(movies) {
     note: String(movie.note || "").slice(0, 1000),
     posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
     ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",
+    viewings: (Array.isArray(movie.viewings) ? movie.viewings : []).slice(-100).map((viewing, index) => ({
+      id: String(viewing.id || `viewing_${index}`).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80),
+      watchDate: String(viewing.watchDate || "").slice(0, 10),
+      format: String(viewing.format || "").slice(0, 40),
+      cinema: String(viewing.cinema || "").slice(0, 80),
+      seat: String(viewing.seat || "").slice(0, 40),
+      companion: String(viewing.companion || "").slice(0, 80),
+      memory: String(viewing.memory || "").slice(0, 800),
+      ticketImg: /^https:\/\//.test(viewing.ticketImg || "") ? viewing.ticketImg : "",
+      createdAt: String(viewing.createdAt || "").slice(0, 40)
+    })),
     updatedAt: String(movie.updatedAt || "").slice(0, 40)
   }));
 }
@@ -294,7 +305,8 @@ export async function publishMovieCollection(user, movies) {
     format: movie.format,
     cinema: movie.cinema,
     rating: movie.rating,
-    posterImg: movie.posterImg
+    posterImg: movie.posterImg,
+    watchCount: Math.max(1, Array.isArray(movie.viewings) ? movie.viewings.length : 0)
   }));
 
   await setDoc(doc(db, "publicProfiles", user.uid), {

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0d0a08">
+  <title>Dashboard — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-4">
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-4";
+    }
+  </script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="page-shell">
+      <nav class="page-nav">
+        <a class="page-brand back-to-memory" href="./index.html"><span class="page-logo">🎞️</span><span>Movie Memory</span></a>
+        <div class="page-actions">
+          <div class="account-badge" id="dashboardAccount" hidden>
+            <img id="dashboardAvatar" alt="">
+            <span id="dashboardUserName"></span>
+          </div>
+          <button class="page-button primary login-copy" id="dashboardLoginBtn" type="button" hidden>G <span>เข้าสู่ระบบ</span></button>
+          <a class="page-button back-to-memory" href="./index.html">← คอลเลกชัน</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main page-shell">
+    <div class="page-kicker">▥ YOUR DASHBOARD</div>
+    <h1 class="page-title">ภาพรวมการดูหนัง<em>ของคุณ</em></h1>
+    <p class="page-intro">รวมจำนวนเรื่อง จำนวนครั้งที่ดู คะแนน และรูปแบบการรับชมไว้ในหน้าเดียว โดยข้อมูลจะเปลี่ยนตามบัญชีที่เข้าสู่ระบบ</p>
+    <p class="sync-note" id="dashboardSyncNote">กำลังอ่านข้อมูลจากอุปกรณ์นี้…</p>
+
+    <section class="dashboard-stats" id="dashboardStats" aria-label="สถิติการดูหนัง">
+      <article class="dashboard-stat"><strong class="gold" id="dashMovieCount">0</strong><span>เรื่องในคอลเลกชัน</span></article>
+      <article class="dashboard-stat"><strong id="dashWatchCount">0</strong><span>จำนวนครั้งที่ดูทั้งหมด</span></article>
+      <article class="dashboard-stat"><strong id="dashYearCount">0</strong><span>ครั้งที่ดูในปี <span id="dashCurrentYear"></span></span></article>
+      <article class="dashboard-stat"><strong id="dashAverage">—</strong><span>คะแนนเฉลี่ยจาก 5</span></article>
+      <article class="dashboard-stat"><strong id="dashTopFormat">—</strong><span>รูปแบบที่ดูบ่อยที่สุด</span></article>
+    </section>
+
+    <section class="dashboard-panels" id="dashboardPanels">
+      <article class="dashboard-panel">
+        <div class="panel-head"><h2>ดูหนังในแต่ละปี</h2><span>นับทุกครั้งที่ดู</span></div>
+        <div class="breakdown-list" id="yearBreakdown"></div>
+      </article>
+      <article class="dashboard-panel">
+        <div class="panel-head"><h2>รูปแบบการรับชม</h2><span>โรงหนัง สตรีมมิง และอื่น ๆ</span></div>
+        <div class="breakdown-list" id="formatBreakdown"></div>
+      </article>
+    </section>
+
+    <section class="dashboard-empty" id="dashboardEmpty" hidden>
+      <span>🎬</span>
+      <h2>ยังไม่มีข้อมูลสำหรับทำสถิติ</h2>
+      <p>เพิ่มหนังเรื่องแรก แล้ว Dashboard จะสรุปให้โดยอัตโนมัติ</p>
+      <a class="page-button primary add-movie-link" href="./index.html">＋ เพิ่มหนังเรื่องแรก</a>
+    </section>
+  </main>
+
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.querySelectorAll(".back-to-memory").forEach(link => link.href = "/Movie%20Memory/");
+      document.querySelectorAll(".add-movie-link").forEach(link => link.href = "/Movie-Memory/add/");
+    }
+    document.write(`<script src="${window.location.protocol === "file:" ? "./dashboard.js" : "/movie-memory-assets/dashboard.js"}?v=20260728-4"><\/script>`);
+  </script>
+</body>
+</html>

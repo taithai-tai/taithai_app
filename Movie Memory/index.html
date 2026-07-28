@@ -8,10 +8,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260727-2">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260728-6">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260727-2';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260728-6';
     }
   </script>
 </head>
@@ -25,20 +25,19 @@
     <div class="shell">
       <nav>
         <a class="brand" href="../">
-          <div class="brand-logo">🎞️</div>
+          <span class="brand-logo">
+            <img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt="">
+          </span>
           <div class="brand-title">
             Movie Memory
-            <small>Taithai Cinema Archive</small>
+            <small>TAITHAI.APP NETWORK</small>
           </div>
         </a>
 
         <div class="nav-actions">
-          <a class="game-nav-btn game-page-link" href="./game.html" title="เล่นเกมเลือกหนังเรื่องโปรด">
-            <span>🎮</span><span class="game-nav-label">เกมเลือกหนัง</span>
-          </a>
-          <div class="people-search" id="peopleSearchWrap" style="display:none">
+          <div class="people-search" id="peopleSearchWrap">
             <span class="search-icon">⌕</span>
-            <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดีของเพื่อน..." autocomplete="off">
+            <input class="control" id="peopleSearchInput" type="search" placeholder="ค้นหาไอดี..." aria-label="ค้นหาไอดี Movie Memory" autocomplete="off">
             <div class="people-results" id="peopleSearchResults" hidden></div>
           </div>
           <button id="googleLoginBtn" class="google-login-btn">
@@ -75,35 +74,33 @@
         <div class="eyebrow">🎬 Personal Cinema Vault</div>
         <h1>ทุกเรื่องที่ดู<br>คือหนึ่ง<em>ความทรงจำ</em></h1>
         <p class="hero-copy">บันทึกตั๋วหนัง ความรู้สึก และบรรยากาศในวันนั้นไว้ในคอลเลกชันส่วนตัวเพื่อย้อนเวลาดูได้ทุกเมื่อ</p>
-        <a class="hero-game-btn game-page-link" href="./game.html">
-          <span class="hero-game-icon">🎮</span>
-          <span><strong>เล่นเกมเลือกหนังเรื่องโปรด</strong><small>เลือกซ้าย–ขวา จนเจอหนังอันดับหนึ่งของคุณ</small></span>
-          <span class="hero-game-arrow">→</span>
-        </a>
+        <div class="feature-shortcuts" aria-label="เมนูพิเศษ">
+          <a class="feature-shortcut-card game-page-link" href="./game.html">
+            <img class="feature-shortcut-icon game" src="./assets/feature-icons/game.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/game.jpg?v=20260728-2" alt="">
+            <span class="feature-shortcut-copy">
+              <strong>เกมเลือกหนัง</strong>
+              <small>เลือกซ้าย–ขวา หาหนังอันดับหนึ่ง</small>
+            </span>
+          </a>
+          <a class="feature-shortcut-card install-page-link" href="./install.html">
+            <img class="feature-shortcut-icon install" src="./assets/feature-icons/install.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/install.jpg?v=20260728-2" alt="">
+            <span class="feature-shortcut-copy">
+              <strong>เพิ่มไอคอนแอป</strong>
+              <small>วิธีติดไว้บนหน้าจอโทรศัพท์</small>
+            </span>
+          </a>
+          <a class="feature-shortcut-card dashboard-page-link" href="./dashboard.html">
+            <img class="feature-shortcut-icon dashboard" src="./assets/feature-icons/dashboard.jpg?v=20260728-2" data-hosted-src="/movie-memory-assets/feature-icons/dashboard.jpg?v=20260728-2" alt="">
+            <span class="feature-shortcut-copy">
+              <strong>Dashboard</strong>
+              <small>ดูสถิติการชมทั้งหมดของคุณ</small>
+            </span>
+          </a>
+        </div>
       </div>
       <div class="quote-box">
         “หนังจบลง... แต่ความรู้สึกและตั๋วใบนั้นจะคงอยู่ตลอดไป”
         <strong>— บันทึกการชมภาพยนตร์ของคุณ</strong>
-      </div>
-    </section>
-
-    <!-- Dashboard Analytics -->
-    <section class="stats-grid" aria-label="สถิติบันทึก">
-      <div class="stat-card">
-        <div class="stat-val" id="statTotal">0</div>
-        <span class="stat-lbl">เรื่องที่บันทึกทั้งหมด</span>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="statYear">0</div>
-        <span class="stat-lbl">ชมในปีนี้ (<span id="currYearTxt"></span>)</span>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="statAvg"><em>—</em></div>
-        <span class="stat-lbl">คะแนนเฉลี่ย (เต็ม 5)</span>
-      </div>
-      <div class="stat-card">
-        <div class="stat-val" id="statTopFormat" style="font-size:22px"><em>—</em></div>
-        <span class="stat-lbl">รูปแบบยอดนิยม</span>
       </div>
     </section>
 
@@ -151,7 +148,7 @@
         <h2>คอลเลกชันของฉัน</h2>
         <p id="resultSummary" aria-live="polite">ยังไม่มีหนังในคอลเลกชัน</p>
       </div>
-      <button class="clear-filter-btn" id="clearFiltersBtn" type="button" hidden>ล้างตัวกรอง ×</button>
+      <button class="clear-filter-btn" id="clearFiltersBtn" type="button">↻ รีเซ็ตตัวกรอง</button>
     </div>
 
     <!-- Movie Collection Display -->
@@ -345,7 +342,11 @@
 
           <div class="form-section-title">ความรู้สึกและคะแนน</div>
           <div class="form-col-full">
-            <label>คะแนนของคุณ</label>
+            <label for="formViewingNoteInput">บันทึกของการดูครั้งนี้</label>
+            <textarea class="control" id="formViewingNoteInput" placeholder="บรรยากาศ เหตุการณ์ หรือความทรงจำของการดูครั้งนี้..." maxlength="800"></textarea>
+          </div>
+          <div class="form-col-full">
+            <label>คะแนนรีวิวของคุณ</label>
             <div class="rating-stars-picker" id="ratingPicker">
               <button class="star-btn" type="button" data-star="1" aria-label="ให้คะแนนดาวดวงที่ 1">★</button>
               <button class="star-btn" type="button" data-star="2" aria-label="ให้คะแนนดาวดวงที่ 2">★</button>
@@ -358,8 +359,8 @@
           </div>
 
           <div class="form-col-full">
-            <label for="formNoteInput">ความทรงจำ & รีวิวสั้น ๆ</label>
-            <textarea class="control" id="formNoteInput" placeholder="เขียนบันทึก ความประทับใจ หรือฉากที่ชอบ..." maxlength="800"></textarea>
+            <label for="formNoteInput">รีวิวหนังเรื่องนี้ <small>(เขียนได้หนึ่งรีวิวและกลับมาแก้ไขได้)</small></label>
+            <textarea class="control" id="formNoteInput" placeholder="เขียนความรู้สึกโดยรวม หรือรีวิวสั้น ๆ..." maxlength="800"></textarea>
           </div>
         </div>
       </div>
@@ -388,6 +389,7 @@
         </div>
         <div class="ticket-inspect-title-group">
           <div class="badge-format" id="inspectFormatBadge" style="display:inline-block; margin-bottom:8px"></div>
+          <div class="watch-count-pill" id="inspectWatchCount">ดูแล้ว 1 ครั้ง</div>
           <h2 id="inspectTitleTxt"></h2>
           <div style="color:var(--gold); font-size:18px; margin-top:4px" id="inspectStarsTxt"></div>
         </div>
@@ -397,40 +399,119 @@
 
     <div class="ticket-inspect-body">
       <div>
-        <label>ความรู้สึก & รีวิว</label>
+        <label>รีวิวของฉัน</label>
         <div class="inspect-quote" id="inspectNoteTxt"></div>
       </div>
 
-      <div class="inspect-meta-grid">
-        <div class="inspect-meta-item">
-          <strong>วันที่รับชม</strong>
-          <span id="inspectDateTxt"></span>
+      <div class="watch-history-section">
+        <div class="watch-history-heading">
+          <div><strong>ประวัติการดู</strong><small>แต่ละครั้งถูกเก็บแยกจากกัน</small></div>
+          <button class="btn btn-primary" id="inspectRewatchBtn" type="button">＋ ดูอีกครั้ง</button>
         </div>
-        <div class="inspect-meta-item">
-          <strong>สถานที่ / แพลตฟอร์ม</strong>
-          <span id="inspectCinemaTxt"></span>
-        </div>
-        <div class="inspect-meta-item">
-          <strong>โรง / ที่นั่ง</strong>
-          <span id="inspectSeatTxt"></span>
-        </div>
-        <div class="inspect-meta-item">
-          <strong>ผู้ร่วมชม</strong>
-          <span id="inspectCompanionTxt"></span>
-        </div>
+        <div class="watch-history-list" id="inspectWatchHistory"></div>
       </div>
     </div>
 
     <div class="modal-footer">
       <div class="inspect-record-actions">
         <button class="btn btn-ghost inspect-delete-btn" id="inspectDeleteBtn" type="button">🗑️ ลบหนัง</button>
-        <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไข</button>
+        <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไขรีวิว</button>
       </div>
       <div class="inspect-footer-actions">
         <button class="btn inspect-share-btn" id="inspectShareBtn" type="button">✦ แชร์ลง IG Story</button>
         <button class="btn btn-ghost" id="inspectCloseBtn" type="button">ปิด</button>
       </div>
     </div>
+  </dialog>
+
+  <dialog id="rewatchModal">
+    <div class="modal-header">
+      <div>
+        <h2>เพิ่มการดูอีกครั้ง</h2>
+        <p class="dialog-subtitle" id="rewatchMovieTitle"></p>
+      </div>
+      <button class="close-modal-btn" id="closeRewatchBtn" type="button" title="กลับ">←</button>
+    </div>
+    <form id="rewatchForm">
+      <div class="form-container">
+        <input type="hidden" id="rewatchTicketData">
+        <div class="form-grid">
+          <div>
+            <label for="rewatchDateInput">วันที่ชม</label>
+            <input class="control" id="rewatchDateInput" type="date" required>
+          </div>
+          <div>
+            <label for="rewatchFormatInput">ดูด้วยอะไร</label>
+            <select class="control" id="rewatchFormatInput">
+              <option value="โรงภาพยนตร์">โรงภาพยนตร์</option>
+              <option value="Streaming">Streaming</option>
+              <option value="แผ่น / Digital">แผ่น / Digital</option>
+              <option value="เทศกาลหนัง">เทศกาลหนัง</option>
+              <option value="อื่น ๆ">อื่น ๆ</option>
+            </select>
+          </div>
+          <div>
+            <label for="rewatchCinemaInput">โรงภาพยนตร์ / แพลตฟอร์ม</label>
+            <input class="control" id="rewatchCinemaInput" placeholder="เช่น Major Cineplex, Netflix" maxlength="80">
+          </div>
+          <div>
+            <label for="rewatchSeatInput">โรงที่ / เลขที่นั่ง</label>
+            <input class="control" id="rewatchSeatInput" placeholder="เช่น Cinema 8 · G12" maxlength="40">
+          </div>
+          <div class="form-col-full">
+            <label for="rewatchCompanionInput">ดูกับใคร</label>
+            <input class="control" id="rewatchCompanionInput" placeholder="เช่น ดูคนเดียว, กับเพื่อน" maxlength="80">
+          </div>
+          <div class="form-col-full">
+            <label for="rewatchMemoryInput">บันทึกของการดูครั้งนี้</label>
+            <textarea class="control" id="rewatchMemoryInput" placeholder="เขียนบรรยากาศหรือความทรงจำของครั้งนี้..." maxlength="800"></textarea>
+          </div>
+          <div class="form-col-full">
+            <label>รูปตั๋ว / ภาพความทรงจำของครั้งนี้</label>
+            <div class="rewatch-ticket-upload" id="rewatchTicketUploadZone">
+              <input type="file" id="rewatchTicketFileInput" accept="image/*" hidden>
+              <img id="rewatchTicketPreviewImg" alt="รูปตั๋ว" hidden>
+              <div id="rewatchTicketOverlay">🎟️ <strong>เพิ่มรูปตั๋วหรือภาพความทรงจำ</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="cancelRewatchBtn" type="button">ยกเลิก</button>
+        <button class="btn btn-primary" id="saveRewatchBtn" type="submit">＋ บันทึกการดูครั้งนี้</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="reviewModal">
+    <div class="modal-header">
+      <div>
+        <h2>แก้ไขรีวิว</h2>
+        <p class="dialog-subtitle" id="reviewMovieTitle"></p>
+      </div>
+      <button class="close-modal-btn" id="closeReviewBtn" type="button" title="กลับ">←</button>
+    </div>
+    <form id="reviewForm">
+      <div class="form-container review-form-container">
+        <label>คะแนนของคุณ</label>
+        <div class="rating-stars-picker" id="reviewRatingPicker">
+          <button class="star-btn" type="button" data-star="1" aria-label="ให้คะแนนรีวิวดาวดวงที่ 1">★</button>
+          <button class="star-btn" type="button" data-star="2" aria-label="ให้คะแนนรีวิวดาวดวงที่ 2">★</button>
+          <button class="star-btn" type="button" data-star="3" aria-label="ให้คะแนนรีวิวดาวดวงที่ 3">★</button>
+          <button class="star-btn" type="button" data-star="4" aria-label="ให้คะแนนรีวิวดาวดวงที่ 4">★</button>
+          <button class="star-btn" type="button" data-star="5" aria-label="ให้คะแนนรีวิวดาวดวงที่ 5">★</button>
+          <output class="rating-value-label" id="reviewRatingValueLabel">0 / 5</output>
+        </div>
+        <input type="hidden" id="reviewRatingVal" value="0">
+        <label for="reviewNoteInput">รีวิวหนังเรื่องนี้</label>
+        <textarea class="control" id="reviewNoteInput" maxlength="800" placeholder="เขียนรีวิวหนึ่งรายการสำหรับหนังเรื่องนี้..."></textarea>
+        <p class="review-rule-note">รีวิวมีได้หนึ่งรายการ แต่กลับมาแก้ไขได้ทุกเมื่อ</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="cancelReviewBtn" type="button">ยกเลิก</button>
+        <button class="btn btn-primary" type="submit">บันทึกรีวิว</button>
+      </div>
+    </form>
   </dialog>
 
 
@@ -501,8 +582,17 @@
     const movieMemoryAssetBase = isLocalFile ? './' : '/movie-memory-assets/';
     const authBridgePath = isLocalFile ? '../local-auth-bridge.js' : '/local-auth-bridge.js';
     if (!isLocalFile) {
+      document.querySelectorAll('[data-hosted-src]').forEach(image => {
+        image.src = image.dataset.hostedSrc;
+      });
       document.querySelectorAll('.game-page-link').forEach(link => {
         link.href = '/Movie-Memory/game/';
+      });
+      document.querySelectorAll('.install-page-link').forEach(link => {
+        link.href = '/Movie-Memory/install/';
+      });
+      document.querySelectorAll('.dashboard-page-link').forEach(link => {
+        link.href = '/Movie-Memory/dashboard/';
       });
     } else {
       document.querySelectorAll('.game-page-link').forEach(link => {
@@ -520,9 +610,9 @@
         });
       });
     }
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260726-24"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260728-4"><\/script>`);
     document.write(`<script src="${authBridgePath}"><\/script>`);
-    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260726-4"><\/script>`);
+    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260728-3"><\/script>`);
   </script>
 </body>
 </html>

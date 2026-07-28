@@ -1,4 +1,5 @@
     const STORAGE_KEY = 'taithai_movie_memory_v2';
+    const FILTER_STORAGE_KEY = 'mm_filter_settings_v1';
     const API_KEY = 'a7ee9f0641a8225ed2d6f0693de8507d';
     const BASE_URL = 'https://api.themoviedb.org/3';
     const IMG_URL = 'https://image.tmdb.org/t/p/w500';
@@ -34,6 +35,8 @@
       if (path.endsWith('/Movie-Memory/add')) return 'add';
       if (path.endsWith('/Movie-Memory/movie')) return 'movie';
       if (path.endsWith('/Movie-Memory/posters')) return 'posters';
+      if (path.endsWith('/Movie-Memory/rewatch')) return 'rewatch';
+      if (path.endsWith('/Movie-Memory/review')) return 'review';
       if (path.endsWith('/Movie-Memory/settings')) return 'settings';
       return 'home';
     };
@@ -61,6 +64,43 @@
       return /^(https:\/\/|data:image\/(?:jpeg|png|webp);base64,)/i.test(image) ? image : '';
     }
 
+    function normalizeViewing(raw, fallback = {}, index = 0) {
+      const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+      const validDate = date => /^\d{4}-\d{2}-\d{2}$/.test(date || '') ? date : '';
+      const allowedFormats = ['โรงภาพยนตร์', 'Streaming', 'แผ่น / Digital', 'เทศกาลหนัง', 'อื่น ๆ'];
+      const rawId = safeText(value.id, 80);
+      const watchDate = validDate(value.watchDate)
+        ? value.watchDate
+        : validDate(fallback.watchDate)
+          ? fallback.watchDate
+          : new Date().toISOString().slice(0, 10);
+      return {
+        id: /^[a-zA-Z0-9_-]+$/.test(rawId) ? rawId : `v_${Date.now()}_${index}`,
+        watchDate,
+        format: allowedFormats.includes(value.format)
+          ? value.format
+          : allowedFormats.includes(fallback.format)
+            ? fallback.format
+            : 'โรงภาพยนตร์',
+        cinema: safeText(value.cinema ?? fallback.cinema, 80),
+        seat: safeText(value.seat ?? fallback.seat, 40),
+        companion: safeText(value.companion ?? fallback.companion, 80),
+        memory: safeText(value.memory, 800),
+        ticketImg: safeImage(value.ticketImg || fallback.ticketImg),
+        createdAt: safeText(value.createdAt, 40)
+      };
+    }
+
+    function latestViewing(movie) {
+      const viewings = Array.isArray(movie?.viewings) ? movie.viewings : [];
+      return viewings.reduce((latest, viewing) => {
+        if (!latest) return viewing;
+        const latestKey = `${latest.watchDate || ''}|${latest.createdAt || ''}|${latest.id || ''}`;
+        const viewingKey = `${viewing.watchDate || ''}|${viewing.createdAt || ''}|${viewing.id || ''}`;
+        return viewingKey > latestKey ? viewing : latest;
+      }, null);
+    }
+
     function normalizeMovie(raw, index = 0) {
       const value = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
       const rawId = safeText(value.id, 80);
@@ -70,20 +110,36 @@
       const format = allowedFormats.includes(value.format) ? value.format : 'โรงภาพยนตร์';
       const rating = Math.min(5, Math.max(0, Math.round((Number(value.rating) || 0) * 2) / 2));
 
+      const rawViewings = Array.isArray(value.viewings) && value.viewings.length
+        ? value.viewings
+        : [{
+            id: `v_legacy_${id}`,
+            watchDate: value.watchDate,
+            format: value.format,
+            cinema: value.cinema,
+            seat: value.seat,
+            companion: value.companion,
+            ticketImg: value.ticketImg,
+            createdAt: value.updatedAt
+          }];
+      const viewings = rawViewings.map((viewing, viewingIndex) => normalizeViewing(viewing, value, viewingIndex));
+      const latest = latestViewing({ viewings }) || normalizeViewing({}, value, 0);
+
       return {
         id,
         tmdbId: Number.isInteger(Number(value.tmdbId)) && Number(value.tmdbId) > 0 ? Number(value.tmdbId) : null,
         title: safeText(value.title, 100) || 'บันทึกความทรงจำภาพยนตร์',
-        watchDate: validDate(value.watchDate) ? value.watchDate : new Date().toISOString().slice(0, 10),
+        watchDate: latest.watchDate,
         releaseDate: validDate(value.releaseDate) ? value.releaseDate : '',
-        format,
-        cinema: safeText(value.cinema, 80),
-        seat: safeText(value.seat, 40),
-        companion: safeText(value.companion, 80),
+        format: latest.format || format,
+        cinema: latest.cinema,
+        seat: latest.seat,
+        companion: latest.companion,
         rating,
         note: safeText(value.note, 1000),
         posterImg: safeImage(value.posterImg || value.image),
-        ticketImg: safeImage(value.ticketImg),
+        ticketImg: latest.ticketImg,
+        viewings,
         updatedAt: safeText(value.updatedAt, 40)
       };
     }
@@ -143,6 +199,30 @@
       return `${'★'.repeat(full)}${half ? '½' : ''}${'☆'.repeat(5 - Math.ceil(num))}`;
     }
 
+    function movieWatchCount(movie) {
+      return Math.max(1, Array.isArray(movie?.viewings) ? movie.viewings.length : 0);
+    }
+
+    function allViewings() {
+      return movies.flatMap(movie => Array.isArray(movie.viewings) ? movie.viewings : []);
+    }
+
+    function normalizeCatalogTitle(value) {
+      return safeText(value, 120).toLocaleLowerCase('th').replace(/[^\p{L}\p{N}]+/gu, '');
+    }
+
+    function alreadyInCollection(item) {
+      const tmdbId = Number(item?.id || item?.tmdbId) || null;
+      if (tmdbId && movies.some(movie => Number(movie.tmdbId) === tmdbId)) return true;
+      const title = normalizeCatalogTitle(item?.title);
+      const releaseYear = safeText(item?.release_date || item?.releaseDate, 10).slice(0, 4);
+      return Boolean(title) && movies.some(movie => {
+        if (normalizeCatalogTitle(movie.title) !== title) return false;
+        const savedYear = safeText(movie.releaseDate, 10).slice(0, 4);
+        return !releaseYear || !savedYear || releaseYear === savedYear;
+      });
+    }
+
     function getFilteredMovies() {
       const q = $('searchInput').value.trim().toLowerCase();
       const yr = $('yearFilter').value;
@@ -150,10 +230,12 @@
       const sort = $('sortSelect').value;
 
       let list = movies.filter(m => {
-        const combinedText = [m.title, m.cinema, m.seat, m.companion, m.note, m.format].join(' ').toLowerCase();
+        const viewingText = (Array.isArray(m.viewings) ? m.viewings : [])
+          .flatMap(viewing => [viewing.cinema, viewing.seat, viewing.companion, viewing.memory, viewing.format]);
+        const combinedText = [m.title, m.note, ...viewingText].join(' ').toLowerCase();
         const matchQuery = !q || combinedText.includes(q);
-        const matchYear = yr === 'all' || (m.watchDate || '').startsWith(yr);
-        const matchFormat = fmt === 'all' || (m.format || '').includes(fmt);
+        const matchYear = yr === 'all' || (Array.isArray(m.viewings) ? m.viewings : []).some(viewing => (viewing.watchDate || '').startsWith(yr));
+        const matchFormat = fmt === 'all' || (Array.isArray(m.viewings) ? m.viewings : []).some(viewing => (viewing.format || '').includes(fmt));
         return matchQuery && matchYear && matchFormat;
       });
 
@@ -177,46 +259,10 @@
       return list;
     }
 
-    function updateStatsDashboard() {
-      $('statTotal').textContent = movies.length;
-      
-      const currYr = String(new Date().getFullYear());
-      $('currYearTxt').textContent = Number(currYr) + 543;
-      const countThisYear = movies.filter(m => (m.watchDate || '').startsWith(currYr)).length;
-      $('statYear').textContent = countThisYear;
-
-      const rated = movies.filter(m => Number(m.rating) > 0);
-      if (rated.length) {
-        const avg = (rated.reduce((sum, m) => sum + Number(m.rating), 0) / rated.length).toFixed(1);
-        $('statAvg').innerHTML = `${avg} <em>★</em>`;
-      } else {
-        $('statAvg').innerHTML = `<em>—</em>`;
-      }
-
-      // Top format
-      const fmtCounts = {};
-      movies.forEach(m => {
-        const f = m.format || 'โรงภาพยนตร์';
-        fmtCounts[f] = (fmtCounts[f] || 0) + 1;
-      });
-      let topFmt = '—';
-      let maxC = 0;
-      Object.keys(fmtCounts).forEach(f => {
-        if (fmtCounts[f] > maxC) {
-          maxC = fmtCounts[f];
-          topFmt = f;
-        }
-      });
-      if (topFmt !== '—') {
-        $('statTopFormat').textContent = topFmt;
-      } else {
-        $('statTopFormat').innerHTML = `<em>—</em>`;
-      }
-
-      // Year filter options
+    function updateYearFilterOptions() {
       const yearFilter = $('yearFilter');
       const selectedYear = yearFilter.value;
-      const years = [...new Set(movies.map(m => (m.watchDate || '').slice(0, 4)).filter(Boolean))].sort().reverse();
+      const years = [...new Set(allViewings().map(viewing => (viewing.watchDate || '').slice(0, 4)).filter(Boolean))].sort().reverse();
       
       yearFilter.innerHTML = '<option value="all">ทุกปี</option>' + years.map(y => `<option value="${y}">${Number(y) + 543}</option>`).join('');
       if (years.includes(selectedYear) || selectedYear === 'all') {
@@ -224,8 +270,48 @@
       }
     }
 
+    function persistFilterSettings() {
+      try {
+        localStorage.setItem(FILTER_STORAGE_KEY, JSON.stringify({
+          search: $('searchInput').value,
+          year: $('yearFilter').value,
+          format: $('formatFilter').value,
+          sort: $('sortSelect').value
+        }));
+      } catch {}
+    }
+
+    function restoreFilterSettings() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(FILTER_STORAGE_KEY) || '{}');
+        const setIfAvailable = (element, value, fallback) => {
+          const hasOption = [...element.options].some(option => option.value === value);
+          element.value = hasOption ? value : fallback;
+        };
+        $('searchInput').value = typeof saved.search === 'string' ? saved.search.slice(0, 200) : '';
+        setIfAvailable($('yearFilter'), saved.year, 'all');
+        setIfAvailable($('formatFilter'), saved.format, 'all');
+        setIfAvailable($('sortSelect'), saved.sort, 'newest');
+      } catch {
+        localStorage.removeItem(FILTER_STORAGE_KEY);
+      }
+    }
+
+    function resetFilterSettings() {
+      $('searchInput').value = '';
+      $('yearFilter').value = 'all';
+      $('formatFilter').value = 'all';
+      $('sortSelect').value = 'newest';
+      try {
+        localStorage.removeItem(FILTER_STORAGE_KEY);
+      } catch {}
+      document.querySelector('.toolbar').classList.remove('filters-open');
+      $('mobileFilterToggle').setAttribute('aria-expanded', 'false');
+    }
+
     function renderCollection() {
       const grid = $('collectionGrid');
+      updateYearFilterOptions();
       const filtered = getFilteredMovies();
       const filtersActive = Boolean(
         $('searchInput').value.trim() ||
@@ -244,7 +330,7 @@
           ? `พบ ${filtered.length} จาก ${movies.length} เรื่อง`
           : `${movies.length} เรื่อง · เก็บไว้เป็นความทรงจำแล้ว`
         : 'ยังไม่มีหนังในคอลเลกชัน';
-      $('clearFiltersBtn').hidden = !filtersActive;
+      $('clearFiltersBtn').disabled = !filtersActive;
 
       grid.className = 'collection-grid';
       if (currentViewMode === 'list') grid.classList.add('list-view');
@@ -253,8 +339,6 @@
       $('viewGridBtn').classList.toggle('active', currentViewMode === 'grid');
       $('viewListBtn').classList.toggle('active', currentViewMode === 'list');
       $('viewTicketBtn').classList.toggle('active', currentViewMode === 'ticket');
-
-      updateStatsDashboard();
 
       if (filtered.length === 0) {
         grid.innerHTML = `
@@ -275,7 +359,7 @@
             <div class="ticket-stub-card" onclick="openInspectDialog('${m.id}')" role="link" tabindex="0" data-movie-id="${m.id}" aria-label="เปิดรายละเอียด ${escapeHtml(m.title)}">
               <div class="ticket-stub-top">
                 <span class="ticket-cinema-badge">${escapeHtml(m.cinema || m.format || 'CINEMA')}</span>
-                <span style="font-size:11px; color:var(--gold); font-weight:700">${formatDate(m.watchDate)}</span>
+                <span style="font-size:11px; color:var(--gold); font-weight:700">ดู ${movieWatchCount(m)} ครั้ง</span>
               </div>
               <div class="ticket-stub-body">
                 <div class="ticket-thumb">
@@ -305,6 +389,7 @@
               </div>
               <div class="card-header">
                 <span class="badge-format">${escapeHtml(m.format || 'โรงภาพยนตร์')}</span>
+                <span class="badge-watch-count">ดู ${movieWatchCount(m)} ครั้ง</span>
                 ${m.releaseDate ? `<span class="badge-release">ฉาย ${escapeHtml(m.releaseDate.slice(0, 4))}</span>` : ''}
               </div>
               <div class="card-content">
@@ -385,13 +470,16 @@
 
         const res = await fetch(url);
         const data = await res.json();
-        const results = data.results || [];
+        const results = (data.results || []).filter(item => !alreadyInCollection(item));
 
         if (reset) catalogMoviesList = [];
-        catalogMoviesList = [...catalogMoviesList, ...results];
+        const knownCatalogIds = new Set(catalogMoviesList.map(item => item.id));
+        catalogMoviesList = [...catalogMoviesList, ...results.filter(item => !knownCatalogIds.has(item.id))];
 
         if (catalogMoviesList.length === 0) {
-          listGrid.innerHTML = '<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted)">ไม่พบรายชื่อหนัง ลองค้นหาด้วยคำอื่น</div>';
+          listGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:var(--muted)">
+            ${query ? 'ไม่พบหนังเรื่องใหม่ หนังที่อยู่ในคอลเลกชันแล้วจะไม่แสดงที่นี่' : 'หนังในหน้านี้อยู่ในคอลเลกชันแล้ว ลองโหลดรายการเพิ่ม'}
+          </div>`;
           isCatalogLoading = false;
           return;
         }
@@ -400,7 +488,7 @@
           const poster = item.poster_path ? `${IMG_URL}${item.poster_path}` : '';
           const yr = item.release_date ? item.release_date.slice(0, 4) : '';
           return `
-            <div class="catalog-item-card" onclick="selectCatalogMovie(${item.id})">
+            <button class="catalog-item-card" type="button" data-tmdb-id="${item.id}" onclick="selectCatalogMovie(${item.id})">
               <div class="catalog-poster-thumb">
                 ${poster ? `<img src="${poster}" class="vertical-aspect" alt="${escapeHtml(item.title)}" loading="lazy" decoding="async">` : `<div style="width:100%;height:100%;display:grid;place-items:center;color:var(--muted);font-size:24px">🎬</div>`}
               </div>
@@ -408,7 +496,7 @@
                 <strong>${escapeHtml(item.title)}</strong>
                 <span>${yr ? `ปี ${yr}` : 'ภาพยนตร์'}</span>
               </div>
-            </div>
+            </button>
           `;
         }).join('');
 
@@ -432,6 +520,10 @@
     function selectCatalogMovie(movieId) {
       const selected = catalogMoviesList.find(m => m.id === movieId);
       if (!selected) return;
+      if (alreadyInCollection(selected)) {
+        showToast('หนังเรื่องนี้อยู่ในคอลเลกชันแล้ว กด “ดูอีกครั้ง” จากหน้ารายละเอียดได้เลย');
+        return;
+      }
 
       $('formTmdbId').value = selected.id;
       $('formTitleInput').value = selected.title || '';
@@ -464,6 +556,7 @@
       $('formCinemaInput').value = '';
       $('formSeatInput').value = '';
       $('formCompanionInput').value = '';
+      $('formViewingNoteInput').value = '';
       $('formNoteInput').value = '';
       $('formRatingVal').value = '0';
 
@@ -496,6 +589,32 @@
       $('ratingValueLabel').textContent = `${value} / 5`;
     }
 
+    function updateReviewRatingStarsUI(rating) {
+      const value = Math.min(5, Math.max(0, Math.round((Number(rating) || 0) * 2) / 2));
+      document.querySelectorAll('#reviewRatingPicker .star-btn').forEach((btn, idx) => {
+        const star = idx + 1;
+        const isFull = value >= star;
+        const isHalf = value === star - 0.5;
+        btn.classList.toggle('active', isFull);
+        btn.classList.toggle('half', isHalf);
+        btn.textContent = isFull || isHalf ? '★' : '☆';
+        btn.setAttribute('aria-pressed', String(isFull || isHalf));
+      });
+      $('reviewRatingValueLabel').textContent = `${value} / 5`;
+    }
+
+    function syncLatestViewingFields(movie) {
+      const latest = latestViewing(movie);
+      if (!latest) return movie;
+      movie.watchDate = latest.watchDate;
+      movie.format = latest.format;
+      movie.cinema = latest.cinema;
+      movie.seat = latest.seat;
+      movie.companion = latest.companion;
+      movie.ticketImg = latest.ticketImg;
+      return movie;
+    }
+
     // Direct Save Function triggered by Save Button at Bottom
     function executeSaveMovie() {
       let title = $('formTitleInput').value.trim();
@@ -516,8 +635,31 @@
       const companion = $('formCompanionInput').value.trim();
       const rating = Number($('formRatingVal').value) || 0;
       const note = $('formNoteInput').value.trim();
+      const viewingMemory = $('formViewingNoteInput').value.trim();
       const posterImg = $('formPosterData').value;
       const ticketImg = $('formTicketData').value;
+      const duplicate = movies.find(movie => {
+        if (tmdbId && Number(movie.tmdbId) === tmdbId) return true;
+        return normalizeCatalogTitle(movie.title) === normalizeCatalogTitle(title)
+          && (!releaseDate || !movie.releaseDate || movie.releaseDate.slice(0, 4) === releaseDate.slice(0, 4));
+      });
+      if (duplicate && duplicate.id !== id) {
+        showToast('หนังเรื่องนี้มีอยู่แล้ว กด “ดูอีกครั้ง” จากหน้ารายละเอียด');
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const viewing = normalizeViewing({
+        id: `v_${Date.now()}`,
+        watchDate,
+        format,
+        cinema,
+        seat,
+        companion,
+        memory: viewingMemory,
+        ticketImg,
+        createdAt: now
+      });
 
       const movieObj = {
         id,
@@ -533,12 +675,19 @@
         note,
         posterImg,
         ticketImg,
-        updatedAt: new Date().toISOString()
+        viewings: [viewing],
+        updatedAt: now
       };
 
       const existingIndex = movies.findIndex(m => m.id === id);
       if (existingIndex >= 0) {
-        movies[existingIndex] = movieObj;
+        const existing = movies[existingIndex];
+        movies[existingIndex] = {
+          ...existing,
+          rating,
+          note,
+          updatedAt: now
+        };
       } else {
         movies.unshift(movieObj);
       }
@@ -548,6 +697,29 @@
       if (currentRoute() === 'add') sessionStorage.setItem('movie_memory_flash', '✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว');
       closeAddDialog();
       showToast('✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว');
+    }
+
+    function renderWatchHistory(movie) {
+      const viewings = [...(Array.isArray(movie.viewings) ? movie.viewings : [])]
+        .sort((a, b) => `${b.watchDate || ''}|${b.createdAt || ''}|${b.id || ''}`.localeCompare(`${a.watchDate || ''}|${a.createdAt || ''}|${a.id || ''}`));
+      $('inspectWatchHistory').innerHTML = viewings.map((viewing, index) => `
+        <article class="watch-history-card">
+          <div class="watch-history-index">${viewings.length - index}</div>
+          <div class="watch-history-content">
+            <div class="watch-history-top">
+              <strong>${formatDate(viewing.watchDate)}</strong>
+              <span>${escapeHtml(viewing.format || 'โรงภาพยนตร์')}</span>
+            </div>
+            <div class="watch-history-meta">
+              ${viewing.cinema ? `<span>📍 ${escapeHtml(viewing.cinema)}</span>` : ''}
+              ${viewing.seat ? `<span>💺 ${escapeHtml(viewing.seat)}</span>` : ''}
+              <span>👥 ${escapeHtml(viewing.companion || 'ดูคนเดียว')}</span>
+            </div>
+            ${viewing.memory ? `<p>${escapeHtml(viewing.memory)}</p>` : ''}
+            ${viewing.ticketImg ? `<img src="${escapeHtml(viewing.ticketImg)}" alt="ภาพความทรงจำจากการดูครั้งนี้" loading="lazy" decoding="async">` : ''}
+          </div>
+        </article>
+      `).join('');
     }
 
     // Inspector modal
@@ -569,13 +741,11 @@
       $('inspectBgImg').src = bgImg;
       $('inspectCoverImg').src = bgImg;
       $('inspectFormatBadge').textContent = movie.format || 'โรงภาพยนตร์';
+      $('inspectWatchCount').textContent = `ดูแล้ว ${movieWatchCount(movie)} ครั้ง`;
       $('inspectTitleTxt').textContent = movie.title || 'ไม่มีชื่อ';
       $('inspectStarsTxt').textContent = formatStars(movie.rating);
-      $('inspectNoteTxt').textContent = movie.note || 'ไม่มีรีวิวหรือความรู้สึกเพิ่มเติมในตั๋วใบนี้';
-      $('inspectDateTxt').textContent = formatDate(movie.watchDate);
-      $('inspectCinemaTxt').textContent = movie.cinema || 'ไม่ระบุสถานที่';
-      $('inspectSeatTxt').textContent = movie.seat || 'ไม่ระบุที่นั่ง';
-      $('inspectCompanionTxt').textContent = movie.companion || 'ดูคนเดียว';
+      $('inspectNoteTxt').textContent = movie.note || 'ยังไม่มีรีวิวสำหรับหนังเรื่องนี้';
+      renderWatchHistory(movie);
 
       openAsPage($('inspectModal'));
     }
@@ -1106,51 +1276,125 @@
       showToast('เปลี่ยนโปสเตอร์เรียบร้อยแล้ว');
     }
 
-    function editInspectedMovie() {
-      if (!inspectingMovieId) return;
+    function openReviewEditor(asRoute = false) {
+      if (!inspectingMovieId) {
+        if (asRoute) goHome();
+        return;
+      }
       const movie = movies.find(m => m.id === inspectingMovieId);
-      if (!movie) return;
+      if (!movie) {
+        if (asRoute) goHome();
+        return;
+      }
 
-      if (!IS_FILE_MODE && currentRoute() !== 'add') {
-        window.location.href = `${APP_ROUTES}/add/?edit=${encodeURIComponent(movie.id)}`;
+      if (!IS_FILE_MODE && !asRoute && currentRoute() !== 'review') {
+        window.location.href = `${APP_ROUTES}/review/?id=${encodeURIComponent(movie.id)}`;
         return;
       }
       if ($('inspectModal').open) $('inspectModal').close();
-      
-      $('formMovieId').value = movie.id;
-      $('formTmdbId').value = movie.tmdbId || '';
-      $('formReleaseDate').value = movie.releaseDate || '';
-      $('formTitleInput').value = movie.title || '';
-      $('formWatchDateInput').value = movie.watchDate || '';
-      $('formFormatInput').value = movie.format || 'โรงภาพยนตร์';
-      $('formCinemaInput').value = movie.cinema || '';
-      $('formSeatInput').value = movie.seat || '';
-      $('formCompanionInput').value = movie.companion || '';
-      $('formNoteInput').value = movie.note || '';
-      $('formRatingVal').value = movie.rating || 0;
+      $('reviewMovieTitle').textContent = movie.title;
+      $('reviewNoteInput').value = movie.note || '';
+      $('reviewRatingVal').value = movie.rating || 0;
+      updateReviewRatingStarsUI(movie.rating || 0);
+      openAsPage($('reviewModal'));
+    }
 
-      $('formPosterData').value = movie.posterImg || '';
-      if (movie.posterImg) {
-        $('posterPreviewImg').src = movie.posterImg;
-        $('posterPreviewImg').style.display = 'block';
-        $('posterOverlayInfo').style.display = 'block';
-        $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>';
+    function closeReviewEditor() {
+      if (IS_FILE_MODE) {
+        closeLocalPage($('reviewModal'));
+        if (inspectingMovieId) openInspectDialog(inspectingMovieId, true);
+      } else if (currentRoute() === 'review') {
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(inspectingMovieId || '')}`;
+      } else {
+        $('reviewModal').close();
       }
+    }
 
-      $('formTicketData').value = movie.ticketImg || '';
-      if (movie.ticketImg) {
-        $('ticketPreviewImg').src = movie.ticketImg;
-        $('ticketPreviewImg').style.display = 'block';
-        $('ticketOverlayInfo').style.display = 'none';
+    function saveReview(event) {
+      event.preventDefault();
+      const movie = movies.find(item => item.id === inspectingMovieId);
+      if (!movie) return;
+      movie.rating = Math.min(5, Math.max(0, Math.round((Number($('reviewRatingVal').value) || 0) * 2) / 2));
+      movie.note = $('reviewNoteInput').value.trim();
+      movie.updatedAt = new Date().toISOString();
+      saveMoviesToStorage();
+      renderCollection();
+      if (!IS_FILE_MODE && currentRoute() === 'review') {
+        sessionStorage.setItem('movie_memory_flash', '✓ แก้ไขรีวิวเรียบร้อยแล้ว');
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(movie.id)}`;
+      } else {
+        closeLocalPage($('reviewModal'));
+        openInspectDialog(movie.id, true);
+        showToast('✓ แก้ไขรีวิวเรียบร้อยแล้ว');
       }
+    }
 
-      updateRatingStarsUI(movie.rating || 0);
+    function openRewatchDialog(asRoute = false) {
+      const movie = movies.find(item => item.id === inspectingMovieId);
+      if (!movie) {
+        if (asRoute) goHome();
+        return;
+      }
+      if (!IS_FILE_MODE && !asRoute && currentRoute() !== 'rewatch') {
+        window.location.href = `${APP_ROUTES}/rewatch/?id=${encodeURIComponent(movie.id)}`;
+        return;
+      }
+      if ($('inspectModal').open) $('inspectModal').close();
+      $('rewatchMovieTitle').textContent = movie.title;
+      $('rewatchDateInput').value = new Date().toISOString().slice(0, 10);
+      $('rewatchFormatInput').value = movie.format || 'โรงภาพยนตร์';
+      $('rewatchCinemaInput').value = '';
+      $('rewatchSeatInput').value = '';
+      $('rewatchCompanionInput').value = '';
+      $('rewatchMemoryInput').value = '';
+      $('rewatchTicketData').value = '';
+      $('rewatchTicketPreviewImg').removeAttribute('src');
+      $('rewatchTicketPreviewImg').hidden = true;
+      $('rewatchTicketPreviewImg').style.display = 'none';
+      $('rewatchTicketOverlay').style.display = 'block';
+      openAsPage($('rewatchModal'));
+    }
 
-      $('modalHeaderTitle').textContent = 'แก้ไขบันทึกภาพยนตร์';
-      $('deleteEntryBtn').style.display = 'inline-flex';
+    function closeRewatchDialog() {
+      if (IS_FILE_MODE) {
+        closeLocalPage($('rewatchModal'));
+        if (inspectingMovieId) openInspectDialog(inspectingMovieId, true);
+      } else if (currentRoute() === 'rewatch') {
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(inspectingMovieId || '')}`;
+      } else {
+        $('rewatchModal').close();
+      }
+    }
 
-      switchWizardStep(3);
-      openAsPage($('addEditModal'));
+    function saveRewatch(event) {
+      event.preventDefault();
+      const movie = movies.find(item => item.id === inspectingMovieId);
+      if (!movie) return;
+      const now = new Date().toISOString();
+      const viewing = normalizeViewing({
+        id: `v_${Date.now()}`,
+        watchDate: $('rewatchDateInput').value,
+        format: $('rewatchFormatInput').value,
+        cinema: $('rewatchCinemaInput').value,
+        seat: $('rewatchSeatInput').value,
+        companion: $('rewatchCompanionInput').value,
+        memory: $('rewatchMemoryInput').value,
+        ticketImg: $('rewatchTicketData').value,
+        createdAt: now
+      });
+      movie.viewings = [...(Array.isArray(movie.viewings) ? movie.viewings : []), viewing];
+      syncLatestViewingFields(movie);
+      movie.updatedAt = now;
+      saveMoviesToStorage();
+      renderCollection();
+      if (!IS_FILE_MODE && currentRoute() === 'rewatch') {
+        sessionStorage.setItem('movie_memory_flash', `✓ บันทึกการดูครั้งที่ ${movieWatchCount(movie)} แล้ว`);
+        window.location.href = `${APP_ROUTES}/movie/?id=${encodeURIComponent(movie.id)}`;
+      } else {
+        closeLocalPage($('rewatchModal'));
+        openInspectDialog(movie.id, true);
+        showToast(`✓ บันทึกการดูครั้งที่ ${movieWatchCount(movie)} แล้ว`);
+      }
     }
 
     function deleteCurrentMovie() {
@@ -1247,6 +1491,8 @@
     // Event Listeners Setup
     document.addEventListener('DOMContentLoaded', () => {
       renderCollection();
+      restoreFilterSettings();
+      renderCollection();
       const flashMessage = sessionStorage.getItem('movie_memory_flash');
       if (flashMessage) {
         sessionStorage.removeItem('movie_memory_flash');
@@ -1259,7 +1505,7 @@
         const editId = routeParams.get('edit');
         if (editId) {
           inspectingMovieId = editId;
-          editInspectedMovie();
+          openReviewEditor(true);
         } else {
           openAddDialog(true);
         }
@@ -1268,6 +1514,12 @@
       } else if (route === 'posters') {
         inspectingMovieId = routeParams.get('id');
         openPosterPicker(true);
+      } else if (route === 'rewatch') {
+        inspectingMovieId = routeParams.get('id');
+        openRewatchDialog(true);
+      } else if (route === 'review') {
+        inspectingMovieId = routeParams.get('id');
+        openReviewEditor(true);
       } else if (route === 'settings') {
         document.body.classList.add('route-page');
       }
@@ -1330,6 +1582,15 @@
           }
         });
       });
+      document.querySelectorAll('#reviewRatingPicker .star-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const star = Number(btn.dataset.star);
+          const current = Number($('reviewRatingVal').value) || 0;
+          const rating = current === star - 0.5 ? star : star - 0.5;
+          $('reviewRatingVal').value = rating;
+          updateReviewRatingStarsUI(rating);
+        });
+      });
 
       // Poster Selection (Takes user to catalog search!)
       $('posterSelectZone').addEventListener('click', () => {
@@ -1343,22 +1604,32 @@
           handleImageFileSelect(e.target.files[0], 'formTicketData', 'ticketPreviewImg', 'ticketOverlayInfo');
         }
       });
+      $('rewatchTicketUploadZone').addEventListener('click', () => $('rewatchTicketFileInput').click());
+      $('rewatchTicketFileInput').addEventListener('change', event => {
+        if (event.target.files?.[0]) {
+          handleImageFileSelect(event.target.files[0], 'rewatchTicketData', 'rewatchTicketPreviewImg', 'rewatchTicketOverlay');
+          $('rewatchTicketPreviewImg').hidden = false;
+        }
+      });
 
       // Filter & Toolbar Controls
-      $('searchInput').addEventListener('input', renderCollection);
+      $('searchInput').addEventListener('input', () => {
+        persistFilterSettings();
+        renderCollection();
+      });
       $('mobileFilterToggle').addEventListener('click', () => {
         const toolbar = document.querySelector('.toolbar');
         const expanded = toolbar.classList.toggle('filters-open');
         $('mobileFilterToggle').setAttribute('aria-expanded', String(expanded));
       });
-      $('yearFilter').addEventListener('change', renderCollection);
-      $('formatFilter').addEventListener('change', renderCollection);
-      $('sortSelect').addEventListener('change', renderCollection);
+      ['yearFilter', 'formatFilter', 'sortSelect'].forEach(id => {
+        $(id).addEventListener('change', () => {
+          persistFilterSettings();
+          renderCollection();
+        });
+      });
       $('clearFiltersBtn').addEventListener('click', () => {
-        $('searchInput').value = '';
-        $('yearFilter').value = 'all';
-        $('formatFilter').value = 'all';
-        $('sortSelect').value = 'newest';
+        resetFilterSettings();
         renderCollection();
       });
       $('collectionGrid').addEventListener('click', event => {
@@ -1397,7 +1668,8 @@
       // Inspector Controls
       $('closeInspectBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
       $('inspectCloseBtn').addEventListener('click', () => IS_FILE_MODE ? closeLocalPage($('inspectModal')) : currentRoute() === 'movie' ? goHome() : $('inspectModal').close());
-      $('inspectEditBtn').addEventListener('click', editInspectedMovie);
+      $('inspectEditBtn').addEventListener('click', () => openReviewEditor());
+      $('inspectRewatchBtn').addEventListener('click', () => openRewatchDialog());
       $('inspectDeleteBtn').addEventListener('click', deleteInspectedMovie);
       $('inspectShareBtn').addEventListener('click', openStoryEditor);
       $('closeStoryEditorBtn').addEventListener('click', closeStoryEditor);
@@ -1426,4 +1698,10 @@
       });
 
       $('deleteEntryBtn').addEventListener('click', deleteCurrentMovie);
+      $('rewatchForm').addEventListener('submit', saveRewatch);
+      $('closeRewatchBtn').addEventListener('click', closeRewatchDialog);
+      $('cancelRewatchBtn').addEventListener('click', closeRewatchDialog);
+      $('reviewForm').addEventListener('submit', saveReview);
+      $('closeReviewBtn').addEventListener('click', closeReviewEditor);
+      $('cancelReviewBtn').addEventListener('click', closeReviewEditor);
     });

@@ -40,15 +40,20 @@ for (const entry of entries) {
 const movieMemorySource = path.join(root, 'Movie Memory');
 const movieMemoryAssets = path.join(output, 'movie-memory-assets');
 await mkdir(movieMemoryAssets, { recursive: true });
-for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js', 'game.css', 'game.js']) {
+for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js']) {
   await cp(path.join(movieMemorySource, asset), path.join(movieMemoryAssets, asset));
 }
+await cp(
+  path.join(movieMemorySource, 'assets', 'feature-icons'),
+  path.join(movieMemoryAssets, 'feature-icons'),
+  { recursive: true }
+);
 
 // Materialize every app route as a real static page so Vercel does not need rewrites.
 const movieMemoryRoutes = path.join(output, 'Movie-Memory');
 await mkdir(movieMemoryRoutes, { recursive: true });
 await cp(path.join(movieMemorySource, 'index.html'), path.join(movieMemoryRoutes, 'index.html'));
-for (const route of ['add', 'movie', 'settings', 'posters']) {
+for (const route of ['add', 'movie', 'settings', 'posters', 'rewatch', 'review']) {
   const routeDirectory = path.join(movieMemoryRoutes, route);
   await mkdir(routeDirectory, { recursive: true });
   await cp(path.join(movieMemorySource, 'index.html'), path.join(routeDirectory, 'index.html'));
@@ -56,6 +61,11 @@ for (const route of ['add', 'movie', 'settings', 'posters']) {
 const gameRoute = path.join(movieMemoryRoutes, 'game');
 await mkdir(gameRoute, { recursive: true });
 await cp(path.join(movieMemorySource, 'game.html'), path.join(gameRoute, 'index.html'));
+for (const [route, source] of [['dashboard', 'dashboard.html'], ['install', 'install.html']]) {
+  const routeDirectory = path.join(movieMemoryRoutes, route);
+  await mkdir(routeDirectory, { recursive: true });
+  await cp(path.join(movieMemorySource, source), path.join(routeDirectory, 'index.html'));
+}
 const profileRoute = path.join(movieMemoryRoutes, 'profile');
 await mkdir(profileRoute, { recursive: true });
 await cp(path.join(movieMemorySource, 'profile.html'), path.join(profileRoute, 'index.html'));

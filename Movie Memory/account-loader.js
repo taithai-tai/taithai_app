@@ -3,7 +3,7 @@ let accountModuleReady = false;
 
 function loadAccountModule() {
   if (!accountModulePromise) {
-    accountModulePromise = import("./account.js?v=20260726-4").then(module => {
+    accountModulePromise = import("./account.js?v=20260728-3").then(module => {
       accountModuleReady = true;
       return module;
     });
