@@ -342,6 +342,7 @@ export async function publishMovieCollection(user, movies) {
     format: movie.format,
     cinema: movie.cinema,
     rating: movie.rating,
+    note: String(movie.note || "").slice(0, 1000),
     posterImg: movie.posterImg,
     watchCount: Math.max(1, Array.isArray(movie.viewings) ? movie.viewings.length : 0)
   }));

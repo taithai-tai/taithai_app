@@ -39,6 +39,7 @@
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:18px}.movie{min-width:0;border:1px solid var(--line);border-radius:19px;overflow:hidden;background:var(--card);box-shadow:0 15px 35px #0005}
     .poster{width:100%;aspect-ratio:2/3;object-fit:cover;display:block;background:#251d17}.placeholder{aspect-ratio:2/3;display:grid;place-items:center;font-size:48px;background:#251d17}
     .info{padding:14px}.info h3{font-size:15px;line-height:1.35;margin:0 0 7px}.meta{font-size:12px;color:var(--muted)}.stars{color:var(--gold);font-size:12px;margin-top:5px}
+    .public-review{margin-top:12px;border:1px solid #ffffff12;border-radius:13px;background:#ffffff08;overflow:hidden}.public-review summary{padding:10px;display:grid;gap:5px;list-style:none;cursor:pointer}.public-review summary::-webkit-details-marker{display:none}.public-review summary span{color:var(--gold);font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}.public-review summary q{display:-webkit-box;overflow:hidden;-webkit-box-orient:vertical;-webkit-line-clamp:3;color:#d7d7dc;font-size:11px;line-height:1.55;white-space:pre-wrap}.public-review summary::after{content:"อ่านรีวิวทั้งหมด";color:var(--muted);font-size:9px;font-weight:600}.public-review[open] summary{border-bottom:1px solid #ffffff10}.public-review[open] summary q{display:none}.public-review[open] summary::after{content:"ย่อรีวิว"}.public-review p{margin:0;padding:11px;color:#ededf0;font-size:12px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
     .guest{margin:42px 0 0;padding:26px;border:1px solid #8a642d;background:linear-gradient(135deg,#2c1c11,#17100c);border-radius:24px;display:flex;align-items:center;justify-content:space-between;gap:20px}.guest h2{font-size:20px;margin:0 0 5px}.guest p{color:var(--muted);margin:0}
     .empty,.loading{text-align:center;padding:70px 20px;border:1px dashed var(--line);border-radius:22px;color:var(--muted);grid-column:1/-1}.profile-skeleton{height:220px;border-radius:24px;background:linear-gradient(90deg,#17110d 25%,#241a14 50%,#17110d 75%);background-size:200% 100%;animation:pulse 1.2s infinite}@keyframes pulse{to{background-position:-200% 0}}.error{max-width:560px;margin:80px auto;text-align:center}.error .icon{font-size:58px}
     @media(max-width:650px){
@@ -48,7 +49,7 @@
       main{padding:28px 0 calc(60px + env(safe-area-inset-bottom))}
       .profile-head{align-items:center;gap:14px;margin-bottom:24px}.avatar{width:70px;height:70px;flex:none}.profile-head h1{font-size:27px;overflow-wrap:anywhere}.handle{font-size:14px}
       .stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:18px 0 30px}.stat{padding:12px 8px;text-align:center;border-radius:14px}.stat strong{font-size:22px}.stat span{font-size:10px;line-height:1.3;display:block}
-      .section-title h2{font-size:19px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.movie{border-radius:15px}.info{padding:11px}.info h3{font-size:13px}.meta{font-size:10px}.stars{font-size:10px}
+      .section-title h2{font-size:19px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.movie{border-radius:15px}.info{padding:11px}.info h3{font-size:13px}.meta{font-size:10px}.stars{font-size:10px}.public-review{margin-top:9px;border-radius:11px}.public-review summary{padding:8px}.public-review summary q{-webkit-line-clamp:4;font-size:10px}.public-review p{padding:9px;font-size:11px}
       .guest{margin-top:28px;padding:20px;align-items:stretch;flex-direction:column}.guest h2{font-size:18px}.guest .primary{width:100%;min-height:48px}
       .empty,.loading{padding:48px 14px}.error{margin:50px auto}.error h1{font-size:28px}
     }
@@ -88,7 +89,7 @@
     }, 12000);
   </script>
   <script type="module">
-    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260728-2";
+    import { getPublicProfile, getPublicProfileByUsername, loginWithGoogle, subscribeAuth } from "/firebase-auth.js?v=20260729-1";
     const content=document.getElementById("content"),loginBtn=document.getElementById("loginBtn"),guestInvite=document.getElementById("guestInvite");
     const escapeHtml=value=>String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     const stars=value=>{const rating=Math.min(5,Math.max(0,Math.round((Number(value)||0)*2)/2)),full=Math.floor(rating),half=rating%1!==0;return"★".repeat(full)+(half?"½":"")+"☆".repeat(5-Math.ceil(rating))};
@@ -131,7 +132,12 @@
           <section class="grid">${movies.length?movies.map(movie=>`
             <article class="movie">
               ${movie.posterImg?`<img class="poster" src="${escapeHtml(movie.posterImg)}" alt="${escapeHtml(movie.title)}" loading="lazy" decoding="async">`:`<div class="placeholder">🎬</div>`}
-              <div class="info"><h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3><div class="meta">${date(movie.watchDate)} · ดู ${Math.max(1,Number(movie.watchCount)||0)} ครั้ง</div><div class="stars">${stars(movie.rating)}</div></div>
+              <div class="info">
+                <h3>${escapeHtml(movie.title||"ไม่มีชื่อหนัง")}</h3>
+                <div class="meta">${date(movie.watchDate)} · ดู ${Math.max(1,Number(movie.watchCount)||0)} ครั้ง</div>
+                <div class="stars">${stars(movie.rating)}</div>
+                ${movie.note?`<details class="public-review"><summary><span>รีวิวของเจ้าของโปรไฟล์</span><q>${escapeHtml(movie.note)}</q></summary><p>${escapeHtml(movie.note)}</p></details>`:""}
+              </div>
             </article>`).join(""):`<div class="empty">บัญชีนี้ยังไม่มีภาพยนตร์ในคอลเลกชัน</div>`}</section>`;
       }catch(error){
         const timedOut=error?.message==="LOAD_TIMEOUT";

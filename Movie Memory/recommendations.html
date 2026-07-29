@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Movie Memory">
+  <link rel="manifest" href="/movie-memory-assets/manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="/movie-memory-assets/app-icons/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/movie-memory-assets/app-icons/favicon-32.png">
+  <title>แนะนำหนังสำหรับคุณ — Movie Memory</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://accounts.google.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  <link id="featurePageStyles" rel="stylesheet" href="./feature-pages.css?v=20260728-6">
+  <link id="recommendationStyles" rel="stylesheet" href="./recommendations.css?v=20260729-1">
+  <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-2">
+  <script>
+    const recommendationAssetBase = window.location.protocol === "file:" ? "./" : "/movie-memory-assets/";
+    if (window.location.protocol !== "file:") {
+      document.getElementById("featurePageStyles").href = "/movie-memory-assets/feature-pages.css?v=20260728-6";
+      document.getElementById("recommendationStyles").href = "/movie-memory-assets/recommendations.css?v=20260729-1";
+      document.getElementById("preferencesStyles").href = "/movie-memory-assets/preferences.css?v=20260728-2";
+    }
+    document.write(`<script src="${recommendationAssetBase}preferences.js?v=20260729-2"><\/script>`);
+    document.write(`<script src="${recommendationAssetBase}auth-feedback.js?v=20260728-1"><\/script>`);
+  </script>
+</head>
+<body>
+  <header class="page-header">
+    <div class="page-shell">
+      <nav class="page-nav">
+        <a class="page-brand back-to-memory" href="./index.html">
+          <span class="page-logo"><img src="./assets/feature-icons/brand.jpg?v=20260728-1" data-hosted-src="/movie-memory-assets/feature-icons/brand.jpg?v=20260728-1" alt=""></span>
+          <span>Movie Memory</span>
+        </a>
+        <div class="page-actions">
+          <div class="account-badge" id="recommendationAccount" hidden>
+            <img id="recommendationAvatar" alt="">
+            <span id="recommendationUserName"></span>
+          </div>
+          <button class="page-button primary login-copy" id="recommendationLoginBtn" type="button" hidden>G <span>เข้าสู่ระบบ</span></button>
+          <a class="page-button back-to-memory" href="./index.html">← คอลเลกชัน</a>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="page-main page-shell recommendation-page">
+    <section class="recommendation-hero">
+      <div>
+        <div class="page-kicker">✦ FOR YOUR NEXT MOVIE</div>
+        <h1 class="page-title">หนังเรื่องต่อไป<br><em>ที่คุณน่าจะชอบ</em></h1>
+        <p class="page-intro">คัดจากหนังที่คุณเคยดูและคะแนนที่ให้ พร้อมเติมหนังใหม่และเรื่องน่าสนใจจาก TMDB</p>
+        <div class="recommendation-summary" id="recommendationSummary" aria-live="polite">
+          <span class="summary-spinner" aria-hidden="true"></span>
+          <span>กำลังอ่านรสนิยมการดูหนังของคุณ…</span>
+        </div>
+      </div>
+      <div class="recommendation-hero-art">
+        <img src="./assets/feature-icons/recommendations.jpg?v=20260729-1" data-hosted-src="/movie-memory-assets/feature-icons/recommendations.jpg?v=20260729-1" alt="">
+      </div>
+    </section>
+
+    <section class="taste-panel" id="tastePanel" hidden>
+      <div>
+        <small>แนวที่คุณน่าจะชอบ</small>
+        <div class="taste-genres" id="tasteGenres"></div>
+      </div>
+      <p id="tasteExplanation"></p>
+    </section>
+
+    <div class="recommendation-toolbar">
+      <div>
+        <h2 id="recommendationHeading">รายการแนะนำสำหรับคุณ</h2>
+        <p id="recommendationSource">กำลังเตรียมรายการ…</p>
+      </div>
+      <button class="page-button" id="refreshRecommendationsBtn" type="button">↻ สุ่มชุดใหม่</button>
+    </div>
+
+    <section class="recommendation-grid" id="recommendationGrid" aria-live="polite">
+      <article class="recommendation-skeleton"></article>
+      <article class="recommendation-skeleton"></article>
+      <article class="recommendation-skeleton"></article>
+      <article class="recommendation-skeleton"></article>
+    </section>
+
+    <section class="recommendation-error" id="recommendationError" hidden>
+      <span>🎞️</span>
+      <h2>ยังเตรียมคำแนะนำไม่สำเร็จ</h2>
+      <p>การเชื่อมต่อข้อมูลหนังอาจขัดข้องชั่วคราว ลองอีกครั้งได้เลย</p>
+      <button class="page-button primary" id="retryRecommendationsBtn" type="button">ลองอีกครั้ง</button>
+    </section>
+
+    <p class="recommendation-credit">ข้อมูลภาพยนตร์และโปสเตอร์โดย TMDB · คำแนะนำคำนวณจากคอลเลกชันของคุณภายใน Movie Memory</p>
+  </main>
+
+  <script>
+    if (window.location.protocol !== "file:") {
+      document.querySelectorAll("[data-hosted-src]").forEach(image => image.src = image.dataset.hostedSrc);
+      document.querySelectorAll(".back-to-memory").forEach(link => link.href = "/Movie%20Memory/");
+    }
+    document.write(`<script src="${recommendationAssetBase}recommendations.js?v=20260729-1"><\/script>`);
+  </script>
+</body>
+</html>

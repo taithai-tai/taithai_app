@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260728-2";
+    } from "../firebase-auth.js?v=20260729-1";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -31,7 +31,7 @@
     let movieCollectionUnsubscribe = null;
     const profileSearchCache = new Map();
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
-    const movieSyncKey = uid => `movie_memory_public_sync_v2_${uid}`;
+    const movieSyncKey = uid => `movie_memory_public_sync_v3_${uid}`;
     const accountMoviesKey = uid => `movie_memory_collection_${uid}`;
     const pendingSyncKey = uid => `movie_memory_pending_sync_${uid}`;
     const legacyOwnerKey = "movie_memory_legacy_owner_uid";
@@ -151,6 +151,7 @@
           <div class="social-movie-info">
             <strong>${escapeHtml(movie.title || "ไม่มีชื่อหนัง")}</strong>
             <small>${formatDate(movie.watchDate)} · ดู ${Math.max(1, Number(movie.watchCount) || (Array.isArray(movie.viewings) ? movie.viewings.length : 0))} ครั้ง · ${formatStars(movie.rating)}</small>
+            ${movie.note ? `<p class="social-movie-review">“${escapeHtml(movie.note)}”</p>` : ''}
           </div>
         </article>
       `).join("") : `

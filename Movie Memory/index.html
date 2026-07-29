@@ -19,14 +19,14 @@
   <link rel="preconnect" href="https://accounts.google.com">
   <link rel="dns-prefetch" href="//accounts.google.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260728-11">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260729-2">
   <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-2">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260728-11';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260729-2';
       document.getElementById('preferencesStyles').href = '/movie-memory-assets/preferences.css?v=20260728-2';
     }
-    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260728-3"><\/script>`);
+    document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260729-2"><\/script>`);
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}auth-feedback.js?v=20260728-1"><\/script>`);
   </script>
 </head>
@@ -113,6 +113,13 @@
               <span class="feature-shortcut-copy">
                 <strong data-mm-i18n="feature.game.title">เกมเลือกหนัง</strong>
                 <small data-mm-i18n="feature.game.copy">เลือกซ้าย–ขวา หาหนังอันดับหนึ่ง</small>
+              </span>
+            </a>
+            <a class="feature-shortcut-card recommendations-page-link" href="./recommendations.html">
+              <img class="feature-shortcut-icon recommendations" src="./assets/feature-icons/recommendations.jpg?v=20260729-1" data-hosted-src="/movie-memory-assets/feature-icons/recommendations.jpg?v=20260729-1" alt="">
+              <span class="feature-shortcut-copy">
+                <strong data-mm-i18n="feature.recommendations.title">แนะนำหนัง</strong>
+                <small data-mm-i18n="feature.recommendations.copy">คัดเรื่องที่คุณน่าจะชอบ</small>
               </span>
             </a>
             <a class="feature-shortcut-card dashboard-page-link" href="./dashboard.html">
@@ -281,8 +288,8 @@
     <form id="movieForm" style="display:none">
       <div class="form-container">
         <input type="hidden" id="formMovieId">
+        <input type="hidden" id="formViewingId">
         <input type="hidden" id="formTmdbId">
-        <input type="hidden" id="formReleaseDate">
         <input type="hidden" id="formPosterData">
         <input type="hidden" id="formTicketData">
 
@@ -300,7 +307,10 @@
               
               <!-- Poster Selection Card (Strictly Selected from Catalog - NOT User Upload!) -->
               <div>
-                <label>โปสเตอร์หนัง (เลือกจากรายชื่อหนัง)</label>
+                <div class="media-field-heading">
+                  <label>โปสเตอร์หนัง (เลือกจากรายชื่อหนัง)</label>
+                  <button class="media-clear-btn" id="clearPosterBtn" type="button">เอารูปออก</button>
+                </div>
                 <div class="upload-box-card" id="posterSelectZone" title="คลิกเพื่อค้นหาและเลือกโปสเตอร์หนัง">
                   <img id="posterPreviewImg" class="upload-preview-thumb" style="display:none" alt="Poster">
                   <div class="upload-overlay-info" id="posterOverlayInfo">
@@ -313,7 +323,10 @@
 
               <!-- Ticket Image Selection (User Photo Upload) -->
               <div>
-                <label>รูปตั๋วหนัง / ภาพความทรงจำ (อัปโหลดรูปแนวตั้ง)</label>
+                <div class="media-field-heading">
+                  <label>รูปตั๋วหนัง / ภาพความทรงจำ (อัปโหลดรูปแนวตั้ง)</label>
+                  <button class="media-clear-btn" id="clearTicketBtn" type="button">เอารูปออก</button>
+                </div>
                 <div class="upload-box-card" id="ticketUploadZone">
                   <input type="file" id="ticketFileInput" accept="image/*" hidden>
                   <img id="ticketPreviewImg" class="upload-preview-thumb" style="display:none" alt="Ticket">
@@ -332,6 +345,10 @@
           <div class="form-col-full">
             <label for="formTitleInput">ชื่อภาพยนตร์</label>
             <input class="control" id="formTitleInput" placeholder="พิมพ์ชื่อภาพยนตร์..." maxlength="120" required>
+          </div>
+          <div class="form-col-full">
+            <label for="formReleaseDate">วันที่เข้าฉาย</label>
+            <input class="control" id="formReleaseDate" type="date">
           </div>
 
           <div class="form-section-title">วันที่และสถานที่รับชม</div>
@@ -440,6 +457,23 @@
         <div class="inspect-quote" id="inspectNoteTxt"></div>
       </div>
 
+      <section class="watch-availability-section" aria-labelledby="watchAvailabilityTitle">
+        <div class="watch-availability-heading">
+          <div>
+            <strong id="watchAvailabilityTitle" data-mm-i18n="watch.title">รับชมได้ที่ไหน</strong>
+            <small data-mm-i18n="watch.subtitle">ช่องทางออนไลน์ที่มีข้อมูลในประเทศไทย</small>
+          </div>
+          <span class="watch-region-badge" aria-label="ประเทศไทย">🇹🇭 TH</span>
+        </div>
+        <div class="watch-provider-content" id="inspectWatchProviders" aria-live="polite">
+          <div class="watch-provider-status is-loading" data-mm-i18n="watch.loading">กำลังค้นหาช่องทางรับชม…</div>
+        </div>
+        <div class="watch-provider-footer">
+          <span data-mm-i18n="watch.source">ข้อมูลผู้ให้บริการโดย JustWatch ผ่าน TMDB</span>
+          <a id="inspectProviderLink" href="#" target="_blank" rel="noopener noreferrer" hidden data-mm-i18n="watch.all">ดูตัวเลือกทั้งหมด ↗</a>
+        </div>
+      </section>
+
       <div class="watch-history-section">
         <div class="watch-history-heading">
           <div><strong>ประวัติการดู</strong><small>แต่ละครั้งถูกเก็บแยกจากกัน</small></div>
@@ -452,7 +486,7 @@
     <div class="modal-footer">
       <div class="inspect-record-actions">
         <button class="btn btn-ghost inspect-delete-btn" id="inspectDeleteBtn" type="button">🗑️ ลบหนัง</button>
-        <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไขรีวิว</button>
+        <button class="btn btn-ghost" id="inspectEditBtn" type="button">✏️ แก้ไขข้อมูลหนัง</button>
       </div>
       <div class="inspect-footer-actions">
         <button class="btn inspect-share-btn" id="inspectShareBtn" type="button">✦ แชร์ลง IG Story</button>
@@ -464,7 +498,7 @@
   <dialog id="rewatchModal">
     <div class="modal-header">
       <div>
-        <h2>เพิ่มการดูอีกครั้ง</h2>
+        <h2 id="rewatchModalTitle">เพิ่มการดูอีกครั้ง</h2>
         <p class="dialog-subtitle" id="rewatchMovieTitle"></p>
       </div>
       <button class="close-modal-btn" id="closeRewatchBtn" type="button" title="กลับ">←</button>
@@ -504,7 +538,10 @@
             <textarea class="control" id="rewatchMemoryInput" placeholder="เขียนบรรยากาศหรือความทรงจำของครั้งนี้..." maxlength="800"></textarea>
           </div>
           <div class="form-col-full">
-            <label>รูปตั๋ว / ภาพความทรงจำของครั้งนี้</label>
+            <div class="media-field-heading">
+              <label>รูปตั๋ว / ภาพความทรงจำของครั้งนี้</label>
+              <button class="media-clear-btn" id="clearRewatchTicketBtn" type="button">เอารูปออก</button>
+            </div>
             <div class="rewatch-ticket-upload" id="rewatchTicketUploadZone">
               <input type="file" id="rewatchTicketFileInput" accept="image/*" hidden>
               <img id="rewatchTicketPreviewImg" alt="รูปตั๋ว" hidden>
@@ -631,6 +668,9 @@
       document.querySelectorAll('.dashboard-page-link').forEach(link => {
         link.href = '/Movie-Memory/dashboard/';
       });
+      document.querySelectorAll('.recommendations-page-link').forEach(link => {
+        link.href = '/Movie-Memory/recommendations/';
+      });
       document.querySelectorAll('.tutorial-page-link').forEach(link => {
         link.href = '/Movie-Memory/tutorial/';
       });
@@ -654,8 +694,8 @@
       });
     }
     document.write(`<script src="${authBridgePath}"><\/script>`);
-    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260728-4"><\/script>`);
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260728-5"><\/script>`);
+    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260729-1"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260729-3"><\/script>`);
   </script>
 </body>
 </html>

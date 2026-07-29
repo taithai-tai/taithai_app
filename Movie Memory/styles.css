@@ -133,6 +133,10 @@
     .social-movie-info { padding:11px; }
     .social-movie-info strong { display:block; font-size:13px; line-height:1.35; }
     .social-movie-info small { color:var(--muted); }
+    .social-movie-review {
+      margin:9px 0 0; display:-webkit-box; overflow:hidden; -webkit-box-orient:vertical; -webkit-line-clamp:4;
+      color:#d1d1d6; font-size:11px; line-height:1.55; white-space:pre-wrap;
+    }
     #profileModal { width:min(1050px,calc(100% - 24px)); height:min(820px,88dvh); }
     .profile-dialog-body { flex:1; min-height:0; }
     #publicProfileView { min-height:100%; }
@@ -551,6 +555,15 @@
 
     /* Media Row (Poster Selected From Catalog + Ticket Uploaded by User) */
     .media-upload-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .media-field-heading {
+      min-height:26px; display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+    }
+    .media-field-heading label { margin-bottom:6px; }
+    .media-clear-btn {
+      flex:none; padding:2px 0; border:0; background:transparent; color:var(--muted);
+      font:inherit; font-size:10px; font-weight:600; cursor:pointer;
+    }
+    .media-clear-btn:hover { color:var(--danger); }
     .upload-box-card {
       border: 2px dashed var(--border); border-radius: var(--radius); padding: 12px; text-align: center;
       background: var(--surface); cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
@@ -623,6 +636,58 @@
     .inspect-meta-item strong { display: block; font-size: 11px; color: var(--muted); text-transform: uppercase; }
     .inspect-meta-item span { font-size: 14px; font-weight: 600; color: var(--cream); }
     .inspect-quote { background: var(--surface-card); padding: 16px; border-radius: var(--radius); border-left: 3px solid var(--gold); font-style: italic; color: #e6d8cb; }
+    .watch-availability-section {
+      display:grid; gap:14px; padding:17px; border:1px solid var(--border); border-radius:20px;
+      background:linear-gradient(145deg,rgba(35,31,27,.9),rgba(25,23,21,.92));
+      box-shadow:inset 0 1px rgba(255,255,255,.035);
+    }
+    .watch-availability-heading { display:flex; align-items:center; justify-content:space-between; gap:14px; }
+    .watch-availability-heading strong, .watch-availability-heading small { display:block; }
+    .watch-availability-heading strong { font-size:15px; color:var(--cream); }
+    .watch-availability-heading small { margin-top:2px; color:var(--muted); font-size:10px; }
+    .watch-region-badge {
+      flex:none; display:inline-flex; align-items:center; min-height:28px; padding:5px 9px;
+      border:1px solid rgba(255,255,255,.1); border-radius:999px; background:rgba(255,255,255,.055);
+      color:#d1d1d6; font-size:10px; font-weight:700; letter-spacing:.04em;
+    }
+    .watch-provider-content { display:grid; gap:13px; min-height:46px; }
+    .watch-provider-group { display:grid; gap:8px; }
+    .watch-provider-group > strong { color:var(--gold); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+    .watch-provider-list { display:flex; flex-wrap:wrap; gap:8px; }
+    .watch-provider-pill {
+      min-width:0; max-width:220px; min-height:44px; display:inline-flex; align-items:center; gap:9px;
+      padding:5px 11px 5px 5px; border:1px solid rgba(255,255,255,.095); border-radius:13px;
+      background:rgba(255,255,255,.05); color:#f5f5f7; font-size:11px; font-weight:600;
+    }
+    .watch-provider-pill > img, .watch-provider-logo-fallback {
+      width:34px; height:34px; flex:none; border-radius:9px; background:#f5f5f7;
+    }
+    .watch-provider-pill > img { display:block; object-fit:cover; }
+    .watch-provider-logo-fallback { display:grid; place-items:center; color:#1c1c1e; font-size:12px; }
+    .watch-provider-pill > span:last-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .watch-provider-footer {
+      padding-top:11px; border-top:1px solid rgba(255,255,255,.075);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      color:var(--muted-dark); font-size:9px; line-height:1.4;
+    }
+    .watch-provider-footer a { color:var(--gold); font-weight:700; text-decoration:none; white-space:nowrap; }
+    .watch-provider-status {
+      min-height:64px; display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:9px;
+      padding:12px; border:1px dashed rgba(255,255,255,.1); border-radius:14px;
+      color:var(--muted); text-align:center;
+    }
+    .watch-provider-status > span { display:grid; place-items:center; width:24px; height:24px; }
+    .watch-provider-status strong { font-size:11px; font-weight:500; }
+    .watch-provider-status i {
+      width:18px; height:18px; border:2px solid rgba(255,255,255,.16); border-top-color:var(--gold);
+      border-radius:50%; animation:watch-provider-spin .8s linear infinite;
+    }
+    .watch-provider-retry {
+      min-height:30px; padding:5px 11px; border:1px solid rgba(255,255,255,.12);
+      border-radius:999px; background:rgba(255,255,255,.075); color:var(--cream);
+      font-family:inherit; font-size:10px; font-weight:600; cursor:pointer;
+    }
+    @keyframes watch-provider-spin { to { transform:rotate(360deg); } }
     .watch-count-pill {
       display:inline-flex; margin-left:8px; padding:3px 9px; border-radius:999px;
       background:rgba(255,181,71,.15); border:1px solid rgba(255,181,71,.35);
@@ -647,6 +712,13 @@
     .watch-history-top { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
     .watch-history-top strong { font-size:13px; }
     .watch-history-top span { color:var(--gold); font-size:10px; font-weight:700; }
+    .watch-history-actions { display:flex; align-items:center; gap:8px; }
+    .watch-history-edit {
+      min-height:28px; padding:4px 10px; border:1px solid rgba(255,255,255,.11); border-radius:999px;
+      background:rgba(255,255,255,.055); color:var(--cream); font:inherit; font-size:9px; font-weight:700;
+      cursor:pointer;
+    }
+    .watch-history-edit:hover { border-color:var(--gold); color:var(--gold); background:rgba(255,181,71,.08); }
     .watch-history-meta { display:flex; flex-wrap:wrap; gap:6px 12px; margin-top:5px; color:var(--muted); font-size:11px; }
     .watch-history-content p { margin-top:9px; color:#e6d8cb; font-size:12px; white-space:pre-wrap; }
     .watch-history-content img { width:72px; aspect-ratio:2/3; object-fit:cover; margin-top:10px; border-radius:9px; border:1px solid var(--border); }
@@ -878,6 +950,10 @@
       .ticket-inspect-title-group { min-width:0; }
       .ticket-inspect-title-group h2 { font-size:21px; overflow-wrap:anywhere; }
       .ticket-inspect-body { flex:1; min-height:0; padding:18px 16px; gap:14px; }
+      .watch-availability-section { padding:14px; border-radius:17px; }
+      .watch-provider-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+      .watch-provider-pill { width:100%; max-width:none; padding-right:8px; }
+      .watch-provider-footer { align-items:flex-start; }
       .inspect-meta-grid { grid-template-columns:1fr 1fr; padding:13px; gap:10px; }
       .inspect-meta-item span { font-size:12px; overflow-wrap:anywhere; }
       .poster-picker-body { flex:1; min-height:0; padding:16px 14px calc(22px + env(safe-area-inset-bottom)); }
@@ -1146,6 +1222,7 @@
     .ticket-stub-card,
     .social-movie,
     .watch-history-card,
+    .watch-availability-section,
     .inspect-meta-grid,
     .inspect-quote {
       border-color: rgba(255, 255, 255, .105);
