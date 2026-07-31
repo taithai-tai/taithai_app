@@ -5,6 +5,15 @@ import { fileURLToPath } from 'node:url';
 import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
+try {
+  if (typeof process.loadEnvFile === 'function') {
+    process.loadEnvFile(path.join(root, '.env.local'));
+  }
+} catch (error) {
+  if (error?.code !== 'ENOENT') {
+    console.warn('Local environment file could not be loaded.');
+  }
+}
 const port = Number(process.env.PORT) || 3000;
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
