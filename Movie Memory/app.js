@@ -721,27 +721,14 @@
     }
 
     function ticketMovieMatchScore(movie, ticket) {
-      const wantedTitles = [ticket.title, ticket.originalTitle]
-        .map(normalizeCatalogTitle)
-        .filter(Boolean);
-      const availableTitles = [movie.title, movie.original_title]
-        .map(normalizeCatalogTitle)
-        .filter(Boolean);
-      let score = 0;
-      wantedTitles.forEach(wanted => {
-        availableTitles.forEach(available => {
-          if (wanted === available) score = Math.max(score, 120);
-          else if (wanted.startsWith(available) || available.startsWith(wanted)) score = Math.max(score, 92);
-          else if (wanted.includes(available) || available.includes(wanted)) score = Math.max(score, 72);
-        });
-      });
-      return score + Math.min(12, Math.log10(Math.max(1, Number(movie.popularity) || 1)) * 4);
+      return window.MovieMemoryTicketResolver?.scoreMovie(movie, ticket).score || 0;
     }
 
     async function findTicketMovie(ticket, signal) {
-      const queries = [...new Set([ticket.title, ticket.originalTitle].map(value => safeText(value, 120)).filter(Boolean))];
-      const results = [];
-      const knownIds = new Set();
+      const resolver = window.MovieMemoryTicketResolver;
+      if (!resolver) return null;
+      const queries = resolver.buildSearchQueries(ticket);
+      const resultMap = new Map();
 
       for (const query of queries) {
         const response = await fetch(
@@ -750,24 +737,50 @@
         );
         if (!response.ok) continue;
         const payload = await response.json();
-        (payload.results || []).slice(0, 10).forEach(movie => {
-          if (!knownIds.has(movie.id)) {
-            knownIds.add(movie.id);
-            results.push(movie);
+        (payload.results || []).slice(0, 10).forEach((movie, searchRank) => {
+          const existing = resultMap.get(movie.id);
+          if (existing) {
+            existing._ticketSearchRank = Math.min(existing._ticketSearchRank, searchRank);
+            existing._ticketAlternativeTitles = [...new Set([
+              ...(existing._ticketAlternativeTitles || []),
+              movie.title,
+              movie.original_title
+            ].filter(Boolean))];
+          } else {
+            resultMap.set(movie.id, {
+              ...movie,
+              _ticketSearchRank: searchRank,
+              _ticketAlternativeTitles: [movie.title, movie.original_title].filter(Boolean)
+            });
           }
         });
-        if (results.some(movie => ticketMovieMatchScore(movie, ticket) >= 110)) break;
+        const currentBest = resolver.selectBestMovie([...resultMap.values()], ticket);
+        if (currentBest?.titleScore >= 146) break;
       }
 
-      return results
-        .map(movie => ({ movie, score: ticketMovieMatchScore(movie, ticket) }))
-        .sort((first, second) => second.score - first.score)[0]?.score >= 68
-        ? results.map(movie => ({ movie, score: ticketMovieMatchScore(movie, ticket) }))
-            .sort((first, second) => second.score - first.score)[0].movie
-        : null;
+      const results = [...resultMap.values()];
+      const enrichmentCandidates = resolver.rankMovies(results, ticket).slice(0, 5);
+      await Promise.all(enrichmentCandidates.map(async ({ movie }) => {
+        try {
+          const response = await fetch(
+            `${BASE_URL}/movie/${encodeURIComponent(movie.id)}/alternative_titles?api_key=${API_KEY}`,
+            { signal }
+          );
+          if (!response.ok) return;
+          const payload = await response.json();
+          movie._ticketAlternativeTitles = [...new Set([
+            ...(movie._ticketAlternativeTitles || []),
+            ...(payload.titles || []).map(item => safeText(item?.title, 140)).filter(Boolean)
+          ])];
+        } catch (error) {
+          if (error?.name === 'AbortError') throw error;
+        }
+      }));
+
+      return resolver.selectBestMovie(results, ticket);
     }
 
-    function applyTicketDetails(ticket, { includeTitle = true } = {}) {
+    function applyTicketDetails(ticket, { includeTitle = false } = {}) {
       const detectedTitle = ticket.title || ticket.originalTitle;
       if (includeTitle && detectedTitle) $('formTitleInput').value = detectedTitle;
       if (ticket.watchDate) $('formWatchDateInput').value = ticket.watchDate;
@@ -839,7 +852,7 @@
           return;
         }
 
-        applyTicketDetails(ticket);
+        applyTicketDetails(ticket, { includeTitle: false });
         const detectedTitle = ticket.title || ticket.originalTitle;
         if (!detectedTitle) {
           setTicketAnalysisStatus(
@@ -853,27 +866,32 @@
 
         setTicketAnalysisStatus(
           'loading',
-          `พบชื่อ “${detectedTitle}”`,
-          'กำลังจับคู่กับข้อมูลภาพยนตร์และโปสเตอร์…'
+          `อ่านข้อความบนตั๋วได้ว่า “${detectedTitle}”`,
+          'กำลังตรวจชื่อจริง ชื่อทางเลือก ปีฉาย และโปสเตอร์กับ TMDB…'
         );
-        const matchedMovie = await findTicketMovie(ticket, controller.signal);
-        if (matchedMovie) {
+        const matchedMovieResult = await findTicketMovie(ticket, controller.signal);
+        if (matchedMovieResult) {
+          const matchedMovie = matchedMovieResult.movie;
           if (!catalogMoviesList.some(movie => movie.id === matchedMovie.id)) catalogMoviesList.push(matchedMovie);
           const applied = applyCatalogMovieToForm(matchedMovie, { allowExisting: true, fromTicket: true });
           applyTicketDetails(ticket, { includeTitle: false });
+          const verifiedTitle = matchedMovie.title || matchedMovie.original_title;
           setTicketAnalysisStatus(
             'success',
-            applied?.isNewViewing ? 'พบหนังเดิมและเตรียมเพิ่มการดูครั้งใหม่แล้ว' : 'อ่านตั๋วและเลือกหนังให้แล้ว',
-            'ตรวจสอบข้อมูลด้านล่าง แล้วกดบันทึกได้เลย ภาพตั๋วจะอยู่ในความทรงจำครั้งนี้'
+            applied?.isNewViewing ? 'พบหนังเดิมและเตรียมเพิ่มการดูครั้งใหม่แล้ว' : 'อ่านตั๋วและยืนยันชื่อหนังแล้ว',
+            `ยืนยันจาก TMDB ว่าเป็น “${verifiedTitle}” ตรวจสอบข้อมูลด้านล่างแล้วกดบันทึกได้เลย`
           );
         } else {
-          $('selectedFilmTitleTxt').textContent = `🎟️ ${detectedTitle}`;
-          $('selectedFilmSubTxt').textContent = 'อ่านชื่อจากตั๋วแล้ว · ยังไม่พบโปสเตอร์ที่ตรงกัน';
+          $('formTmdbId').value = '';
+          $('formTitleInput').value = '';
+          $('formReleaseDate').value = '';
+          $('selectedFilmTitleTxt').textContent = `🎟️ ข้อความบนตั๋ว: ${detectedTitle}`;
+          $('selectedFilmSubTxt').textContent = 'ยังไม่ใส่เป็นชื่อหนัง เพราะผลค้นหายังไม่มั่นใจ';
           $('selectedFilmBanner').style.display = 'block';
           setTicketAnalysisStatus(
             'warning',
-            'อ่านข้อมูลตั๋วสำเร็จ แต่ยังไม่พบโปสเตอร์',
-            'ตรวจสอบชื่อหนังหรือกดช่องโปสเตอร์เพื่อค้นหาเอง แล้วบันทึกต่อได้เลย'
+            'ยังยืนยันชื่อหนังจริงไม่ได้',
+            'ระบบจะไม่เดาชื่อให้ผิด กรุณากดช่องโปสเตอร์แล้วเลือกหนังจากผลค้นหา TMDB'
           );
         }
       } catch (error) {

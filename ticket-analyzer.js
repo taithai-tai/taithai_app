@@ -17,6 +17,14 @@ const TICKET_SCHEMA = {
       type: 'string',
       description: 'English or original-language movie title when clearly identifiable, otherwise an empty string.'
     },
+    titleCandidates: {
+      type: 'array',
+      description: 'Up to five likely official movie titles or database search queries inferred from the visible ticket title. Exclude cinema formats and language labels.',
+      items: {
+        type: 'string'
+      },
+      maxItems: 5
+    },
     watchDate: {
       type: 'string',
       description: 'Screening date in YYYY-MM-DD using the Gregorian calendar, otherwise an empty string.'
@@ -48,6 +56,7 @@ const TICKET_SCHEMA = {
     'isMovieTicket',
     'title',
     'originalTitle',
+    'titleCandidates',
     'watchDate',
     'cinema',
     'screen',
@@ -94,10 +103,14 @@ export function parseTicketImageDataUrl(value) {
 
 export function normalizeTicketResult(value) {
   const result = value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  const titleCandidates = Array.isArray(result.titleCandidates)
+    ? [...new Set(result.titleCandidates.map(value => cleanText(value, 120)).filter(Boolean))].slice(0, 5)
+    : [];
   return {
     isMovieTicket: result.isMovieTicket === true,
     title: cleanText(result.title, 120),
     originalTitle: cleanText(result.originalTitle, 120),
+    titleCandidates,
     watchDate: cleanDate(result.watchDate),
     cinema: cleanText(result.cinema, 100),
     screen: cleanText(result.screen, 40),
@@ -140,6 +153,7 @@ export async function analyzeTicketImage({
   const prompt = [
     'Inspect this image as a movie-ticket data extraction task.',
     'Read Thai and English text. Never invent missing values.',
+    'Keep title as the text visible on the ticket, then provide likely official movie-name spellings in titleCandidates for database lookup.',
     'A booking confirmation or mobile cinema e-ticket counts as a movie ticket.',
     'For Thai Buddhist years, convert to the Gregorian year by subtracting 543.',
     'Return empty strings for fields that are not clearly readable.',

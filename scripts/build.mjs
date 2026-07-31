@@ -42,7 +42,7 @@ for (const entry of entries) {
 const movieMemorySource = path.join(root, 'Movie Memory');
 const movieMemoryAssets = path.join(output, 'movie-memory-assets');
 await mkdir(movieMemoryAssets, { recursive: true });
-for (const asset of ['styles.css', 'app.js', 'account.js', 'account-loader.js', 'auth-feedback.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js', 'recommendations.css', 'recommendations.js', 'preferences.css', 'preferences.js', 'settings.css', 'settings.js']) {
+for (const asset of ['styles.css', 'app.js', 'ticket-movie-resolver.js', 'account.js', 'account-loader.js', 'auth-feedback.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js', 'recommendations.css', 'recommendations.js', 'preferences.css', 'preferences.js', 'settings.css', 'settings.js']) {
   await cp(path.join(movieMemorySource, asset), path.join(movieMemoryAssets, asset));
 }
 await cp(

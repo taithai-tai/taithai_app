@@ -54,7 +54,7 @@ async function resolveFile(requestPath) {
     if (assetName === 'manifest.webmanifest') {
       return path.join(root, 'Movie Memory', 'manifest.webmanifest');
     }
-    if (['styles.css', 'app.js', 'account.js', 'account-loader.js', 'auth-feedback.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js', 'preferences.css', 'preferences.js', 'settings.css', 'settings.js'].includes(assetName)) {
+    if (['styles.css', 'app.js', 'ticket-movie-resolver.js', 'account.js', 'account-loader.js', 'auth-feedback.js', 'game.css', 'game.js', 'feature-pages.css', 'dashboard.js', 'preferences.css', 'preferences.js', 'settings.css', 'settings.js'].includes(assetName)) {
       return path.join(root, 'Movie Memory', assetName);
     }
   }
