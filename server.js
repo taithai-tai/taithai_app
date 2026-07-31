@@ -175,8 +175,8 @@ async function serveTicketAnalysis(req, res) {
     const body = await readJsonBody(req);
     const result = await analyzeTicketImage({
       image: body?.image,
-      apiKey: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || undefined
+      apiKey: process.env.OPENROUTER_API_KEY,
+      model: process.env.OPENROUTER_MODEL || undefined
     });
     res.writeHead(200);
     res.end(JSON.stringify({ result }));

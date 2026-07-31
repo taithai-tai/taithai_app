@@ -1,43 +1,46 @@
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_OPENROUTER_MODEL = 'google/gemma-4-26b-a4b-it:free';
+export const OPENROUTER_FALLBACK_MODEL = 'openrouter/free';
 export const MAX_TICKET_IMAGE_BYTES = 3 * 1024 * 1024;
 
 const TICKET_SCHEMA = {
-  type: 'OBJECT',
+  type: 'object',
   properties: {
     isMovieTicket: {
-      type: 'BOOLEAN',
+      type: 'boolean',
       description: 'True only when the image is a cinema ticket, booking confirmation, or cinema e-ticket.'
     },
     title: {
-      type: 'STRING',
+      type: 'string',
       description: 'The movie title exactly as shown on the ticket. Use an empty string when unreadable.'
     },
     originalTitle: {
-      type: 'STRING',
+      type: 'string',
       description: 'English or original-language movie title when clearly identifiable, otherwise an empty string.'
     },
     watchDate: {
-      type: 'STRING',
+      type: 'string',
       description: 'Screening date in YYYY-MM-DD using the Gregorian calendar, otherwise an empty string.'
     },
     cinema: {
-      type: 'STRING',
+      type: 'string',
       description: 'Cinema chain and branch shown on the ticket, otherwise an empty string.'
     },
     screen: {
-      type: 'STRING',
+      type: 'string',
       description: 'Auditorium, screen, theatre, or cinema number, otherwise an empty string.'
     },
     seat: {
-      type: 'STRING',
+      type: 'string',
       description: 'Seat row and number, otherwise an empty string.'
     },
     showtime: {
-      type: 'STRING',
+      type: 'string',
       description: 'Screening time in 24-hour HH:mm format, otherwise an empty string.'
     },
     confidence: {
-      type: 'NUMBER',
+      type: 'number',
+      minimum: 0,
+      maximum: 1,
       description: 'Overall extraction confidence between 0 and 1.'
     }
   },
@@ -51,7 +54,8 @@ const TICKET_SCHEMA = {
     'seat',
     'showtime',
     'confidence'
-  ]
+  ],
+  additionalProperties: false
 };
 
 function cleanText(value, maxLength) {
@@ -104,9 +108,13 @@ export function normalizeTicketResult(value) {
 }
 
 function responseText(payload) {
-  const parts = payload?.candidates?.[0]?.content?.parts;
-  if (!Array.isArray(parts)) return '';
-  return parts.map(part => typeof part?.text === 'string' ? part.text : '').join('').trim();
+  const content = payload?.choices?.[0]?.message?.content;
+  if (typeof content === 'string') return content.trim();
+  if (!Array.isArray(content)) return '';
+  return content
+    .map(part => typeof part?.text === 'string' ? part.text : '')
+    .join('')
+    .trim();
 }
 
 function parseJsonResponse(text) {
@@ -120,13 +128,15 @@ function parseJsonResponse(text) {
 export async function analyzeTicketImage({
   image,
   apiKey,
-  model = DEFAULT_MODEL,
-  fetchImpl = fetch
+  model = DEFAULT_OPENROUTER_MODEL,
+  fallbackModel = OPENROUTER_FALLBACK_MODEL,
+  fetchImpl = fetch,
+  timeoutMs = 26000
 }) {
   if (!apiKey) throw new Error('TICKET_ANALYZER_NOT_CONFIGURED');
   const { mimeType, base64 } = parseTicketImageDataUrl(image);
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 26000);
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const prompt = [
     'Inspect this image as a movie-ticket data extraction task.',
     'Read Thai and English text. Never invent missing values.',
@@ -140,26 +150,42 @@ export async function analyzeTicketImage({
   let upstream;
   try {
     upstream = await fetchImpl(
-      `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,
+      'https://openrouter.ai/api/v1/chat/completions',
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': apiKey
+          Authorization: `Bearer ${apiKey}`,
+          'HTTP-Referer': 'https://taithai.app',
+          'X-Title': 'Movie Memory'
         },
         body: JSON.stringify({
-          contents: [{
+          models: [...new Set([model, fallbackModel].filter(Boolean))],
+          messages: [{
             role: 'user',
-            parts: [
-              { text: prompt },
-              { inlineData: { mimeType, data: base64 } }
+            content: [
+              { type: 'text', text: prompt },
+              {
+                type: 'image_url',
+                image_url: {
+                  url: `data:${mimeType};base64,${base64}`
+                }
+              }
             ]
           }],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-            responseSchema: TICKET_SCHEMA
-          }
+          response_format: {
+            type: 'json_schema',
+            json_schema: {
+              name: 'movie_ticket',
+              strict: true,
+              schema: TICKET_SCHEMA
+            }
+          },
+          provider: {
+            require_parameters: true
+          },
+          temperature: 0.1,
+          max_tokens: 500
         }),
         signal: controller.signal
       }
@@ -173,7 +199,7 @@ export async function analyzeTicketImage({
 
   if (!upstream.ok) {
     if (upstream.status === 401 || upstream.status === 403) throw new Error('TICKET_ANALYZER_AUTH_FAILED');
-    if (upstream.status === 429) throw new Error('TICKET_ANALYZER_BUSY');
+    if (upstream.status === 402 || upstream.status === 429) throw new Error('TICKET_ANALYZER_BUSY');
     throw new Error('TICKET_ANALYSIS_UNAVAILABLE');
   }
 

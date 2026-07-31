@@ -23,8 +23,8 @@ export default async function handler(request, response) {
     const body = typeof request.body === 'string' ? JSON.parse(request.body) : request.body;
     const result = await analyzeTicketImage({
       image: body?.image,
-      apiKey: process.env.GEMINI_API_KEY,
-      model: process.env.GEMINI_MODEL || undefined
+      apiKey: process.env.OPENROUTER_API_KEY,
+      model: process.env.OPENROUTER_MODEL || undefined
     });
     response.status(200).json({ result });
   } catch (error) {

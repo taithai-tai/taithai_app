@@ -784,10 +784,10 @@
 
     function ticketAnalysisErrorCopy(code) {
       if (code === 'TICKET_ANALYZER_NOT_CONFIGURED') {
-        return ['ยังไม่ได้เปิดตัวอ่านตั๋ว', 'เพิ่ม GEMINI_API_KEY ใน Environment Variables แล้วลองใหม่ ภาพตั๋วยังถูกเก็บไว้ในแบบฟอร์มแล้ว'];
+        return ['ยังไม่ได้เปิดตัวอ่านตั๋ว', 'เพิ่ม OPENROUTER_API_KEY ใน Environment Variables แล้วลองใหม่ ภาพตั๋วยังถูกเก็บไว้ในแบบฟอร์มแล้ว'];
       }
       if (code === 'TICKET_ANALYZER_AUTH_FAILED') {
-        return ['ตัวอ่านตั๋วยังเชื่อมต่อไม่ได้', 'ตรวจสอบ GEMINI_API_KEY ใน Environment Variables แล้วกด “ลองอ่านอีกครั้ง”'];
+        return ['ตัวอ่านตั๋วยังเชื่อมต่อไม่ได้', 'ตรวจสอบ OPENROUTER_API_KEY ใน Environment Variables แล้วกด “ลองอ่านอีกครั้ง”'];
       }
       if (code === 'TICKET_ANALYZER_BUSY') {
         return ['ตัวอ่านตั๋วกำลังมีผู้ใช้งานมาก', 'รอสักครู่แล้วกด “ลองอ่านอีกครั้ง” หรือกรอกข้อมูลเองได้เลย'];
