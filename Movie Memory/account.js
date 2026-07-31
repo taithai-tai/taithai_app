@@ -9,7 +9,7 @@
       getMyMovieCollection,
       subscribeMyMovieCollection,
       saveMyMovieCollection
-    } from "../firebase-auth.js?v=20260729-1";
+    } from "../firebase-auth.js?v=20260731-1";
 
     const loginBtn = document.getElementById("googleLoginBtn");
     const logoutBtn = document.getElementById("logoutBtn");
@@ -28,6 +28,8 @@
     let myProfile = null;
     let peopleSearchTimer = null;
     let movieSyncTimer = null;
+    let movieSyncPromise = null;
+    let queuedMovieSync = null;
     let movieCollectionUnsubscribe = null;
     const profileSearchCache = new Map();
     const usernameCacheKey = uid => `movie_memory_username_${uid}`;
@@ -49,6 +51,13 @@
       return readStoredCollection("taithai_movie_memory_v2");
     }
 
+    function imageFingerprint(value) {
+      const image = String(value || "");
+      if (/^https:\/\//.test(image)) return image;
+      if (/^data:image\//.test(image)) return `local-image:${image.length}:${image.slice(-48)}`;
+      return "";
+    }
+
     function publicMovieFingerprint(collection) {
       return JSON.stringify((Array.isArray(collection) ? collection : []).map(movie => ({
         id: movie.id,
@@ -63,7 +72,7 @@
         rating: movie.rating,
         note: movie.note,
         posterImg: /^https:\/\//.test(movie.posterImg || "") ? movie.posterImg : "",
-        ticketImg: /^https:\/\//.test(movie.ticketImg || "") ? movie.ticketImg : "",
+        ticketImg: imageFingerprint(movie.ticketImg),
         viewings: (Array.isArray(movie.viewings) ? movie.viewings : []).map(viewing => ({
           id: viewing.id,
           watchDate: viewing.watchDate,
@@ -72,7 +81,7 @@
           seat: viewing.seat,
           companion: viewing.companion,
           memory: viewing.memory,
-          ticketImg: /^https:\/\//.test(viewing.ticketImg || "") ? viewing.ticketImg : "",
+          ticketImg: imageFingerprint(viewing.ticketImg),
           createdAt: viewing.createdAt
         })),
         updatedAt: movie.updatedAt
@@ -116,11 +125,34 @@
         localStorage.removeItem("movie_memory_local_dirty");
         return;
       }
-      await saveMyMovieCollection(user, collection);
-      localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(collection));
-      localStorage.setItem(movieSyncKey(user.uid), fingerprint);
+      const saved = await saveMyMovieCollection(user, collection);
+      const cloudMovies = Array.isArray(saved) ? saved : saved.movies;
+      const syncedCollection = mergeCloudWithLocal(cloudMovies, collection);
+      localStorage.setItem(accountMoviesKey(user.uid), JSON.stringify(syncedCollection));
+      localStorage.setItem("taithai_movie_memory_v2", JSON.stringify(syncedCollection));
+      window.dispatchEvent(new CustomEvent("movie-memory:replace", { detail: syncedCollection }));
+      if (saved?.failedImageUploads) {
+        throw new Error("TICKET_IMAGE_SYNC_FAILED");
+      }
+      localStorage.setItem(movieSyncKey(user.uid), publicMovieFingerprint(syncedCollection));
       localStorage.removeItem(pendingSyncKey(user.uid));
       localStorage.removeItem("movie_memory_local_dirty");
+    }
+
+    function queueMovieSync(user, collection) {
+      queuedMovieSync = { user, collection };
+      if (!movieSyncPromise) {
+        movieSyncPromise = (async () => {
+          while (queuedMovieSync) {
+            const nextSync = queuedMovieSync;
+            queuedMovieSync = null;
+            await syncMoviesIfNeeded(nextSync.user, nextSync.collection);
+          }
+        })().finally(() => {
+          movieSyncPromise = null;
+        });
+      }
+      return movieSyncPromise;
     }
 
     function openUsernameSetup() {
@@ -263,8 +295,10 @@
         localStorage.setItem(pendingSyncKey(signedInUser.uid), publicMovieFingerprint(collection));
       }
       movieSyncTimer = setTimeout(() => {
-        if (signedInUser) syncMoviesIfNeeded(signedInUser, event.detail).catch(() => {
-          showToast("บันทึกในเครื่องแล้ว แต่ซิงก์โปรไฟล์ไม่สำเร็จ");
+        if (signedInUser) queueMovieSync(signedInUser, event.detail).catch(error => {
+          showToast(error?.message === "TICKET_IMAGE_SYNC_FAILED"
+            ? "บันทึกหนังแล้ว แต่รูปตั๋วยังรอซิงก์กับบัญชี"
+            : "บันทึกในเครื่องแล้ว แต่ซิงก์โปรไฟล์ไม่สำเร็จ");
         });
       }, 80);
     });
@@ -370,7 +404,7 @@
           } else {
             if (userEmail) userEmail.textContent = "ตั้งไอดีของคุณ";
           }
-          await syncMoviesIfNeeded(user, syncedCollection);
+          await queueMovieSync(user, syncedCollection);
           movieCollectionUnsubscribe = subscribeMyMovieCollection(user, remoteMovies => {
             if (signedInUser?.uid !== user.uid) return;
             if (localStorage.getItem(pendingSyncKey(user.uid)) !== null) return;

@@ -19,11 +19,11 @@
   <link rel="preconnect" href="https://accounts.google.com">
   <link rel="dns-prefetch" href="//accounts.google.com">
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400..700;1,9..40,400..700&family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260729-2">
+  <link id="movieMemoryStyles" rel="stylesheet" href="./styles.css?v=20260731-1">
   <link id="preferencesStyles" rel="stylesheet" href="./preferences.css?v=20260728-2">
   <script>
     if (window.location.protocol !== 'file:') {
-      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260729-2';
+      document.getElementById('movieMemoryStyles').href = '/movie-memory-assets/styles.css?v=20260731-1';
       document.getElementById('preferencesStyles').href = '/movie-memory-assets/preferences.css?v=20260728-2';
     }
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260729-2"><\/script>`);
@@ -265,10 +265,10 @@
       <button class="choice-card-btn" id="choiceCameraBtn" type="button">
         <div>
           <span class="choice-icon">📷</span>
-          <strong>ถ่ายรูป / อัปโหลดตั๋วหนัง</strong>
-          <span>ใช้ภาพถ่ายตั๋วหนังจริง รูปบรรยากาศ หรือภาพตั๋วจากอุปกรณ์ของคุณ</span>
+          <strong>สแกนตั๋วแล้วเพิ่มหนังอัตโนมัติ</strong>
+          <span>ถ่ายหรือเลือกรูปตั๋ว ระบบจะอ่านชื่อหนัง วันที่ โรงภาพยนตร์ โรงและที่นั่งให้</span>
         </div>
-        <small>อัปโหลดรูปตั๋วหนัง →</small>
+        <small>ถ่ายรูป / เลือกรูปตั๋ว →</small>
       </button>
     </div>
 
@@ -339,6 +339,15 @@
               </div>
 
             </div>
+          </div>
+
+          <div class="ticket-analysis-panel form-col-full" id="ticketAnalysisPanel" hidden aria-live="polite">
+            <div class="ticket-analysis-icon" id="ticketAnalysisIcon" aria-hidden="true">✦</div>
+            <div class="ticket-analysis-copy">
+              <strong id="ticketAnalysisTitle">กำลังอ่านข้อมูลบนตั๋ว…</strong>
+              <span id="ticketAnalysisDescription">ระบบกำลังค้นหาชื่อหนัง วันที่ โรงภาพยนตร์ โรงและที่นั่ง</span>
+            </div>
+            <button class="btn btn-ghost ticket-analysis-retry" id="retryTicketAnalysisBtn" type="button" hidden>ลองอ่านอีกครั้ง</button>
           </div>
 
           <div class="form-section-title">ข้อมูลภาพยนตร์</div>
@@ -694,8 +703,8 @@
       });
     }
     document.write(`<script src="${authBridgePath}"><\/script>`);
-    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260729-1"><\/script>`);
-    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260729-3"><\/script>`);
+    document.write(`<script type="module" src="${movieMemoryAssetBase}account-loader.js?v=20260731-1"><\/script>`);
+    document.write(`<script src="${movieMemoryAssetBase}app.js?v=20260731-1"><\/script>`);
   </script>
 </body>
 </html>

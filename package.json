@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "node server.js",
     "build": "node scripts/build.mjs",
+    "test:ticket": "node scripts/test-ticket-scanner.mjs",
     "start": "node server.js"
   },
   "dependencies": {}

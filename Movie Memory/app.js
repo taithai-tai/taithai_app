@@ -19,6 +19,8 @@
     let posterChoices = [];
     let pendingDeleteMovieId = null;
     let pendingDeleteTimer = null;
+    let ticketAnalysisController = null;
+    let latestTicketAnalysisImage = '';
     const watchProviderCache = new Map();
     let watchProviderRenderVersion = 0;
     let storyEditorState = {
@@ -624,31 +626,266 @@
       }
     }
 
-    function selectCatalogMovie(movieId) {
-      const selected = catalogMoviesList.find(m => m.id === movieId);
-      if (!selected) return;
-      if (alreadyInCollection(selected, $('formMovieId').value)) {
+    function findCollectionMovieForCatalogItem(item) {
+      const tmdbId = Number(item?.id || item?.tmdbId) || null;
+      const title = normalizeCatalogTitle(item?.title || item?.original_title);
+      return movies.find(movie => {
+        if (tmdbId && Number(movie.tmdbId) === tmdbId) return true;
+        return Boolean(title) && normalizeCatalogTitle(movie.title) === title;
+      }) || null;
+    }
+
+    function applyCatalogMovieToForm(selected, { allowExisting = false, fromTicket = false } = {}) {
+      if (!selected) return null;
+      const currentMovieId = $('formMovieId').value;
+      const duplicate = findCollectionMovieForCatalogItem(selected);
+      if (duplicate && duplicate.id !== currentMovieId && !allowExisting) {
         showToast('หนังเรื่องนี้อยู่ในคอลเลกชันแล้ว กด “ดูอีกครั้ง” จากหน้ารายละเอียดได้เลย');
+        return null;
+      }
+
+      const isNewViewing = Boolean(fromTicket && duplicate && duplicate.id !== currentMovieId);
+      if (isNewViewing) {
+        $('formMovieId').value = duplicate.id;
+        $('formViewingId').value = '';
+        $('formRatingVal').value = duplicate.rating || 0;
+        $('formNoteInput').value = duplicate.note || '';
+        updateRatingStarsUI(duplicate.rating || 0);
+      }
+
+      const title = isNewViewing ? duplicate.title : (selected.title || selected.original_title || '');
+      const releaseDate = isNewViewing
+        ? (duplicate.releaseDate || selected.release_date || '')
+        : (selected.release_date || '');
+      const tmdbId = Number(selected.id) || duplicate?.tmdbId || null;
+      const poster = isNewViewing && duplicate.posterImg
+        ? duplicate.posterImg
+        : selected.poster_path
+          ? `${IMG_URL}${selected.poster_path}`
+          : '';
+
+      $('formTmdbId').value = tmdbId || '';
+      $('formTitleInput').value = title;
+      $('formReleaseDate').value = releaseDate;
+      if (poster) {
+        setFormImagePreview(
+          poster,
+          'formPosterData',
+          'posterPreviewImg',
+          'posterOverlayInfo',
+          '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>',
+          '🎬<br><strong>เลือกโปสเตอร์หนัง</strong><br><small style="color:var(--gold)">🔍 ค้นหาและเลือกจากรายชื่อหนัง</small>'
+        );
+      }
+
+      $('selectedFilmTitleTxt').textContent = `🎬 ${title || 'ตรวจสอบชื่อภาพยนตร์'}`;
+      $('selectedFilmSubTxt').textContent = isNewViewing
+        ? `มีในคอลเลกชันแล้ว · กำลังเพิ่มการดูครั้งที่ ${movieWatchCount(duplicate) + 1}`
+        : releaseDate
+          ? `ปีฉาย: ${releaseDate.slice(0, 4)}`
+          : fromTicket
+            ? 'พบหนังจากข้อมูลบนตั๋ว'
+            : '';
+      $('selectedFilmBanner').style.display = 'block';
+
+      if (isNewViewing) {
+        $('modalHeaderTitle').textContent = 'เพิ่มการดูจากตั๋วหนัง';
+        $('saveMovieBtn').textContent = '＋ บันทึกการดูครั้งใหม่';
+      }
+      return { duplicate, isNewViewing };
+    }
+
+    function selectCatalogMovie(movieId) {
+      const selected = catalogMoviesList.find(movie => movie.id === movieId);
+      if (!applyCatalogMovieToForm(selected)) return;
+      switchWizardStep(3);
+    }
+
+    function setTicketAnalysisStatus(state = 'idle', title = '', description = '') {
+      const panel = $('ticketAnalysisPanel');
+      if (!panel) return;
+      if (state === 'idle') {
+        panel.hidden = true;
+        panel.className = 'ticket-analysis-panel form-col-full';
+        $('retryTicketAnalysisBtn').hidden = true;
         return;
       }
 
-      $('formTmdbId').value = selected.id;
-      $('formTitleInput').value = selected.title || '';
-      $('formReleaseDate').value = selected.release_date || '';
-      if (selected.poster_path) {
-        const fullPosterUrl = `${IMG_URL}${selected.poster_path}`;
-        $('formPosterData').value = fullPosterUrl;
-        $('posterPreviewImg').src = fullPosterUrl;
-        $('posterPreviewImg').style.display = 'block';
-        $('posterOverlayInfo').style.display = 'block';
-        $('posterOverlayInfo').innerHTML = '🎬<br><strong>เลือกโปสเตอร์นี้แล้ว</strong><br><small style="color:var(--gold)">🔍 คลิกเพื่อเปลี่ยนเรื่อง</small>';
+      const icons = { loading: '✦', success: '✓', warning: '!', error: '!' };
+      panel.hidden = false;
+      panel.className = `ticket-analysis-panel form-col-full is-${state}`;
+      $('ticketAnalysisIcon').textContent = icons[state] || '✦';
+      $('ticketAnalysisTitle').textContent = title;
+      $('ticketAnalysisDescription').textContent = description;
+      $('retryTicketAnalysisBtn').hidden = state === 'loading' || state === 'success';
+    }
+
+    function ticketMovieMatchScore(movie, ticket) {
+      const wantedTitles = [ticket.title, ticket.originalTitle]
+        .map(normalizeCatalogTitle)
+        .filter(Boolean);
+      const availableTitles = [movie.title, movie.original_title]
+        .map(normalizeCatalogTitle)
+        .filter(Boolean);
+      let score = 0;
+      wantedTitles.forEach(wanted => {
+        availableTitles.forEach(available => {
+          if (wanted === available) score = Math.max(score, 120);
+          else if (wanted.startsWith(available) || available.startsWith(wanted)) score = Math.max(score, 92);
+          else if (wanted.includes(available) || available.includes(wanted)) score = Math.max(score, 72);
+        });
+      });
+      return score + Math.min(12, Math.log10(Math.max(1, Number(movie.popularity) || 1)) * 4);
+    }
+
+    async function findTicketMovie(ticket, signal) {
+      const queries = [...new Set([ticket.title, ticket.originalTitle].map(value => safeText(value, 120)).filter(Boolean))];
+      const results = [];
+      const knownIds = new Set();
+
+      for (const query of queries) {
+        const response = await fetch(
+          `${BASE_URL}/search/movie?api_key=${API_KEY}&language=th-TH&include_adult=false&query=${encodeURIComponent(query)}&page=1`,
+          { signal }
+        );
+        if (!response.ok) continue;
+        const payload = await response.json();
+        (payload.results || []).slice(0, 10).forEach(movie => {
+          if (!knownIds.has(movie.id)) {
+            knownIds.add(movie.id);
+            results.push(movie);
+          }
+        });
+        if (results.some(movie => ticketMovieMatchScore(movie, ticket) >= 110)) break;
       }
 
-      $('selectedFilmTitleTxt').textContent = `🎬 ${selected.title}`;
-      $('selectedFilmSubTxt').textContent = selected.release_date ? `ปีฉาย: ${selected.release_date.slice(0,4)}` : '';
-      $('selectedFilmBanner').style.display = 'block';
+      return results
+        .map(movie => ({ movie, score: ticketMovieMatchScore(movie, ticket) }))
+        .sort((first, second) => second.score - first.score)[0]?.score >= 68
+        ? results.map(movie => ({ movie, score: ticketMovieMatchScore(movie, ticket) }))
+            .sort((first, second) => second.score - first.score)[0].movie
+        : null;
+    }
 
-      switchWizardStep(3);
+    function applyTicketDetails(ticket, { includeTitle = true } = {}) {
+      const detectedTitle = ticket.title || ticket.originalTitle;
+      if (includeTitle && detectedTitle) $('formTitleInput').value = detectedTitle;
+      if (ticket.watchDate) $('formWatchDateInput').value = ticket.watchDate;
+      $('formFormatInput').value = 'โรงภาพยนตร์';
+      if (ticket.cinema) $('formCinemaInput').value = ticket.cinema;
+
+      const screeningDetails = [
+        ticket.screen ? `โรง ${ticket.screen.replace(/^(?:โรง|cinema|screen|theatre)\s*/i, '')}` : '',
+        ticket.seat ? `ที่นั่ง ${ticket.seat.replace(/^(?:ที่นั่ง|seat)\s*/i, '')}` : '',
+        ticket.showtime ? `รอบ ${ticket.showtime}` : ''
+      ].filter(Boolean);
+      if (screeningDetails.length) $('formSeatInput').value = screeningDetails.join(' · ').slice(0, 50);
+    }
+
+    function ticketAnalysisErrorCopy(code) {
+      if (code === 'TICKET_ANALYZER_NOT_CONFIGURED') {
+        return ['ยังไม่ได้เปิดตัวอ่านตั๋ว', 'เพิ่ม GEMINI_API_KEY ใน Environment Variables แล้วลองใหม่ ภาพตั๋วยังถูกเก็บไว้ในแบบฟอร์มแล้ว'];
+      }
+      if (code === 'TICKET_ANALYZER_AUTH_FAILED') {
+        return ['ตัวอ่านตั๋วยังเชื่อมต่อไม่ได้', 'ตรวจสอบ GEMINI_API_KEY ใน Environment Variables แล้วกด “ลองอ่านอีกครั้ง”'];
+      }
+      if (code === 'TICKET_ANALYZER_BUSY') {
+        return ['ตัวอ่านตั๋วกำลังมีผู้ใช้งานมาก', 'รอสักครู่แล้วกด “ลองอ่านอีกครั้ง” หรือกรอกข้อมูลเองได้เลย'];
+      }
+      if (code === 'TICKET_IMAGE_TOO_LARGE') {
+        return ['รูปตั๋วมีขนาดใหญ่เกินไป', 'ลองถ่ายใหม่ให้เห็นเฉพาะตั๋ว หรือเลือกรูปที่มีขนาดเล็กลง'];
+      }
+      if (code === 'FILE_MODE_UNAVAILABLE') {
+        return ['เปิดรูปตั๋วแล้ว แต่ยังอ่านอัตโนมัติไม่ได้', 'การอ่านตั๋วใช้ได้เมื่อเปิด Movie Memory ผ่านเว็บไซต์หรือ localhost ภาพนี้ยังบันทึกได้ตามปกติ'];
+      }
+      return ['อ่านข้อมูลบนตั๋วยังไม่สำเร็จ', 'ภาพตั๋วถูกเพิ่มแล้ว คุณกรอกข้อมูลเองหรือกด “ลองอ่านอีกครั้ง” ได้'];
+    }
+
+    async function analyzeAndApplyTicket(imageDataUrl) {
+      if (!imageDataUrl) return;
+      latestTicketAnalysisImage = imageDataUrl;
+      if (IS_FILE_MODE) {
+        const [title, description] = ticketAnalysisErrorCopy('FILE_MODE_UNAVAILABLE');
+        setTicketAnalysisStatus('warning', title, description);
+        return;
+      }
+
+      ticketAnalysisController?.abort();
+      const controller = new AbortController();
+      ticketAnalysisController = controller;
+      $('saveMovieBtn').disabled = true;
+      setTicketAnalysisStatus(
+        'loading',
+        'กำลังอ่านข้อมูลบนตั๋ว…',
+        'ระบบกำลังค้นหาชื่อหนัง วันที่ โรงภาพยนตร์ โรงและที่นั่ง'
+      );
+
+      try {
+        const response = await fetch('/api/analyze-movie-ticket', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: imageDataUrl }),
+          signal: controller.signal
+        });
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.error || 'TICKET_ANALYSIS_UNAVAILABLE');
+        const ticket = payload.result || {};
+        if (!ticket.isMovieTicket) {
+          setTicketAnalysisStatus(
+            'warning',
+            'ยังไม่พบข้อมูลตั๋วหนังในภาพนี้',
+            'ลองถ่ายให้ตั๋วเต็มภาพและตัวหนังสือชัดขึ้น ภาพเดิมยังถูกเพิ่มไว้แล้ว'
+          );
+          return;
+        }
+
+        applyTicketDetails(ticket);
+        const detectedTitle = ticket.title || ticket.originalTitle;
+        if (!detectedTitle) {
+          setTicketAnalysisStatus(
+            'warning',
+            'อ่านรายละเอียดบางส่วนได้แล้ว',
+            'ยังอ่านชื่อหนังไม่ชัด กรุณาใส่ชื่อหนังเองก่อนบันทึก'
+          );
+          $('formTitleInput').focus();
+          return;
+        }
+
+        setTicketAnalysisStatus(
+          'loading',
+          `พบชื่อ “${detectedTitle}”`,
+          'กำลังจับคู่กับข้อมูลภาพยนตร์และโปสเตอร์…'
+        );
+        const matchedMovie = await findTicketMovie(ticket, controller.signal);
+        if (matchedMovie) {
+          if (!catalogMoviesList.some(movie => movie.id === matchedMovie.id)) catalogMoviesList.push(matchedMovie);
+          const applied = applyCatalogMovieToForm(matchedMovie, { allowExisting: true, fromTicket: true });
+          applyTicketDetails(ticket, { includeTitle: false });
+          setTicketAnalysisStatus(
+            'success',
+            applied?.isNewViewing ? 'พบหนังเดิมและเตรียมเพิ่มการดูครั้งใหม่แล้ว' : 'อ่านตั๋วและเลือกหนังให้แล้ว',
+            'ตรวจสอบข้อมูลด้านล่าง แล้วกดบันทึกได้เลย ภาพตั๋วจะอยู่ในความทรงจำครั้งนี้'
+          );
+        } else {
+          $('selectedFilmTitleTxt').textContent = `🎟️ ${detectedTitle}`;
+          $('selectedFilmSubTxt').textContent = 'อ่านชื่อจากตั๋วแล้ว · ยังไม่พบโปสเตอร์ที่ตรงกัน';
+          $('selectedFilmBanner').style.display = 'block';
+          setTicketAnalysisStatus(
+            'warning',
+            'อ่านข้อมูลตั๋วสำเร็จ แต่ยังไม่พบโปสเตอร์',
+            'ตรวจสอบชื่อหนังหรือกดช่องโปสเตอร์เพื่อค้นหาเอง แล้วบันทึกต่อได้เลย'
+          );
+        }
+      } catch (error) {
+        if (error?.name === 'AbortError') return;
+        const [title, description] = ticketAnalysisErrorCopy(error?.message);
+        setTicketAnalysisStatus('error', title, description);
+      } finally {
+        if (ticketAnalysisController === controller) {
+          ticketAnalysisController = null;
+          $('saveMovieBtn').disabled = false;
+        }
+      }
     }
 
     async function loadSuggestedMovie(movieId) {
@@ -688,6 +925,9 @@
     }
 
     function resetForm() {
+      ticketAnalysisController?.abort();
+      ticketAnalysisController = null;
+      latestTicketAnalysisImage = '';
       $('formMovieId').value = '';
       $('formViewingId').value = '';
       $('formTmdbId').value = '';
@@ -713,8 +953,11 @@
       $('ticketPreviewImg').style.display = 'none';
       $('ticketOverlayInfo').style.display = 'block';
       $('ticketOverlayInfo').innerHTML = '🎟️<br><strong>อัปโหลดตั๋วหนัง</strong><br><small style="color:var(--muted)">คลิกเพื่อเพิ่มรูปถ่ายตั๋วจริง</small>';
+      $('ticketFileInput').value = '';
 
       $('selectedFilmBanner').style.display = 'none';
+      $('saveMovieBtn').disabled = false;
+      setTicketAnalysisStatus('idle');
       updateRatingStarsUI(0);
     }
 
@@ -796,7 +1039,7 @@
       const existing = existingIndex >= 0 ? movies[existingIndex] : null;
       const now = new Date().toISOString();
       const requestedViewingId = $('formViewingId').value;
-      const existingViewing = existing
+      const existingViewing = existing && requestedViewingId
         ? (existing.viewings || []).find(item => item.id === requestedViewingId) || latestViewing(existing)
         : null;
       const viewing = normalizeViewing({
@@ -852,7 +1095,12 @@
       saveMoviesToStorage();
       renderCollection();
       const wasEditing = existingIndex >= 0;
-      const message = wasEditing ? '✓ แก้ไขข้อมูลหนังเรียบร้อยแล้ว' : '✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว';
+      const wasAddingViewing = wasEditing && !requestedViewingId;
+      const message = wasAddingViewing
+        ? '＋ เพิ่มการดูครั้งใหม่พร้อมรูปตั๋วแล้ว'
+        : wasEditing
+          ? '✓ แก้ไขข้อมูลหนังเรียบร้อยแล้ว'
+          : '✨ บันทึกตั๋วภาพยนตร์เรียบร้อยแล้ว';
       if (!IS_FILE_MODE && currentRoute() === 'add') {
         sessionStorage.setItem('movie_memory_flash', message);
         if (wasEditing) {
@@ -1803,35 +2051,50 @@
 
     // Image Upload Handlers for Ticket Upload
     function handleImageFileSelect(file, targetHiddenInputId, targetPreviewImgId, targetOverlayId) {
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_WIDTH = 800;
-          let width = img.width;
-          let height = img.height;
+      if (!file) return Promise.reject(new Error('NO_IMAGE'));
+      if (file.type && !file.type.startsWith('image/')) return Promise.reject(new Error('INVALID_IMAGE'));
+      if (file.size > 20 * 1024 * 1024) return Promise.reject(new Error('IMAGE_TOO_LARGE'));
 
-          if (width > MAX_WIDTH) {
-            height = Math.round((height * MAX_WIDTH) / width);
-            width = MAX_WIDTH;
-          }
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onerror = () => reject(new Error('IMAGE_READ_FAILED'));
+        reader.onload = event => {
+          const image = new Image();
+          image.onerror = () => reject(new Error('IMAGE_DECODE_FAILED'));
+          image.onload = () => {
+            const maximumEdge = 1400;
+            const initialScale = Math.min(1, maximumEdge / Math.max(image.width, image.height));
+            const baseWidth = Math.max(1, Math.round(image.width * initialScale));
+            const baseHeight = Math.max(1, Math.round(image.height * initialScale));
+            const sizeScales = [1, 0.86, 0.72, 0.58];
+            const qualities = [0.84, 0.76, 0.68];
+            let compressedDataUrl = '';
 
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
+            for (const sizeScale of sizeScales) {
+              const canvas = document.createElement('canvas');
+              canvas.width = Math.max(1, Math.round(baseWidth * sizeScale));
+              canvas.height = Math.max(1, Math.round(baseHeight * sizeScale));
+              const context = canvas.getContext('2d');
+              context.fillStyle = '#ffffff';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              context.drawImage(image, 0, 0, canvas.width, canvas.height);
+              for (const quality of qualities) {
+                compressedDataUrl = canvas.toDataURL('image/jpeg', quality);
+                if (compressedDataUrl.length <= 720000) break;
+              }
+              if (compressedDataUrl.length <= 720000) break;
+            }
 
-          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
-          $(targetHiddenInputId).value = compressedDataUrl;
-          $(targetPreviewImgId).src = compressedDataUrl;
-          $(targetPreviewImgId).style.display = 'block';
-          $(targetOverlayId).style.display = 'none';
+            $(targetHiddenInputId).value = compressedDataUrl;
+            $(targetPreviewImgId).src = compressedDataUrl;
+            $(targetPreviewImgId).style.display = 'block';
+            $(targetOverlayId).style.display = 'none';
+            resolve(compressedDataUrl);
+          };
+          image.src = event.target.result;
         };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
+        reader.readAsDataURL(file);
+      });
     }
 
     function setupFeatureScroller() {
@@ -1998,6 +2261,12 @@
         );
       });
       $('clearTicketBtn').addEventListener('click', () => {
+        ticketAnalysisController?.abort();
+        ticketAnalysisController = null;
+        latestTicketAnalysisImage = '';
+        $('ticketFileInput').value = '';
+        $('saveMovieBtn').disabled = false;
+        setTicketAnalysisStatus('idle');
         setFormImagePreview(
           '',
           'formTicketData',
@@ -2010,16 +2279,44 @@
 
       // Ticket Image Upload
       $('ticketUploadZone').addEventListener('click', () => $('ticketFileInput').click());
-      $('ticketFileInput').addEventListener('change', e => {
-        if (e.target.files && e.target.files[0]) {
-          handleImageFileSelect(e.target.files[0], 'formTicketData', 'ticketPreviewImg', 'ticketOverlayInfo');
+      $('ticketFileInput').addEventListener('change', async event => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        setTicketAnalysisStatus('loading', 'กำลังเตรียมรูปตั๋ว…', 'ปรับขนาดรูปให้ชัดและพร้อมบันทึก');
+        try {
+          const imageDataUrl = await handleImageFileSelect(
+            file,
+            'formTicketData',
+            'ticketPreviewImg',
+            'ticketOverlayInfo'
+          );
+          await analyzeAndApplyTicket(imageDataUrl);
+        } catch {
+          setTicketAnalysisStatus(
+            'error',
+            'เปิดรูปนี้ไม่สำเร็จ',
+            'ลองถ่ายใหม่หรือเลือกรูป JPG, PNG หรือ WebP ที่มีขนาดไม่เกิน 20 MB'
+          );
+          showToast('เปิดรูปตั๋วไม่สำเร็จ');
+        } finally {
+          event.target.value = '';
         }
       });
+      $('retryTicketAnalysisBtn').addEventListener('click', () => {
+        if (latestTicketAnalysisImage) analyzeAndApplyTicket(latestTicketAnalysisImage);
+        else $('ticketFileInput').click();
+      });
       $('rewatchTicketUploadZone').addEventListener('click', () => $('rewatchTicketFileInput').click());
-      $('rewatchTicketFileInput').addEventListener('change', event => {
+      $('rewatchTicketFileInput').addEventListener('change', async event => {
         if (event.target.files?.[0]) {
-          handleImageFileSelect(event.target.files[0], 'rewatchTicketData', 'rewatchTicketPreviewImg', 'rewatchTicketOverlay');
-          $('rewatchTicketPreviewImg').hidden = false;
+          try {
+            await handleImageFileSelect(event.target.files[0], 'rewatchTicketData', 'rewatchTicketPreviewImg', 'rewatchTicketOverlay');
+            $('rewatchTicketPreviewImg').hidden = false;
+          } catch {
+            showToast('เปิดรูปตั๋วไม่สำเร็จ');
+          } finally {
+            event.target.value = '';
+          }
         }
       });
       $('clearRewatchTicketBtn').addEventListener('click', () => {

@@ -5,7 +5,7 @@ const authFeedback = window.MovieMemoryAuthFeedback;
 
 function loadAccountModule() {
   if (!accountModulePromise) {
-    accountModulePromise = import("./account.js?v=20260729-1")
+    accountModulePromise = import("./account.js?v=20260731-1")
       .then(module => {
         accountModuleReady = true;
         return module;

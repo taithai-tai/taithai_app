@@ -22,7 +22,9 @@ const excluded = new Set([
   'firebase-blueprint.json',
   'firebase.json',
   '.firebaserc',
-  'firestore.rules'
+  'firestore.rules',
+  'storage.rules',
+  'ticket-analyzer.js'
 ]);
 
 await rm(output, { recursive: true, force: true });

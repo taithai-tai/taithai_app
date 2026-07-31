@@ -2,6 +2,7 @@ import http from 'node:http';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const port = Number(process.env.PORT) || 3000;
@@ -123,10 +124,68 @@ async function serveMoviePoster(requestUrl, res) {
   }
 }
 
+function ticketErrorStatus(code) {
+  if (code === 'INVALID_REQUEST' || code === 'INVALID_TICKET_IMAGE') return 400;
+  if (code === 'TICKET_IMAGE_TOO_LARGE' || code === 'REQUEST_TOO_LARGE') return 413;
+  if (code === 'TICKET_ANALYZER_NOT_CONFIGURED' || code === 'TICKET_ANALYZER_AUTH_FAILED') return 503;
+  if (code === 'TICKET_ANALYZER_BUSY') return 429;
+  if (code === 'TICKET_ANALYSIS_TIMEOUT') return 504;
+  return 502;
+}
+
+async function readJsonBody(req) {
+  const maximumBytes = MAX_TICKET_IMAGE_BYTES * 2;
+  const declaredLength = Number(req.headers['content-length']) || 0;
+  if (declaredLength > maximumBytes) throw new Error('REQUEST_TOO_LARGE');
+
+  const chunks = [];
+  let receivedBytes = 0;
+  for await (const chunk of req) {
+    receivedBytes += chunk.length;
+    if (receivedBytes > maximumBytes) throw new Error('REQUEST_TOO_LARGE');
+    chunks.push(chunk);
+  }
+  try {
+    return JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  } catch {
+    throw new Error('INVALID_REQUEST');
+  }
+}
+
+async function serveTicketAnalysis(req, res) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', 'POST');
+    res.writeHead(405);
+    res.end('{"error":"METHOD_NOT_ALLOWED"}');
+    return;
+  }
+
+  try {
+    const body = await readJsonBody(req);
+    const result = await analyzeTicketImage({
+      image: body?.image,
+      apiKey: process.env.GEMINI_API_KEY,
+      model: process.env.GEMINI_MODEL || undefined
+    });
+    res.writeHead(200);
+    res.end(JSON.stringify({ result }));
+  } catch (error) {
+    const code = String(error?.message || 'TICKET_ANALYSIS_UNAVAILABLE');
+    res.writeHead(ticketErrorStatus(code));
+    res.end(JSON.stringify({ error: code }));
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   try {
     if ((req.url || '').startsWith('/api/movie-poster?')) {
       await serveMoviePoster(req.url, res);
+      return;
+    }
+    if ((req.url || '').split('?')[0] === '/api/analyze-movie-ticket') {
+      await serveTicketAnalysis(req, res);
       return;
     }
     const file = await resolveFile(req.url || '/');

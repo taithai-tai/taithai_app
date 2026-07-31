@@ -35,6 +35,11 @@ let runTransaction;
 let setDoc;
 let serverTimestamp;
 let firestoreReady = null;
+let storage;
+let storageRef;
+let uploadString;
+let getDownloadURL;
+let storageReady = null;
 function ensureFirestore() {
   if (!firestoreReady) {
     firestoreReady = import("https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js")
@@ -63,6 +68,24 @@ function ensureFirestore() {
       });
   }
   return firestoreReady;
+}
+
+function ensureStorage() {
+  if (!storageReady) {
+    storageReady = import("https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js")
+      .then(module => {
+        storageRef = module.ref;
+        uploadString = module.uploadString;
+        getDownloadURL = module.getDownloadURL;
+        storage = module.getStorage(app);
+        return storage;
+      })
+      .catch(error => {
+        storageReady = null;
+        throw error;
+      });
+  }
+  return storageReady;
 }
 const authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error("Could not enable persistent Firebase session:", error);
@@ -279,6 +302,89 @@ function cloudMovieCollection(movies) {
   }));
 }
 
+function safeStorageId(value, fallback) {
+  return String(value || fallback).replace(/[^a-zA-Z0-9_-]/g, "").slice(0, 80) || fallback;
+}
+
+async function uploadPrivateTicketImage(user, movieId, viewingId, imageData) {
+  if (!/^data:image\/(?:jpeg|png|webp);base64,/i.test(imageData || "")) return imageData || "";
+  await ensureStorage();
+  const mimeType = imageData.slice(5, imageData.indexOf(";")).toLowerCase();
+  const target = storageRef(
+    storage,
+    `users/${safeStorageId(user.uid, "user")}/movie-memory/tickets/${safeStorageId(movieId, "movie")}/${safeStorageId(viewingId, "viewing")}`
+  );
+  const snapshot = await uploadString(target, imageData, "data_url", {
+    contentType: mimeType,
+    cacheControl: "private,max-age=31536000"
+  });
+  return getDownloadURL(snapshot.ref);
+}
+
+async function cloudMovieCollectionWithTicketImages(user, movies) {
+  const source = (Array.isArray(movies) ? movies : []).slice(0, 300);
+  const prepared = source.map(movie => ({
+    ...movie,
+    viewings: (Array.isArray(movie.viewings) ? movie.viewings : []).slice(-100).map(viewing => ({ ...viewing }))
+  }));
+  const jobs = [];
+
+  prepared.forEach((movie, movieIndex) => {
+    if (movie.viewings.length) {
+      movie.viewings.forEach((viewing, viewingIndex) => {
+        if (!/^data:image\//i.test(viewing.ticketImg || "")) return;
+        jobs.push({ movieIndex, viewingIndex, image: viewing.ticketImg });
+      });
+    } else if (/^data:image\//i.test(movie.ticketImg || "")) {
+      movie.viewings = [{
+        id: `viewing_${movie.id || movieIndex}`,
+        watchDate: movie.watchDate,
+        format: movie.format,
+        cinema: movie.cinema,
+        seat: movie.seat,
+        companion: movie.companion,
+        memory: "",
+        ticketImg: movie.ticketImg,
+        createdAt: movie.updatedAt
+      }];
+      jobs.push({ movieIndex, viewingIndex: 0, image: movie.ticketImg });
+    }
+  });
+
+  let failedImageUploads = 0;
+  for (let start = 0; start < jobs.length; start += 3) {
+    await Promise.all(jobs.slice(start, start + 3).map(async job => {
+      const movie = prepared[job.movieIndex];
+      const viewing = movie.viewings[job.viewingIndex];
+      try {
+        viewing.ticketImg = await uploadPrivateTicketImage(
+          user,
+          movie.id || `movie_${job.movieIndex}`,
+          viewing.id || `viewing_${job.viewingIndex}`,
+          job.image
+        );
+      } catch (error) {
+        failedImageUploads += 1;
+        console.warn("Ticket image upload failed:", error);
+      }
+    }));
+  }
+
+  prepared.forEach(movie => {
+    const latest = [...movie.viewings]
+      .sort((first, second) =>
+        `${second.watchDate || ""}|${second.createdAt || ""}|${second.id || ""}`
+          .localeCompare(`${first.watchDate || ""}|${first.createdAt || ""}|${first.id || ""}`)
+      )[0];
+    if (latest?.ticketImg) movie.ticketImg = latest.ticketImg;
+  });
+
+  return {
+    movies: cloudMovieCollection(prepared),
+    failedImageUploads
+  };
+}
+
 export async function getMyMovieCollection(user) {
   if (!user) return { exists: false, source: "none", movies: [] };
   await ensureFirestore();
@@ -320,14 +426,18 @@ export function subscribeMyMovieCollection(user, callback) {
 export async function saveMyMovieCollection(user, movies) {
   if (!user) throw new Error("LOGIN_REQUIRED");
   await ensureFirestore();
-  const movieCollection = cloudMovieCollection(movies);
+  const prepared = await cloudMovieCollectionWithTicketImages(user, movies);
+  const movieCollection = prepared.movies;
   await setDoc(doc(db, "users", user.uid), {
     uid: user.uid,
     movieCollection,
     movieCollectionUpdatedAt: serverTimestamp()
   }, { merge: true });
   await publishMovieCollection(user, movieCollection);
-  return movieCollection;
+  return {
+    movies: movieCollection,
+    failedImageUploads: prepared.failedImageUploads
+  };
 }
 
 export async function publishMovieCollection(user, movies) {
