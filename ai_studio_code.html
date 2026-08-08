@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Temporary Image Gallery</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        #drop-area { border: 3px dashed #007bff; border-radius: 20px; width: 80%; max-width: 600px; padding: 40px; text-align: center; background: white; cursor: pointer; transition: 0.3s; }
+        #drop-area.highlight { border-color: #0056b3; background-color: #e7f1ff; }
+        h2 { color: #333; }
+        #gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; width: 90%; margin-top: 30px; }
+        .img-container { background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .img-container img { width: 100%; height: auto; border-radius: 5px; cursor: pointer; }
+        .img-container p { font-size: 12px; color: #666; word-break: break-all; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h2>🖼️ โปรแกรมฝากรูปชั่วคราว (แสดงผลขนาดเต็ม)</h2>
+    
+    <div id="drop-area">
+        <p>ลากรูปภาพมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+        <input type="file" id="fileElem" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
+        <button onclick="document.getElementById('fileElem').click()" style="padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px;">เลือกรูปภาพ</button>
+    </div>
+
+    <div id="gallery"></div>
+
+    <script>
+        let dropArea = document.getElementById('drop-area');
+
+        // ป้องกัน Browser เปิดไฟล์โดยตรง
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults (e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        // เพิ่ม Highlight เวลาลากไฟล์มาวาง
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.add('highlight'), false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => dropArea.classList.remove('highlight'), false);
+        });
+
+        // จัดการเมื่อไฟล์ถูกปล่อย
+        dropArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            let dt = e.dataTransfer;
+            let files = dt.files;
+            handleFiles(files);
+        }
+
+        function handleFiles(files) {
+            ([...files]).forEach(previewFile);
+        }
+
+        function previewFile(file) {
+            let reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onloadend = function() {
+                let div = document.createElement('div');
+                div.className = 'img-container';
+                
+                let img = document.createElement('img');
+                img.src = reader.result;
+                img.onclick = () => window.open(reader.result, '_blank'); // คลิกเพื่อดูขนาดเต็มในแท็บใหม่
+                
+                let p = document.createElement('p');
+                p.textContent = file.name;
+
+                div.appendChild(img);
+                div.appendChild(p);
+                document.getElementById('gallery').appendChild(div);
+            }
+        }
+    </script>
+</body>
+</html>
