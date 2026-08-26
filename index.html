@@ -795,6 +795,14 @@
           </div>
           <span class="app-tag" id="appTag6"></span>
         </a>
+        <a class="app-card" href="javascript:void(0)" onclick="goToPublicDrive()">
+          <div class="app-icon">☁️</div>
+          <div>
+            <div class="app-name" id="appName7"></div>
+            <div class="app-desc" id="appDesc7"></div>
+          </div>
+          <span class="app-tag" id="appTag7"></span>
+        </a>
       </div>
     </div>
   </main>
@@ -813,6 +821,7 @@
     const URL_SHORTENER_URL = "./S/";
     const DOCTOR_PLAN_URL = "./Bangkok%20Doctor%20Plan/";
     const MOVIE_MEMORY_URL = "./Movie%20Memory/";
+    const PUBLIC_DRIVE_URL = "./Public%20Drive/";
 
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
@@ -865,6 +874,9 @@
         appName6: "Movie Memory",
         appDesc6: "Keep your movie tickets, ratings, cinema details, and little memories from every film you have watched.",
         appTag6: "🎞️ Movie Journal",
+        appName7: "Taithai Public Drive",
+        appDesc7: "A shared public drop space where anyone can upload, browse, and download files without signing in.",
+        appTag7: "☁️ Public Files",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -878,6 +890,7 @@
         openingText5: "Opening BU Degree Plan Explorer… 🌸",
         noLinkYet5: "No link added yet for BU Degree Plan Explorer",
         openingText6: "Opening Movie Memory… 🎞️",
+        openingText7: "Opening Taithai Public Drive… ☁️",
         loginBtnText: "Sign in with Google",
         logoutBtnText: "Sign Out",
         welcomePrefix: "Welcome back, ",
@@ -917,6 +930,9 @@
         appName6: "Movie Memory",
         appDesc6: "เก็บตั๋วหนัง คะแนน โรงภาพยนตร์ และความทรงจำเล็ก ๆ จากหนังทุกเรื่องที่เคยดู",
         appTag6: "🎞️ สมุดบันทึกหนัง",
+        appName7: "Taithai Public Drive",
+        appDesc7: "พื้นที่ฝากไฟล์สาธารณะ ทุกคนสามารถอัปโหลด ดู และดาวน์โหลดไฟล์ร่วมกันได้โดยไม่ต้องล็อกอิน",
+        appTag7: "☁️ ไฟล์สาธารณะ",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -930,6 +946,7 @@
         openingText5: "กำลังเปิด ตัวอ่าน Degree Plan BU… 🌸",
         noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่าน Degree Plan BU",
         openingText6: "กำลังเปิด Movie Memory… 🎞️",
+        openingText7: "กำลังเปิด Taithai Public Drive… ☁️",
         loginBtnText: "เข้าสู่ระบบด้วย Google",
         logoutBtnText: "ออกจากระบบ",
         welcomePrefix: "ยินดีต้อนรับคุณ ",
@@ -982,6 +999,9 @@
       document.getElementById("appName6").textContent = t.appName6;
       document.getElementById("appDesc6").textContent = t.appDesc6;
       document.getElementById("appTag6").textContent = t.appTag6;
+      document.getElementById("appName7").textContent = t.appName7;
+      document.getElementById("appDesc7").textContent = t.appDesc7;
+      document.getElementById("appTag7").textContent = t.appTag7;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -1066,6 +1086,13 @@
       showToast(i18n[currentLang].openingText6);
       setTimeout(() => {
         window.location.href = MOVIE_MEMORY_URL;
+      }, 250);
+    }
+
+    function goToPublicDrive() {
+      showToast(i18n[currentLang].openingText7);
+      setTimeout(() => {
+        window.location.href = PUBLIC_DRIVE_URL;
       }, 250);
     }
 
