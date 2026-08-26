@@ -1,4 +1,5 @@
 const MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+const TOTAL_CAP_BYTES = 10 * 1024 * 1024 * 1024;
 const ALLOWED_ORIGINS = new Set([
   "https://taithai.app",
   "https://www.taithai.app",
@@ -57,6 +58,22 @@ async function listFiles(request, env) {
 
 async function beginUpload(request, env) {
   const body = await request.json();
+  const requestedSize = Math.max(0, Number(body.size) || 0) + (body.protected ? 16 : 0);
+  let usedBytes = 0;
+  let cursor;
+  do {
+    const page = await env.FILES.list({ limit: 1000, cursor });
+    usedBytes += page.objects.reduce((total, object) => total + object.size, 0);
+    cursor = page.truncated ? page.cursor : undefined;
+  } while (cursor);
+  if (requestedSize > TOTAL_CAP_BYTES || usedBytes + requestedSize > TOTAL_CAP_BYTES) {
+    return json(request, {
+      error: "STORAGE_LIMIT_EXCEEDED",
+      limit: TOTAL_CAP_BYTES,
+      used: usedBytes,
+      requested: requestedSize
+    }, 507);
+  }
   const id = crypto.randomUUID();
   const key = `${Date.now()}_${id}`;
   const metadata = {
@@ -80,7 +97,7 @@ async function uploadPart(request, env, key, uploadId, partNumber) {
 
 async function completeUpload(request, env, key) {
   const body = await request.json();
-  const upload = env.FILES.resumeMultipartUpload(key, safeMeta(body.uploadId, 256));
+  const upload = env.FILES.resumeMultipartUpload(key, safeMeta(body.uploadId, 2048));
   const object = await upload.complete(body.parts);
   return json(request, { key: object.key, size: object.size });
 }
