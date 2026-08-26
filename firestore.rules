@@ -50,7 +50,9 @@ service cloud.firestore {
                     && (request.resource.data.protected == true
                         || (request.resource.data.salt == '' && request.resource.data.iv == ''))
                     && request.resource.data.uploadedAt == request.time;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if resource.data.uploadedAt is timestamp
+                    && resource.data.uploadedAt < request.time - duration.value(7, 'd');
     }
     match /{document=**} {
       allow read, write: if false;
