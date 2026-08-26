@@ -11,7 +11,7 @@ function cors(request) {
   const origin = request.headers.get("Origin") || "";
   return {
     "Access-Control-Allow-Origin": ALLOWED_ORIGINS.has(origin) ? origin : "https://taithai.app",
-    "Access-Control-Allow-Methods": "GET,POST,PUT,OPTIONS",
+    "Access-Control-Allow-Methods": "GET,POST,PUT,DELETE,OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
     "Access-Control-Max-Age": "86400",
     "Vary": "Origin"
@@ -83,6 +83,7 @@ async function beginUpload(request, env) {
     protected: body.protected ? "true" : "false",
     salt: safeMeta(body.salt, 32),
     iv: safeMeta(body.iv, 24),
+    deleteVerifier: safeMeta(body.deleteVerifier, 64),
     uploadedAt: String(Date.now())
   };
   const upload = await env.FILES.createMultipartUpload(key, { customMetadata: metadata });
@@ -120,6 +121,49 @@ async function getFile(request, env, key) {
   return new Response(object.body, { headers });
 }
 
+function decodeBase64(value) {
+  return Uint8Array.from(atob(value), character => character.charCodeAt(0));
+}
+
+async function makeDeleteVerifier(password, salt) {
+  const base = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(password),
+    "PBKDF2",
+    false,
+    ["deriveBits"]
+  );
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", salt: decodeBase64(salt), iterations: 100000, hash: "SHA-256" },
+    base,
+    256
+  );
+  return btoa(String.fromCharCode(...new Uint8Array(bits)));
+}
+
+function sameValue(left, right) {
+  if (left.length !== right.length) return false;
+  let difference = 0;
+  for (let index = 0; index < left.length; index += 1) {
+    difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+  }
+  return difference === 0;
+}
+
+async function deleteFile(request, env, key) {
+  const object = await env.FILES.head(key);
+  if (!object) return json(request, { error: "FILE_NOT_FOUND" }, 404);
+  if (object.customMetadata?.protected === "true") {
+    const expected = object.customMetadata?.deleteVerifier || "";
+    if (!expected) return json(request, { error: "PASSWORD_DELETE_UNAVAILABLE" }, 409);
+    const body = await request.json();
+    const actual = await makeDeleteVerifier(String(body.password || ""), object.customMetadata?.salt || "");
+    if (!sameValue(actual, expected)) return json(request, { error: "INVALID_PASSWORD" }, 401);
+  }
+  await env.FILES.delete(key);
+  return json(request, { deleted: true });
+}
+
 export default {
   async fetch(request, env) {
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: cors(request) });
@@ -135,6 +179,7 @@ export default {
         return completeUpload(request, env, parts[1]);
       }
       if (request.method === "GET" && parts[0] === "files" && parts.length === 2) return getFile(request, env, parts[1]);
+      if (request.method === "DELETE" && parts[0] === "files" && parts.length === 2) return deleteFile(request, env, parts[1]);
       return json(request, { error: "NOT_FOUND" }, 404);
     } catch (error) {
       console.error(error);
