@@ -1,0 +1,179 @@
+/*
+ * Taithai stability layer v2
+ * Intentionally non-visual: each app keeps its own palette, spacing and surfaces.
+ * This file only supplies accessibility, resilient sizing and targeted overflow fixes.
+ */
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body.taithai-design {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.taithai-design :where(button, input, select, textarea) {
+  font-family: inherit;
+}
+
+.taithai-design :where(button, .button, [role="button"], a, input, select, textarea, summary):focus-visible {
+  outline: 3px solid rgba(10, 132, 255, .55) !important;
+  outline-offset: 3px;
+}
+
+.taithai-design :where(button, .button, [role="button"]) {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.taithai-design :where(button, .button)[disabled],
+.taithai-design :where(button, .button)[aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.taithai-design :where(input, select, textarea)::placeholder {
+  opacity: .7;
+}
+
+.taithai-design :where(h1, h2, h3) {
+  text-wrap: balance;
+}
+
+.taithai-design :where(p, li, label) {
+  text-wrap: pretty;
+}
+
+.taithai-design .sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+/* Keep tables usable on narrow screens without changing their desktop design. */
+body.tt-public .table-wrap {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+body.tt-public #fileTable {
+  min-width: 680px;
+}
+
+body.tt-planner .summary-box,
+body.tt-planner .share-box,
+body.tt-planner .upload-box {
+  min-width: 0;
+}
+
+body.tt-planner .summary-table {
+  display: table;
+  width: 100%;
+}
+
+body.tt-gallery #drop-area {
+  max-width: min(600px, calc(100vw - 40px));
+}
+
+body.tt-gallery #gallery {
+  max-width: 1180px;
+}
+
+/* Minimum mobile target sizes, scoped to real controls only. */
+@media (max-width: 700px) {
+  .taithai-design :where(
+    button,
+    .button,
+    [role="button"],
+    input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea
+  ) {
+    min-height: 44px;
+  }
+
+  .taithai-design input[type="color"] {
+    min-width: 44px;
+  }
+
+  body.tt-public header {
+    height: auto;
+    min-height: 64px;
+    padding: 10px 16px;
+    gap: 10px;
+  }
+
+  body.tt-public .brand-text small {
+    white-space: normal;
+  }
+
+  body.tt-public main {
+    width: min(100% - 28px, 1160px);
+  }
+
+  body.tt-public .toolbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  body.tt-public .search {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  body.tt-public .search input {
+    width: 100%;
+  }
+
+  body.tt-planner .container {
+    width: min(100% - 24px, 1100px);
+  }
+
+  body.tt-planner .summary-box {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  body.tt-planner .summary-table {
+    min-width: 620px;
+  }
+
+  body.tt-gallery {
+    padding-inline: 16px !important;
+  }
+
+  body.tt-gallery #drop-area,
+  body.tt-gallery #gallery {
+    width: 100% !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  .taithai-design *,
+  .taithai-design *::before,
+  .taithai-design *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .taithai-design :where(button, input, select, textarea, .button) {
+    outline-offset: 2px;
+  }
+}
