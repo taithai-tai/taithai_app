@@ -756,6 +756,7 @@
     .app-card:hover { transform: translateY(-4px); border-color: var(--border); box-shadow: 0 14px 40px rgba(0,0,0,.07); }
     .app-card:active { transform: scale(.985); }
     .app-icon { width: 58px; height: 58px; border: 1px solid rgba(255,255,255,.7); border-radius: 17px; background: linear-gradient(145deg,#fff7f3,#ffd8c9); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 8px 20px rgba(185,77,50,.10); font-size: 27px; }
+    .app-icon img { width: 100%; height: 100%; display: block; border-radius: inherit; object-fit: cover; }
     .app-name { margin-bottom: 7px; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
     .app-desc { color: var(--text-mid); font-size: 14px; line-height: 1.55; font-weight: 400; }
     .app-card-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -892,7 +893,7 @@
 
       <div class="apps-grid" aria-labelledby="gridLabel">
         <a class="app-card" href="./temporary%20chat/" onclick="goToTemporaryChat(event)">
-          <div class="app-icon" aria-hidden="true">💬</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/temporary-chat.webp" alt="" width="256" height="256" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName1"></h3>
             <div class="app-desc" id="appDesc1"></div>
@@ -901,7 +902,7 @@
         </a>
 
         <a class="app-card" href="./QR%20Code%20Generator%20/" onclick="goToQrGenerator(event)">
-          <div class="app-icon" aria-hidden="true">🔳</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/qr-generator.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName2"></h3>
             <div class="app-desc" id="appDesc2"></div>
@@ -910,7 +911,7 @@
         </a>
 
         <a class="app-card" href="./QR%20Code%20Reader/" onclick="goToQrReader(event)">
-          <div class="app-icon" aria-hidden="true">📷</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/qr-reader.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName3"></h3>
             <div class="app-desc" id="appDesc3"></div>
@@ -918,7 +919,7 @@
           <div class="app-card-footer"><span class="app-tag" id="appTag3"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
         <a class="app-card" href="./S/" onclick="goToUrlShortener(event)">
-          <div class="app-icon" aria-hidden="true">🔗</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/url-shortener.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName4"></h3>
             <div class="app-desc" id="appDesc4"></div>
@@ -926,7 +927,7 @@
           <div class="app-card-footer"><span class="app-tag" id="appTag4"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
         <a class="app-card" href="./Bangkok%20Doctor%20Plan/" onclick="goToDoctorPlan(event)">
-          <div class="app-icon" aria-hidden="true">🩺</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/degree-plan.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName5"></h3>
             <div class="app-desc" id="appDesc5"></div>
@@ -934,7 +935,7 @@
           <div class="app-card-footer"><span class="app-tag" id="appTag5"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
         <a class="app-card" href="./Movie%20Memory/" onclick="goToMovieMemory(event)">
-          <div class="app-icon" aria-hidden="true">🎞️</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/movie-memory.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName6"></h3>
             <div class="app-desc" id="appDesc6"></div>
@@ -942,7 +943,7 @@
           <div class="app-card-footer"><span class="app-tag" id="appTag6"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
         <a class="app-card" href="./Public%20Drive/index.html" onclick="goToPublicDrive(event)">
-          <div class="app-icon" aria-hidden="true">☁️</div>
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/public-drive.webp" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
           <div>
             <h3 class="app-name" id="appName7"></h3>
             <div class="app-desc" id="appDesc7"></div>
