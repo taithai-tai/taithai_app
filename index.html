@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Taithai Apps 🌸</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Mitr:wght@300;400;500;600&family=Noto+Sans+Thai:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>Taithai Apps</title>
+  <meta name="description" content="A thoughtfully curated collection of useful apps by Taithai." />
+  <meta name="theme-color" content="#f7f7f9" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#111113" media="(prefers-color-scheme: dark)" />
   <style>
     :root {
       --bg: #FDF6F0;
@@ -659,6 +660,151 @@
         display: none;
       }
     }
+
+    /* Apple HIG-inspired refinement: semantic colors, clear hierarchy, adaptive layout. */
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f7f9;
+      --surface: rgba(255, 255, 255, 0.84);
+      --surface-solid: #fff;
+      --text: #1d1d1f;
+      --text-mid: #5f6065;
+      --text-muted: #65666b;
+      --text-faint: #73747a;
+      --border: rgba(29, 29, 31, .13);
+      --border-soft: rgba(29, 29, 31, .09);
+      --accent: #d86445;
+      --accent-light: #fff0ea;
+      --peach: #efaa91;
+      --peach-dark: #ad432b;
+      --focus: #0071e3;
+      --radius: 24px;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 88% 8%, rgba(241, 174, 143, .22), transparent 28rem),
+        radial-gradient(circle at 5% 54%, rgba(255, 211, 198, .18), transparent 24rem),
+        var(--bg);
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Noto Sans Thai", sans-serif;
+      font-size: 17px;
+      line-height: 1.5;
+      text-rendering: optimizeLegibility;
+    }
+
+    button { font: inherit; }
+    a:focus-visible, button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+    .bg-blob, .float-deco { display: none; }
+
+    header {
+      border-bottom: 1px solid var(--border-soft);
+      background: rgba(247, 247, 249, .78);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+    }
+
+    .header-inner { max-width: 1120px; min-height: 68px; padding: 10px 24px; flex-wrap: nowrap; }
+    .brand { min-height: 44px; }
+    .brand-logo {
+      width: 36px; height: 36px; border-radius: 11px;
+      background: linear-gradient(145deg, #ffd4c4, #ee9676);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.65), 0 5px 12px rgba(185,77,50,.16);
+    }
+    .brand-name { font-family: inherit; font-size: 17px; font-weight: 650; letter-spacing: -.01em; }
+
+    .header-actions { gap: 10px; flex-wrap: nowrap; }
+    .google-login-btn, .logout-btn, .lang-btn { min-height: 44px; transition: .18s ease; }
+    .google-login-btn {
+      min-width: 44px; padding: 0 16px; border: 1px solid var(--border);
+      background: var(--surface-solid); color: var(--text); font-size: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .google-login-btn:hover { background: var(--surface-solid); border-color: var(--border); box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+    .google-login-btn:disabled { cursor: wait; transform: none; }
+    .user-profile-bar { min-height: 48px; padding: 3px 4px 3px 5px; border: 1px solid var(--border); background: var(--surface-solid); }
+    .user-avatar { width: 36px; height: 36px; border: 0; }
+    .user-name { font-size: 13px; font-weight: 650; }
+    .user-email { font-size: 11px; color: var(--text-mid); }
+    .logout-btn { padding: 0 14px; color: var(--peach-dark); font-size: 13px; font-weight: 650; }
+    .lang-switch { padding: 3px; gap: 2px; border: 1px solid var(--border-soft); background: rgba(118,118,128,.10); }
+    .lang-btn { min-width: 44px; padding: 0 12px; font-size: 13px; }
+    .lang-btn.active { background: var(--surface-solid); color: var(--text); box-shadow: 0 1px 5px rgba(0,0,0,.10); }
+
+    .wrapper { max-width: 1120px; }
+    .hero { padding: clamp(72px, 10vw, 124px) 0 42px; }
+    .hero-badge { min-height: 32px; margin-bottom: 22px; padding: 5px 13px; border: 1px solid rgba(216,100,69,.20); font-size: 13px; font-weight: 650; }
+    .hero h1 { max-width: 820px; margin: 0 auto 20px; font-family: inherit; font-size: clamp(42px, 7vw, 76px); font-weight: 700; letter-spacing: -.055em; line-height: 1.04; }
+    .hero h1 .hi::after { display: none; }
+    .hero p { max-width: 650px; margin: 0 auto; color: var(--text-mid); font-size: clamp(17px, 2.2vw, 21px); line-height: 1.55; font-weight: 400; }
+
+    .welcome-user-card { max-width: 560px; margin: 0 auto 28px; padding: 12px 14px; border: 1px solid var(--border); background: var(--surface); box-shadow: 0 8px 24px rgba(0,0,0,.05); }
+    .welcome-avatar-wrap img { width: 48px; height: 48px; border: 0; }
+    .welcome-title { margin-bottom: 1px; color: var(--text); font-size: 16px; font-weight: 650; }
+    .welcome-text p { color: var(--text-mid); font-size: 13px; }
+    .status-online { color: #16743a; font-size: 12px; }
+
+    .stats-bar { margin: 0 auto 58px; gap: 10px; }
+    .stat-pill { min-height: 40px; padding: 7px 14px; border: 1px solid var(--border-soft); background: var(--surface); color: var(--text-mid); font-size: 14px; }
+    .stat-num { font-family: inherit; font-size: 15px; font-weight: 700; }
+    .section-head { margin-bottom: 20px; align-items: flex-end; }
+    .section-label { color: var(--text); font-size: clamp(24px, 3vw, 32px); font-weight: 700; letter-spacing: -.035em; text-transform: none; }
+    .section-line { display: none; }
+
+    .apps-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-bottom: 84px; }
+    .app-card { min-height: 260px; padding: 22px; gap: 16px; border: 1px solid var(--border-soft); background: var(--surface); box-shadow: 0 2px 12px rgba(0,0,0,.025); transition: transform .22s ease, box-shadow .22s ease, border-color .22s ease; }
+    .app-card::before { display: none; }
+    .app-card:hover { transform: translateY(-4px); border-color: var(--border); box-shadow: 0 14px 40px rgba(0,0,0,.07); }
+    .app-card:active { transform: scale(.985); }
+    .app-icon { width: 58px; height: 58px; border: 1px solid rgba(255,255,255,.7); border-radius: 17px; background: linear-gradient(145deg,#fff7f3,#ffd8c9); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 8px 20px rgba(185,77,50,.10); font-size: 27px; }
+    .app-name { margin-bottom: 7px; font-size: 18px; font-weight: 700; letter-spacing: -.015em; }
+    .app-desc { color: var(--text-mid); font-size: 14px; line-height: 1.55; font-weight: 400; }
+    .app-card-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .app-tag { margin-top: 0; padding: 4px 10px; color: var(--peach-dark); font-size: 12px; font-weight: 650; }
+    .card-arrow { color: var(--text-faint); font-size: 19px; line-height: 1; transition: .2s ease; }
+    .app-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
+
+    footer { border-top: 1px solid var(--border-soft); }
+    .footer-inner { max-width: 1120px; min-height: 92px; }
+    .footer-left, .footer-right { color: var(--text-faint); }
+    .toast { max-width: calc(100vw - 32px); bottom: max(24px, env(safe-area-inset-bottom)); border: 1px solid rgba(255,255,255,.16); background: rgba(29,29,31,.92); color: #fff; box-shadow: 0 10px 32px rgba(0,0,0,.20); font-size: 14px; }
+
+    @media (max-width: 900px) { .apps-grid { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+    @media (max-width: 720px) {
+      .header-inner { padding: 10px 16px; align-items: flex-start; flex-wrap: wrap; }
+      .header-actions { width: 100%; order: 2; }
+      .google-login-btn, .user-profile-bar { margin-right: auto; }
+      .hero { padding: 58px 0 36px; }
+      .stats-bar { margin-bottom: 48px; }
+    }
+    @media (max-width: 600px) {
+      .apps-grid { grid-template-columns: 1fr; }
+      .app-card { min-height: 228px; padding: 22px; }
+      .app-name { font-size: 18px; }
+      .footer-inner { align-items: flex-start; flex-direction: column; justify-content: center; }
+    }
+    @media (max-width: 430px) {
+      .brand-name { display: none; }
+      .user-info-text { display: none; }
+      .hero h1 { font-size: clamp(38px, 13vw, 54px); }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111113; --surface: rgba(30,30,33,.84); --surface-solid: #242427;
+        --text: #f5f5f7; --text-mid: #b5b5bb; --text-muted: #b5b5bb; --text-faint: #9a9aa1;
+        --border: rgba(255,255,255,.18); --border-soft: rgba(255,255,255,.10);
+        --accent: #ff8f6f; --accent-light: rgba(255,143,111,.13); --peach-dark: #ffb09a;
+      }
+      body { background: radial-gradient(circle at 88% 8%, rgba(216,100,69,.14), transparent 28rem), var(--bg); }
+      header { background: rgba(17,17,19,.78); }
+      .app-icon { border-color: rgba(255,255,255,.08); background: linear-gradient(145deg,#3a2e2b,#5b352b); }
+      .status-online { color: #62c982; }
+    }
+    @media (prefers-contrast: more) { .app-card, .google-login-btn, .lang-switch { border-width: 2px; } }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
@@ -670,18 +816,18 @@
   <div class="float-deco">🌷</div>
   <div class="float-deco">✿</div>
 
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"></div>
 
   <header>
     <div class="header-inner">
-      <a class="brand" href="javascript:void(0)">
-        <div class="brand-logo">🌸</div>
+      <a class="brand" href="./" aria-label="Taithai Apps home">
+        <div class="brand-logo" aria-hidden="true">🌸</div>
         <span class="brand-name">Taithai<span class="brand-dot"></span></span>
       </a>
 
       <div class="header-actions">
-        <button id="googleLoginBtn" class="google-login-btn">
-          <svg viewBox="0 0 24 24">
+        <button id="googleLoginBtn" class="google-login-btn" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
@@ -691,17 +837,17 @@
         </button>
 
         <div id="userProfileBar" class="user-profile-bar" style="display: none;">
-          <img id="userAvatar" class="user-avatar" src="" alt="Profile" />
+          <img id="userAvatar" class="user-avatar" src="" alt="" />
           <div class="user-info-text">
             <span id="userName" class="user-name">...</span>
             <span id="userEmail" class="user-email">...</span>
           </div>
-          <button id="logoutBtn" class="logout-btn">Sign Out</button>
+          <button id="logoutBtn" class="logout-btn" type="button">Sign Out</button>
         </div>
 
-        <div class="lang-switch">
-          <button class="lang-btn active" id="langEnBtn" onclick="setLanguage('en')">EN</button>
-          <button class="lang-btn" id="langThBtn" onclick="setLanguage('th')">ไทย</button>
+        <div class="lang-switch" role="group" aria-label="Language">
+          <button class="lang-btn active" id="langEnBtn" type="button" onclick="setLanguage('en')" aria-pressed="true">EN</button>
+          <button class="lang-btn" id="langThBtn" type="button" onclick="setLanguage('th')" aria-pressed="false">ไทย</button>
         </div>
       </div>
     </div>
@@ -714,10 +860,10 @@
         
         <div id="welcomeUserCard" class="welcome-user-card" style="display: none;">
           <div class="welcome-avatar-wrap">
-            <img id="heroUserAvatar" src="" alt="User Avatar" />
+            <img id="heroUserAvatar" src="" alt="" />
           </div>
           <div class="welcome-text">
-            <h3 id="welcomeGreeting">ยินดีต้อนรับ</h3>
+            <div class="welcome-title" id="welcomeGreeting">ยินดีต้อนรับ</div>
             <p id="welcomeEmail"></p>
             <span class="status-online"><span class="green-dot"></span> <span id="authStatusText">Logged in with Google</span></span>
           </div>
@@ -727,81 +873,81 @@
         <p id="heroDesc"></p>
       </section>
 
-      <div class="stats-bar">
+      <div class="stats-bar" aria-label="App collection summary">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">6</span>
+          <span class="stat-num">7</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
-          <span>🕐</span>
+          <span aria-hidden="true">●</span>
           <span id="updatedTodayLabel"></span>
         </div>
       </div>
 
       <div class="section-head">
-        <span class="section-label" id="gridLabel"></span>
+        <h2 class="section-label" id="gridLabel"></h2>
         <div class="section-line"></div>
       </div>
 
-      <div class="apps-grid">
-        <a class="app-card" href="javascript:void(0)" onclick="goToTemporaryChat()">
-          <div class="app-icon">💬</div>
+      <div class="apps-grid" aria-labelledby="gridLabel">
+        <a class="app-card" href="./temporary%20chat/" onclick="goToTemporaryChat(event)">
+          <div class="app-icon" aria-hidden="true">💬</div>
           <div>
-            <div class="app-name" id="appName1"></div>
+            <h3 class="app-name" id="appName1"></h3>
             <div class="app-desc" id="appDesc1"></div>
           </div>
-          <span class="app-tag" id="appTag1"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag1"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
 
-        <a class="app-card" href="javascript:void(0)" onclick="goToQrGenerator()">
-          <div class="app-icon">🔳</div>
+        <a class="app-card" href="./QR%20Code%20Generator%20/" onclick="goToQrGenerator(event)">
+          <div class="app-icon" aria-hidden="true">🔳</div>
           <div>
-            <div class="app-name" id="appName2"></div>
+            <h3 class="app-name" id="appName2"></h3>
             <div class="app-desc" id="appDesc2"></div>
           </div>
-          <span class="app-tag" id="appTag2"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag2"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
 
-        <a class="app-card" href="javascript:void(0)" onclick="goToQrReader()">
-          <div class="app-icon">📷</div>
+        <a class="app-card" href="./QR%20Code%20Reader/" onclick="goToQrReader(event)">
+          <div class="app-icon" aria-hidden="true">📷</div>
           <div>
-            <div class="app-name" id="appName3"></div>
+            <h3 class="app-name" id="appName3"></h3>
             <div class="app-desc" id="appDesc3"></div>
           </div>
-          <span class="app-tag" id="appTag3"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag3"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
-        <a class="app-card" href="javascript:void(0)" onclick="goToUrlShortener()">
-          <div class="app-icon">🔗</div>
+        <a class="app-card" href="./S/" onclick="goToUrlShortener(event)">
+          <div class="app-icon" aria-hidden="true">🔗</div>
           <div>
-            <div class="app-name" id="appName4"></div>
+            <h3 class="app-name" id="appName4"></h3>
             <div class="app-desc" id="appDesc4"></div>
           </div>
-          <span class="app-tag" id="appTag4"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag4"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
-        <a class="app-card" href="javascript:void(0)" onclick="goToDoctorPlan()">
-          <div class="app-icon">🩺</div>
+        <a class="app-card" href="./Bangkok%20Doctor%20Plan/" onclick="goToDoctorPlan(event)">
+          <div class="app-icon" aria-hidden="true">🩺</div>
           <div>
-            <div class="app-name" id="appName5"></div>
+            <h3 class="app-name" id="appName5"></h3>
             <div class="app-desc" id="appDesc5"></div>
           </div>
-          <span class="app-tag" id="appTag5"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag5"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
-        <a class="app-card" href="javascript:void(0)" onclick="goToMovieMemory()">
-          <div class="app-icon">🎞️</div>
+        <a class="app-card" href="./Movie%20Memory/" onclick="goToMovieMemory(event)">
+          <div class="app-icon" aria-hidden="true">🎞️</div>
           <div>
-            <div class="app-name" id="appName6"></div>
+            <h3 class="app-name" id="appName6"></h3>
             <div class="app-desc" id="appDesc6"></div>
           </div>
-          <span class="app-tag" id="appTag6"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag6"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
-        <a class="app-card" href="javascript:void(0)" onclick="goToPublicDrive()">
-          <div class="app-icon">☁️</div>
+        <a class="app-card" href="./Public%20Drive/index.html" onclick="goToPublicDrive(event)">
+          <div class="app-icon" aria-hidden="true">☁️</div>
           <div>
-            <div class="app-name" id="appName7"></div>
+            <h3 class="app-name" id="appName7"></h3>
             <div class="app-desc" id="appDesc7"></div>
           </div>
-          <span class="app-tag" id="appTag7"></span>
+          <div class="app-card-footer"><span class="app-tag" id="appTag7"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
       </div>
     </div>
@@ -1007,6 +1153,8 @@
       document.getElementById("footerRight").textContent = t.footerRight;
       document.getElementById("langEnBtn").classList.toggle("active", currentLang === "en");
       document.getElementById("langThBtn").classList.toggle("active", currentLang === "th");
+      document.getElementById("langEnBtn").setAttribute("aria-pressed", String(currentLang === "en"));
+      document.getElementById("langThBtn").setAttribute("aria-pressed", String(currentLang === "th"));
       document.getElementById("yearInline").textContent = new Date().getFullYear();
 
       const loginBtnText = document.getElementById("loginBtnText");
@@ -1026,14 +1174,16 @@
       }, 2200);
     }
 
-    function goToTemporaryChat() {
+    function goToTemporaryChat(event) {
+      event?.preventDefault();
       showToast(i18n[currentLang].openingText1);
       setTimeout(() => {
         window.location.href = TEMP_CHAT_URL;
       }, 250);
     }
 
-    function goToQrGenerator() {
+    function goToQrGenerator(event) {
+      event?.preventDefault();
       if (!QR_GENERATOR_URL || QR_GENERATOR_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet2);
         return;
@@ -1047,7 +1197,8 @@
 
 
 
-    function goToQrReader() {
+    function goToQrReader(event) {
+      event?.preventDefault();
       if (!QR_READER_URL || QR_READER_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet3);
         return;
@@ -1058,7 +1209,8 @@
         window.location.href = QR_READER_URL;
       }, 250);
     }
-    function goToUrlShortener() {
+    function goToUrlShortener(event) {
+      event?.preventDefault();
       if (!URL_SHORTENER_URL || URL_SHORTENER_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet4);
         return;
@@ -1070,7 +1222,8 @@
       }, 250);
     }
 
-    function goToDoctorPlan() {
+    function goToDoctorPlan(event) {
+      event?.preventDefault();
       if (!DOCTOR_PLAN_URL || DOCTOR_PLAN_URL === "javascript:void(0)") {
         showToast(i18n[currentLang].noLinkYet5);
         return;
@@ -1082,14 +1235,16 @@
       }, 250);
     }
 
-    function goToMovieMemory() {
+    function goToMovieMemory(event) {
+      event?.preventDefault();
       showToast(i18n[currentLang].openingText6);
       setTimeout(() => {
         window.location.href = MOVIE_MEMORY_URL;
       }, 250);
     }
 
-    function goToPublicDrive() {
+    function goToPublicDrive(event) {
+      event?.preventDefault();
       showToast(i18n[currentLang].openingText7);
       setTimeout(() => {
         window.location.href = PUBLIC_DRIVE_URL;
