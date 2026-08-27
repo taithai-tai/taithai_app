@@ -209,8 +209,9 @@
   }
   #file-input, #img-input { display: none; }
 </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-chat">
 <div class="app" id="app">
   <div class="google-login-chat">
     <button id="googleLoginBtn" class="google-login-btn-chat">
@@ -247,34 +248,34 @@
   </div>
 
   <!-- SHEET: CREATE -->
-  <div id="sheet-create" class="overlay" onclick="closeSheetOutside(event,'sheet-create')">
+  <div id="sheet-create" class="overlay" role="dialog" aria-modal="true" aria-labelledby="create-sheet-title" onclick="closeSheetOutside(event,'sheet-create')">
     <div class="sheet">
       <div class="sheet-handle"></div>
       <div class="sheet-title" id="create-sheet-title">Create Chat Room 🌸</div>
       <div class="sheet-sub" id="create-sheet-sub">Set your name and share the room code</div>
       <div class="field">
-        <label id="create-name-label">Your Name</label>
-        <input id="create-name" placeholder="e.g. Mint" maxlength="20" onkeydown="if(event.key==='Enter')doCreate()"/>
+        <label id="create-name-label" for="create-name">Your Name</label>
+        <input id="create-name" autocomplete="nickname" placeholder="e.g. Mint" maxlength="20" onkeydown="if(event.key==='Enter')doCreate()"/>
       </div>
       <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doCreate()" id="create-room-btn">Create Room ✦</button>
     </div>
   </div>
 
   <!-- SHEET: JOIN -->
-  <div id="sheet-join" class="overlay" onclick="closeSheetOutside(event,'sheet-join')">
+  <div id="sheet-join" class="overlay" role="dialog" aria-modal="true" aria-labelledby="join-sheet-title" onclick="closeSheetOutside(event,'sheet-join')">
     <div class="sheet">
       <div class="sheet-handle"></div>
       <div class="sheet-title" id="join-sheet-title">Join Room 🔑</div>
       <div class="sheet-sub" id="join-sheet-sub">Enter the code shared by your friend</div>
       <div class="field">
-        <label id="join-code-label">Room Code</label>
+        <label id="join-code-label" for="join-code">Room Code</label>
         <input id="join-code" class="code-field" placeholder="ABC123" maxlength="6"
           oninput="this.value=this.value.toUpperCase()"
           onkeydown="if(event.key==='Enter')document.getElementById('join-name').focus()"/>
       </div>
       <div class="field">
-        <label id="join-name-label">Your Name</label>
-        <input id="join-name" placeholder="e.g. Pete" maxlength="20" onkeydown="if(event.key==='Enter')doJoin()"/>
+        <label id="join-name-label" for="join-name">Your Name</label>
+        <input id="join-name" autocomplete="nickname" placeholder="e.g. Pete" maxlength="20" onkeydown="if(event.key==='Enter')doJoin()"/>
       </div>
       <div id="join-err" class="err-msg"></div>
       <button class="btn-main btn-primary" style="max-width:100%;margin-top:4px" onclick="doJoin()" id="join-room-btn">Join Now ↗</button>
@@ -284,13 +285,13 @@
   <!-- WAITING -->
   <div id="waiting" class="screen">
     <div class="waiting-top">
-      <button class="back-btn" onclick="cancelHost()">←</button>
+      <button class="back-btn" type="button" aria-label="กลับ" onclick="cancelHost()">←</button>
     </div>
     <div class="waiting-card">
       <div class="waiting-label" id="waiting-label">Your Room Code</div>
-      <div class="code-big" id="room-code-display" onclick="copyCode()"></div>
+      <div class="code-big" id="room-code-display" role="button" tabindex="0" aria-label="คัดลอกรหัสห้อง" onclick="copyCode()" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();copyCode()}"></div>
       <div class="copy-tip" id="copy-tip">👆 Tap to copy</div>
-      <div class="status-pill"><span class="pulse-dot"></span><span id="wait-status">Waiting for someone to join...</span></div>
+      <div class="status-pill" role="status" aria-live="polite"><span class="pulse-dot" aria-hidden="true"></span><span id="wait-status">Waiting for someone to join...</span></div>
       <p class="share-hint" id="share-hint">Share this code with your friend<br>and ask them to tap "Join Room"</p>
     </div>
     <button class="btn-main btn-primary" style="margin-top:1.5rem" onclick="hostEnterChat()" id="start-chat-btn">Start Chatting ✦</button>
@@ -309,7 +310,7 @@
         <button class="leave-btn" onclick="leaveChat()" id="leave-btn">Leave</button>
       </div>
     </div>
-    <div class="messages-wrap" id="messages"></div>
+    <div class="messages-wrap" id="messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
 
     <div class="attach-menu" id="attach-menu">
       <button class="attach-item" onclick="triggerImg()"><span>🖼️</span><span id="attach-image-label">Image</span></button>
@@ -317,10 +318,10 @@
     </div>
 
     <div class="chat-input-bar">
-      <button class="attach-btn" id="attach-btn" onclick="toggleAttachMenu(event)">＋</button>
+      <button class="attach-btn" id="attach-btn" type="button" aria-label="แนบไฟล์" aria-expanded="false" aria-controls="attach-menu" onclick="toggleAttachMenu(event)">＋</button>
       <textarea class="chat-input" id="chat-input" placeholder="Type a message..." rows="1"
         onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
-      <button class="send-btn" onclick="sendMsg()">
+      <button class="send-btn" type="button" aria-label="ส่งข้อความ" onclick="sendMsg()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <line x1="22" y1="2" x2="11" y2="13"/>
           <polygon points="22 2 15 22 11 13 2 9 22 2"/>
@@ -331,15 +332,15 @@
 
   <!-- LIGHTBOX -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
-    <button class="lightbox-close">✕</button>
+    <button class="lightbox-close" type="button" aria-label="ปิดรูปภาพ">✕</button>
     <img id="lightbox-img" src="" alt="รูปภาพ">
   </div>
 
 </div>
 
-<div class="toast" id="toast"></div>
-<input type="file" id="img-input" accept="image/*" onchange="handleImg(this)">
-<input type="file" id="file-input" onchange="handleFile(this)">
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<input type="file" id="img-input" accept="image/*" aria-label="เลือกรูปภาพ" onchange="handleImg(this)">
+<input type="file" id="file-input" aria-label="เลือกไฟล์" onchange="handleFile(this)">
 
 <script>
 const CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -777,9 +778,14 @@ function sendMsg() {
 /* ── ATTACH ── */
 function toggleAttachMenu(e) {
   e.stopPropagation();
-  document.getElementById('attach-menu').classList.toggle('open');
+  const menu = document.getElementById('attach-menu');
+  const isOpen = menu.classList.toggle('open');
+  document.getElementById('attach-btn').setAttribute('aria-expanded', String(isOpen));
 }
-document.addEventListener('click', () => document.getElementById('attach-menu').classList.remove('open'));
+document.addEventListener('click', () => {
+  document.getElementById('attach-menu').classList.remove('open');
+  document.getElementById('attach-btn').setAttribute('aria-expanded', 'false');
+});
 
 function triggerImg() { document.getElementById('attach-menu').classList.remove('open'); document.getElementById('img-input').click(); }
 function triggerFile() { document.getElementById('attach-menu').classList.remove('open'); document.getElementById('file-input').click(); }

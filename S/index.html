@@ -27,8 +27,9 @@
     .user-email{font-size:10px;color:var(--muted);max-width:100px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .logout-btn{border:none;background:rgba(222,127,95,.15);color:var(--accent);font-size:10px;font-weight:600;padding:3px 8px;border-radius:999px;cursor:pointer;font-family:inherit}
   </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-shortlink">
   <main class="card">
     <div class="header-bar">
       <h1 style="margin:0">🔗 URL Shortener</h1>
@@ -54,9 +55,10 @@
       </div>
     </div>
     <p>วางลิงก์ยาว แล้วกดสร้าง Shortlink ได้ทันที</p>
-    <input id="longUrl" placeholder="https://example.com/page" />
+    <label class="sr-only" for="longUrl">ลิงก์ที่ต้องการย่อ</label>
+    <input id="longUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/page" />
     <button id="createBtn">สร้าง Shortlink</button>
-    <div id="result"></div>
+    <div id="result" role="status" aria-live="polite"></div>
   </main>
 
 <script>
@@ -92,8 +94,11 @@ document.getElementById('createBtn').onclick=()=>{
   const shortUrl=`${BASE_DOMAIN}/S/${code}`;
   const result=document.getElementById('result');
   result.style.display='block';
-  result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank">${shortUrl}</a><br><br><button id="copyBtn" style="margin-top:0">คัดลอกลิงก์</button>`;
-  document.getElementById('copyBtn').onclick=()=>navigator.clipboard.writeText(shortUrl);
+  result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank" rel="noopener">${shortUrl}</a><br><br><button id="copyBtn" type="button" style="margin-top:0">คัดลอกลิงก์</button>`;
+  document.getElementById('copyBtn').onclick=async event=>{
+    await navigator.clipboard.writeText(shortUrl);
+    event.currentTarget.textContent='คัดลอกแล้ว ✓';
+  };
 };
 </script>
 

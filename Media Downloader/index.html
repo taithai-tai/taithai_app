@@ -49,8 +49,9 @@
     .logout-btn:hover { background: #a63f35; color: white; }
     @media (max-width:700px){ .row{ grid-template-columns:1fr; } }
   </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-downloader">
   <main class="card">
     <div class="header-bar">
       <div>
@@ -84,14 +85,14 @@
         <input id="ytUrl" type="url" placeholder="https://www.youtube.com/watch?v=..." />
       </label>
       <div class="row">
-        <select id="format">
+        <select id="format" aria-label="รูปแบบไฟล์ดาวน์โหลด">
           <option value="mp4">Video (mp4)</option>
           <option value="mp3">Audio (mp3)</option>
         </select>
         <button id="openDownhubBtn" class="secondary">เปิดใน Downhub</button>
         <button id="downloadBtn">ไปหน้าดาวน์โหลด</button>
       </div>
-      <p id="status" class="status">พร้อมใช้งาน</p>
+      <p id="status" class="status" role="status" aria-live="polite">พร้อมใช้งาน</p>
     </div>
 
     <section id="preview" class="preview">

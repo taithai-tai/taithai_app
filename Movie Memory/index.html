@@ -29,8 +29,9 @@
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260729-2"><\/script>`);
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}auth-feedback.js?v=20260728-1"><\/script>`);
   </script>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-movie">
   <div class="grain"></div>
   <div class="glow-spot one"></div>
   <div class="glow-spot two"></div>
@@ -152,7 +153,7 @@
     <section class="toolbar">
       <div class="search-wrap">
         <span class="search-icon">🔍</span>
-        <input class="control" id="searchInput" type="search" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." data-mm-i18n-placeholder="home.search.placeholder" autocomplete="off">
+        <input class="control" id="searchInput" type="search" aria-label="ค้นหาในคอลเลกชันหนัง" placeholder="ค้นหาชื่อหนัง, โรงภาพยนตร์, ที่นั่ง หรือความรู้สึก..." data-mm-i18n-placeholder="home.search.placeholder" autocomplete="off">
       </div>
 
       <button class="mobile-filter-toggle" id="mobileFilterToggle" type="button" aria-expanded="false" aria-controls="yearFilter formatFilter sortSelect">
@@ -206,7 +207,7 @@
   <dialog id="profileModal">
     <div class="modal-header">
       <h2 id="profileModalTitle">โปรไฟล์</h2>
-      <button class="close-modal-btn" id="closeProfileBtn" type="button" title="ปิดหน้าต่าง">×</button>
+      <button class="close-modal-btn" id="closeProfileBtn" type="button" title="ปิดหน้าต่าง" aria-label="ปิดหน้าต่างโปรไฟล์">×</button>
     </div>
     <div class="profile-dialog-body">
       <div id="profileSetup" hidden>
@@ -230,7 +231,7 @@
   <dialog id="addEditModal">
     <div class="modal-header">
       <h2 id="modalHeaderTitle">เพิ่มความทรงจำหนังใหม่</h2>
-      <button class="close-modal-btn" id="closeModalBtn" type="button" title="ปิดหน้าต่าง">×</button>
+      <button class="close-modal-btn" id="closeModalBtn" type="button" title="ปิดหน้าต่าง" aria-label="ปิดหน้าต่างเพิ่มบันทึก">×</button>
     </div>
 
     <!-- Wizard Steps Indicator -->
@@ -279,7 +280,7 @@
         <button class="btn btn-ghost" id="backToStep1Btn" type="button" style="font-size:12px; padding:4px 12px">← ย้อนกลับ</button>
       </div>
       <div class="catalog-search-bar">
-        <input class="control" id="catalogSearchInput" type="search" placeholder="พิมพ์ชื่อหนังเพื่อค้นหา (เช่น Past Lives, Dune, หลานม่า)..." autocomplete="off">
+        <input class="control" id="catalogSearchInput" type="search" aria-label="ค้นหาชื่อภาพยนตร์" placeholder="พิมพ์ชื่อหนังเพื่อค้นหา (เช่น Past Lives, Dune, หลานม่า)..." autocomplete="off">
       </div>
       <div class="catalog-list-grid" id="catalogResultsList"></div>
     </div>
@@ -457,7 +458,7 @@
           <div style="color:var(--gold); font-size:18px; margin-top:4px" id="inspectStarsTxt"></div>
         </div>
       </div>
-      <button class="close-modal-btn" id="closeInspectBtn" type="button" style="position:absolute; top:16px; right:16px; z-index:10">×</button>
+      <button class="close-modal-btn" id="closeInspectBtn" type="button" aria-label="ปิดรายละเอียดภาพยนตร์" style="position:absolute; top:16px; right:16px; z-index:10">×</button>
     </div>
 
     <div class="ticket-inspect-body">
@@ -475,7 +476,7 @@
           <span class="watch-region-badge" aria-label="ประเทศไทย">🇹🇭 TH</span>
         </div>
         <div class="watch-provider-content" id="inspectWatchProviders" aria-live="polite">
-          <div class="watch-provider-status is-loading" data-mm-i18n="watch.loading">กำลังค้นหาช่องทางรับชม…</div>
+          <div class="watch-provider-status is-loading" role="status" aria-live="polite" data-mm-i18n="watch.loading">กำลังค้นหาช่องทางรับชม…</div>
         </div>
         <div class="watch-provider-footer">
           <span data-mm-i18n="watch.source">ข้อมูลผู้ให้บริการโดย JustWatch ผ่าน TMDB</span>
@@ -510,7 +511,7 @@
         <h2 id="rewatchModalTitle">เพิ่มการดูอีกครั้ง</h2>
         <p class="dialog-subtitle" id="rewatchMovieTitle"></p>
       </div>
-      <button class="close-modal-btn" id="closeRewatchBtn" type="button" title="กลับ">←</button>
+      <button class="close-modal-btn" id="closeRewatchBtn" type="button" title="กลับ" aria-label="กลับไปหน้ารายละเอียด">←</button>
     </div>
     <form id="rewatchForm">
       <div class="form-container">
@@ -572,7 +573,7 @@
         <h2>แก้ไขรีวิว</h2>
         <p class="dialog-subtitle" id="reviewMovieTitle"></p>
       </div>
-      <button class="close-modal-btn" id="closeReviewBtn" type="button" title="กลับ">←</button>
+      <button class="close-modal-btn" id="closeReviewBtn" type="button" title="กลับ" aria-label="กลับไปหน้ารายละเอียด">←</button>
     </div>
     <form id="reviewForm">
       <div class="form-container review-form-container">
@@ -604,7 +605,7 @@
         <h2>แต่งภาพก่อนแชร์</h2>
         <p class="story-editor-subtitle">เลือกฉากหลังให้เข้ากับโปสเตอร์ แล้วดูตัวอย่างก่อนแชร์</p>
       </div>
-      <button class="close-modal-btn" id="closeStoryEditorBtn" type="button" title="ปิดหน้าต่าง">×</button>
+      <button class="close-modal-btn" id="closeStoryEditorBtn" type="button" title="ปิดหน้าต่าง" aria-label="ปิดตัวแก้ไข Story">×</button>
     </div>
     <div class="story-editor-body">
       <div class="story-preview-shell" id="storyPreviewShell" aria-live="polite">
@@ -648,7 +649,7 @@
         <h2>เลือกโปสเตอร์</h2>
         <p id="posterPickerTitle" style="color:var(--muted);font-size:12px;margin-top:2px"></p>
       </div>
-      <button class="close-modal-btn" id="closePosterPickerBtn" type="button" title="ปิดหน้าต่าง">×</button>
+      <button class="close-modal-btn" id="closePosterPickerBtn" type="button" title="ปิดหน้าต่าง" aria-label="ปิดตัวเลือกโปสเตอร์">×</button>
     </div>
     <div class="poster-picker-body">
       <p class="poster-picker-help">เลือกภาพที่ต้องการใช้เป็นหน้าปกในคอลเลกชันของคุณ</p>
@@ -657,7 +658,7 @@
   </dialog>
 
   <!-- Toast Element -->
-  <div class="toast" id="toast"></div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <!-- Main Application Script -->
   <script>

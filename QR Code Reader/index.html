@@ -154,8 +154,9 @@
       .layout { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-qr">
   <main class="card">
     <div class="header-bar">
       <h1>📷 QR Code Reader</h1>
@@ -197,12 +198,12 @@
           <input id="fileInput" type="file" accept="image/*" />
         </div>
 
-        <p class="status" id="status">ระบบพร้อมใช้งาน</p>
+        <p class="status" id="status" role="status" aria-live="polite">ระบบพร้อมใช้งาน</p>
       </div>
 
       <aside class="panel">
         <h2 style="margin:0 0 10px; font-size:1.15rem;">ผลการอ่าน QR</h2>
-        <div class="result-box" id="resultText">ยังไม่มีผลลัพธ์</div>
+        <div class="result-box" id="resultText" role="status" aria-live="polite">ยังไม่มีผลลัพธ์</div>
         <div class="result-actions">
           <button id="copyBtn" class="secondary" disabled>📋 คัดลอกข้อความ</button>
           <button id="openBtn" disabled>🔗 เปิดลิงก์</button>

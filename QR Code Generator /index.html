@@ -262,8 +262,9 @@
       .row { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-qr">
   <div class="card">
     <div class="grid">
       <section class="left">
@@ -308,7 +309,7 @@
           <div>
             <label>สี QR</label>
             <div class="color-wrap">
-              <input type="color" id="darkColor" value="#000000" />
+              <input type="color" id="darkColor" value="#000000" aria-label="เลือกสี QR" />
               <span id="darkValue">#000000</span>
             </div>
           </div>
@@ -318,7 +319,7 @@
           <div>
             <label>สีพื้นหลัง</label>
             <div class="color-wrap">
-              <input type="color" id="lightColor" value="#ffffff" />
+              <input type="color" id="lightColor" value="#ffffff" aria-label="เลือกสีพื้นหลัง" />
               <span id="lightValue">#ffffff</span>
             </div>
           </div>
@@ -339,7 +340,7 @@
           <button class="secondary" id="clearBtn">ล้างข้อมูล</button>
         </div>
 
-        <div class="status" id="status"></div>
+        <div class="status" id="status" role="status" aria-live="polite"></div>
         <p class="network-note">หมายเหตุ: เวอร์ชันนี้สร้าง QR ผ่านบริการสร้างรูป QR ออนไลน์โดยตรง จึงไม่เกิดปัญหา <code>QRCode is not defined</code> แต่ต้องมีอินเทอร์เน็ตขณะสร้างภาพ</p>
       </section>
 

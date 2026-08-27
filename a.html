@@ -14,15 +14,16 @@
         .img-container img { width: 100%; height: auto; border-radius: 5px; cursor: pointer; }
         .img-container p { font-size: 12px; color: #666; word-break: break-all; margin-top: 5px; }
     </style>
+  <link rel="stylesheet" href="./assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-gallery">
 
-    <h2>🖼️ โปรแกรมฝากรูปชั่วคราว (แสดงผลขนาดเต็ม)</h2>
+    <h1>🖼️ โปรแกรมฝากรูปชั่วคราว</h1>
     
-    <div id="drop-area">
-        <p>ลากรูปภาพมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</p>
+    <div id="drop-area" role="button" tabindex="0" aria-controls="fileElem" aria-describedby="drop-help">
+        <p id="drop-help">ลากรูปภาพมาวางที่นี่ หรือกด Enter เพื่อเลือกไฟล์</p>
         <input type="file" id="fileElem" multiple accept="image/*" style="display:none" onchange="handleFiles(this.files)">
-        <button onclick="document.getElementById('fileElem').click()" style="padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 5px;">เลือกรูปภาพ</button>
+        <button type="button" onclick="document.getElementById('fileElem').click()" style="padding: 10px 20px; cursor: pointer; background: #c75b3b; color: white; border: none; border-radius: 12px;">เลือกรูปภาพ</button>
     </div>
 
     <div id="gallery"></div>
@@ -39,6 +40,18 @@
             e.preventDefault();
             e.stopPropagation();
         }
+
+        dropArea.addEventListener('click', (event) => {
+            if (event.target === dropArea || event.target.tagName === 'P') {
+                document.getElementById('fileElem').click();
+            }
+        });
+        dropArea.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                document.getElementById('fileElem').click();
+            }
+        });
 
         // เพิ่ม Highlight เวลาลากไฟล์มาวาง
         ['dragenter', 'dragover'].forEach(eventName => {
@@ -71,12 +84,19 @@
                 
                 let img = document.createElement('img');
                 img.src = reader.result;
-                img.onclick = () => window.open(reader.result, '_blank'); // คลิกเพื่อดูขนาดเต็มในแท็บใหม่
+                img.alt = `ตัวอย่าง ${file.name}`;
+
+                let link = document.createElement('a');
+                link.href = reader.result;
+                link.target = '_blank';
+                link.rel = 'noopener';
+                link.setAttribute('aria-label', `เปิดรูป ${file.name} ขนาดเต็ม`);
+                link.appendChild(img);
                 
                 let p = document.createElement('p');
                 p.textContent = file.name;
 
-                div.appendChild(img);
+                div.appendChild(link);
                 div.appendChild(p);
                 document.getElementById('gallery').appendChild(div);
             }

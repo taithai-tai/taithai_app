@@ -27,8 +27,9 @@
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}preferences.js?v=20260728-1"><\/script>`);
     document.write(`<script src="${window.location.protocol === 'file:' ? './' : '/movie-memory-assets/'}auth-feedback.js?v=20260728-1"><\/script>`);
   </script>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-movie">
   <header class="page-header">
     <div class="page-shell">
       <nav class="page-nav">
@@ -49,7 +50,7 @@
     <div class="page-kicker">▥ YOUR DASHBOARD</div>
     <h1 class="page-title">ภาพรวมการดูหนัง<em>ของคุณ</em></h1>
     <p class="page-intro">รวมจำนวนเรื่อง จำนวนครั้งที่ดู คะแนน และรูปแบบการรับชมไว้ในหน้าเดียว โดยข้อมูลจะเปลี่ยนตามบัญชีที่เข้าสู่ระบบ</p>
-    <p class="sync-note" id="dashboardSyncNote">กำลังอ่านข้อมูลจากอุปกรณ์นี้…</p>
+    <p class="sync-note" id="dashboardSyncNote" role="status" aria-live="polite">กำลังอ่านข้อมูลจากอุปกรณ์นี้…</p>
 
     <section class="dashboard-stats" id="dashboardStats" aria-label="สถิติการดูหนัง">
       <article class="dashboard-stat"><strong class="gold" id="dashMovieCount">0</strong><span>เรื่องในคอลเลกชัน</span></article>

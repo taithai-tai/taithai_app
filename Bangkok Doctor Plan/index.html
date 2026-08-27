@@ -124,8 +124,9 @@
     }
     .logout-btn:hover { background: #b31624; color: white; }
   </style>
+  <link rel="stylesheet" href="../assets/apple-design-system.css?v=20260827-1">
 </head>
-<body>
+<body class="taithai-design taithai-tool tt-planner">
   <section class="hero">
     <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
       <button id="googleLoginBtn" class="google-login-btn">
@@ -180,7 +181,7 @@
     <div class="progress-box">
       <h3 style="margin-bottom:6px">ความคืบหน้าการเรียน</h3>
       <p class="muted"><span id="completedCount">0</span> / <span id="totalCount">0</span> วิชาเรียนแล้ว · เหลืออีก <span id="remainingCount">0</span> วิชา</p>
-      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <div class="progress-bar" role="progressbar" aria-label="ความคืบหน้าการเรียน" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-fill" id="progressFill"></div></div>
       <button class="reset-btn" type="button" onclick="resetCheckedCourses()">รีเซ็ตการติ๊กวิชา</button>
     </div>
 
@@ -188,10 +189,11 @@
       <h3 style="margin-bottom:6px">ค้นหารายวิชา</h3>
       <p class="muted">พิมพ์รหัสวิชา หรือชื่อวิชา แล้วคลิกผลลัพธ์เพื่อเปิดรายละเอียดทันที (ค้นหาได้ทุกวิชาทุกสาขา)</p>
       <div class="search-wrap">
-        <input type="text" id="courseSearch" class="search-input" placeholder="เช่น MK101, Marketing, การตลาด" autocomplete="off">
+        <label class="sr-only" for="courseSearch">ค้นหารหัสหรือชื่อวิชา</label>
+        <input type="search" id="courseSearch" class="search-input" placeholder="เช่น MK101, Marketing, การตลาด" autocomplete="off">
         <button class="search-btn" type="button" onclick="searchCourses()">ค้นหา</button>
       </div>
-      <div id="searchResult" class="search-result muted">ยังไม่ได้ค้นหา</div>
+      <div id="searchResult" class="search-result muted" role="status" aria-live="polite">ยังไม่ได้ค้นหา</div>
     </div>
 
     <div class="extra-box">
@@ -206,10 +208,11 @@
       <h2>วิเคราะห์ Transcript PDF</h2>
       <p class="muted">อัปโหลด Grade Report PDF เพื่อให้ระบบติ๊กวิชาที่เรียนแล้วอัตโนมัติ</p>
       <div class="upload-row">
-        <input type="file" id="pdfUpload" accept=".pdf">
+        <label class="sr-only" for="pdfUpload">เลือกไฟล์ Transcript PDF</label>
+        <input type="file" id="pdfUpload" accept=".pdf,application/pdf">
         <button onclick="analyzePDF()">วิเคราะห์ PDF</button>
       </div>
-      <div id="uploadStatus" class="upload-status muted">ยังไม่ได้วิเคราะห์ไฟล์</div>
+      <div id="uploadStatus" class="upload-status muted" role="status" aria-live="polite">ยังไม่ได้วิเคราะห์ไฟล์</div>
     </div>
 
     <div id="extraSubjects"></div>
@@ -227,6 +230,7 @@
       <h2>แชร์แผนการเรียนของคุณ</h2>
       <p class="muted">คัดลอก URL นี้เพื่อเปิดสถานะวิชาที่ติ๊กไว้ทั้งหมดบนอุปกรณ์อื่น</p>
       <div class="share-url-wrap">
+        <label class="sr-only" for="shareUrl">URL สำหรับแชร์แผนการเรียน</label>
         <input type="text" class="share-url-input" id="shareUrl" readonly>
         <button class="share-btn" onclick="copyShareURL()">คัดลอก URL</button>
       </div>
@@ -668,7 +672,11 @@
       document.getElementById('completedCount').innerText = completedSubjects;
       document.getElementById('totalCount').innerText = totalSubjects;
       document.getElementById('remainingCount').innerText = remainingSubjects;
-      document.getElementById('progressFill').style.width = totalSubjects ? `${(completedSubjects / totalSubjects) * 100}%` : '0%';
+      const progressPercent = totalSubjects ? Math.round((completedSubjects / totalSubjects) * 100) : 0;
+      document.getElementById('progressFill').style.width = `${progressPercent}%`;
+      const progressBar = document.querySelector('.progress-bar');
+      progressBar.setAttribute('aria-valuenow', String(progressPercent));
+      progressBar.setAttribute('aria-valuetext', `${completedSubjects} จาก ${totalSubjects} วิชา`);
     }
 
     function escapeAttr(value){return String(value).replace(/'/g,'&#39;').replace(/"/g,'&quot;')}
