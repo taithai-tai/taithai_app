@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { capoRecommendations, playingKeyForCapo, transposeChord } from '../chord-engine/transpose.ts';
 import { parseChordPro } from '../chord-engine/parser.ts';
 import { detectKey } from '../chord-engine/key-detection.ts';
-import { buildDraftChordPro } from '../chord-engine/draft.ts';
+import { buildDraftChordPro, parseSyncedLyrics } from '../chord-engine/draft.ts';
 
 test('transposes roots, extensions and slash bass',()=>{
   assert.equal(transposeChord('Cmaj7',2),'Dmaj7');
@@ -17,3 +17,5 @@ test('recommends playable capo keys',()=>{assert.deepEqual(capoRecommendations('
 test('estimates a common major key',()=>{assert.deepEqual(detectKey(['C','G','Am','F']),{key:'C Major',confidence:100})});
 test('builds an explicitly marked draft with slash chords',()=>{const draft=buildDraftChordPro('line one\nline two','Song','Artist','C');assert.match(draft,/needs verification/);assert.match(draft,/\[G\/B]line two/)});
 test('chunks long drafts for balanced full layout columns',()=>{const lyrics=Array.from({length:10},(_,i)=>`line ${i+1}`).join('\n');const draft=buildDraftChordPro(lyrics,'Song','Artist','C');assert.match(draft,/start_of_verse: Draft 1/);assert.match(draft,/start_of_verse: Draft 2/)});
+test('parses LRC timestamps into seconds',()=>{assert.deepEqual(parseSyncedLyrics('[00:01.50] first line\n[01:02.25] second line'),[{time:1.5,text:'first line'},{time:62.25,text:'second line'}])});
+test('places multiple chords at lyric word positions from synced timing',()=>{const lyrics='one two three four five six\nnext line';const synced='[00:00.00] one two three four five six\n[00:08.00] next line';const draft=buildDraftChordPro(lyrics,'Song','Artist','C',{syncedLyrics:synced,bpm:60,beatsPerChord:4});assert.match(draft,/\[C]one two three \[G\/B]four/);assert.match(draft,/timing: synced lyrics beat grid · 60 BPM · 4 beats\/chord/)});
