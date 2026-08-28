@@ -9,6 +9,7 @@ import { ChordSheet } from './chord-sheet';
 import { ChordDiagram } from './chord-diagram';
 import { FavoriteButton } from './favorite-button';
 import { PauseIcon, PlayIcon, ResetIcon, ShareIcon } from './icons';
+import { SongArtwork } from './song-artwork';
 
 export function SongViewer({song}:{song:Song}) {
   const [steps,setSteps]=useState(0);
@@ -43,7 +44,7 @@ export function SongViewer({song}:{song:Song}) {
   return <main className="songPage">
     {toast&&<div className="toast" role="status" onAnimationEnd={()=>setToast('')}>{toast}</div>}
     <section className="songHero wrap">
-      <div className="artwork heroArt" style={{background:song.artwork}}><span>{song.title.slice(0,1)}</span></div>
+      <SongArtwork title={song.title} artist={song.artist} artwork={song.artwork} className="heroArt"/>
       <div className="songHeroText"><span className="eyebrow">CHORD SHEET</span><h1>{song.title}</h1><span className="artistName">{song.artist}</span>
         <div className="songFacts"><span>Original Key <strong>{song.originalKey}</strong></span><span>Capo <strong>{song.capo}</strong></span>{song.bpm&&<span>BPM <strong>{song.bpm}</strong></span>}<span>{song.difficulty}</span><span>{Intl.NumberFormat('th-TH').format(song.views)} views</span></div>
         <div className="heroActions"><FavoriteButton songId={song.id}/><button className="softButton" onClick={share}><ShareIcon/><span>แชร์</span></button></div>

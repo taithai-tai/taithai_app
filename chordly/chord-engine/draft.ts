@@ -90,3 +90,10 @@ export function buildDraftChordPro(lyrics:string,title:string,artist:string,key=
   const timing=timedLines.length?`synced lyrics beat grid · ${bpm} BPM · ${beatsPerChord} beats/chord`:'word-position estimate';
   return `{title: ${title.slice(0,180)}}\n{artist: ${artist.slice(0,180)}}\n{key: ${key}}\n{capo: 0}\n{comment: AI-style draft — needs verification}\n{comment: timing: ${timing}}\n\n${sections.join('\n\n')}`;
 }
+
+export function buildChordOnlyDraftPro(title:string,artist:string,key='C'){
+  const steps=Math.max(0,keys.indexOf(key));
+  const chords=progression.map(chord=>transposeChord(chord,steps,/b/.test(key)));
+  const row=chords.map(chord=>`[${chord}]  `).join('').trimEnd();
+  return `{title: ${title.slice(0,180)}}\n{artist: ${artist.slice(0,180)}}\n{key: ${key}}\n{capo: 0}\n{comment: automatic practice chords — needs verification}\n\n{start_of_intro: คอร์ดทดลอง}\n${row}\n${row}\n{end_of_intro}\n\n{start_of_verse: เล่นวน}\n${row}\n${row}\n${row}\n${row}\n{end_of_verse}`;
+}
