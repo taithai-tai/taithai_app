@@ -17,6 +17,7 @@ export function SongViewer({song}:{song:Song}) {
   const [instrument,setInstrument]=useState<Instrument>('guitar');
   const [autoScroll,setAutoScroll]=useState(false);
   const [speed,setSpeed]=useState(2);
+  const [sheetMode,setSheetMode]=useState<'full'|'scroll'>('full');
   const [toast,setToast]=useState('');
   const frame=useRef<number|null>(null);
   const last=useRef<number>(0);
@@ -59,10 +60,17 @@ export function SongViewer({song}:{song:Song}) {
       </div>
     </section>
 
-    <div className="songLayout wrap">
+    <section className="viewModeBar" aria-label="รูปแบบการแสดงคอร์ด">
+      <div className="viewModeTabs" role="group" aria-label="เลือกรูปแบบหน้าคอร์ด">
+        <button className={sheetMode==='full'?'active':''} aria-pressed={sheetMode==='full'} onClick={()=>setSheetMode('full')}>Full</button>
+        <button className={sheetMode==='scroll'?'active':''} aria-pressed={sheetMode==='scroll'} onClick={()=>setSheetMode('scroll')}>Scroll</button>
+      </div>
+    </section>
+
+    <div className={`songLayout wrap ${sheetMode==='full'?'fullMode':'scrollMode'}`}>
       <section className="sheetColumn">
         <div className="playingSummary"><div><span>Original Key</span><strong>{song.originalKey}</strong></div><div><span>Playing Key</span><strong>{playingKey}</strong></div><div><span>Capo</span><strong>{capo}</strong></div></div>
-        <ChordSheet content={song.content} steps={steps-capo} fontSize={fontSize} instrument={instrument}/>
+        <ChordSheet content={song.content} steps={steps-capo} fontSize={fontSize} instrument={instrument} layoutMode={sheetMode}/>
       </section>
       <aside className="songAside">
         <ChordDiagram chord={transposeChord('C/E',steps-capo)} instrument={instrument}/>
