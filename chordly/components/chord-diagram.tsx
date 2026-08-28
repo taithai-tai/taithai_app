@@ -19,8 +19,10 @@ function Piano({notes}:{notes:number[]}) {
 
 export function ChordDiagram({chord,instrument,onClose}:{chord:string;instrument:Instrument;onClose?:()=>void}) {
   const shape = getChordShape(chord);
+  const bass = chord.includes('/') ? chord.split('/')[1] : '';
   return <div className="diagramCard">
     <div className="diagramHead"><div><span>{instrument==='guitar'?'Guitar':instrument==='piano'?'Piano':'Ukulele'} Chord</span><strong>{chord}</strong></div>{onClose&&<button className="iconButton" onClick={onClose} aria-label="ปิดแผนภาพคอร์ด"><CloseIcon/></button>}</div>
+    {bass&&<div className="bassNote"><span>Bass note</span><strong>{bass}</strong></div>}
     {shape ? <>
       {instrument==='piano' ? <Piano notes={shape.piano}/> : <Fretboard fingering={shape[instrument]} strings={instrument==='guitar'?6:4}/>} 
       <div className="shapeCode">{instrument==='piano'?shape.piano.map(n=>noteNames[n]).join(' · '):shape[instrument]}</div>

@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Instrument, Song } from '@/lib/types';
-import { capoRecommendations, playingKeyForCapo, transposeKey } from '@/chord-engine/transpose';
+import { capoRecommendations, playingKeyForCapo, transposeChord, transposeKey } from '@/chord-engine/transpose';
 import { parseChordPro } from '@/chord-engine/parser';
 import { detectKey } from '@/chord-engine/key-detection';
 import { userLibrary } from '@/services/user-library';
@@ -65,7 +65,7 @@ export function SongViewer({song}:{song:Song}) {
         <ChordSheet content={song.content} steps={steps-capo} fontSize={fontSize} instrument={instrument}/>
       </section>
       <aside className="songAside">
-        <ChordDiagram chord={transposeKey('C',steps-capo)} instrument={instrument}/>
+        <ChordDiagram chord={transposeChord('C/E',steps-capo)} instrument={instrument}/>
         <div className="asideCard"><span className="eyebrow">CAPO SUGGESTION</span><h3>เล่นให้ง่ายขึ้น</h3>{suggestions.length?suggestions.map(item=><button key={item.capo} onClick={()=>setCapo(item.capo)}><span>Capo {item.capo}</span><strong>Play {item.playingKey}</strong></button>):<p>คีย์นี้เล่นได้สะดวกโดยไม่ต้องใช้ Capo</p>}</div>
         <div className="asideCard keyEstimate"><span>Key Detection</span><strong>{estimated.key}</strong><small>Confidence {estimated.confidence}%</small></div>
       </aside>

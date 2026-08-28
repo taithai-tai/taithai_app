@@ -7,6 +7,7 @@ import { detectKey } from '../chord-engine/key-detection.ts';
 test('transposes roots, extensions and slash bass',()=>{
   assert.equal(transposeChord('Cmaj7',2),'Dmaj7');
   assert.equal(transposeChord('Am/G',2),'Bm/A');
+  assert.equal(transposeChord('F#m/C#',1),'Gm/D');
   assert.equal(transposeChord('Bbadd9',1),'Badd9');
 });
 test('handles negative and large steps',()=>{assert.equal(transposeChord('C',-1),'B');assert.equal(transposeChord('G',14),'A')});
