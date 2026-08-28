@@ -16,3 +16,4 @@ test('parses section and aligned chord tokens',()=>{const parsed=parseChordPro('
 test('recommends playable capo keys',()=>{assert.deepEqual(capoRecommendations('F#')[0],{capo:2,playingKey:'E'});assert.equal(playingKeyForCapo('F#',2),'E')});
 test('estimates a common major key',()=>{assert.deepEqual(detectKey(['C','G','Am','F']),{key:'C Major',confidence:100})});
 test('builds an explicitly marked draft with slash chords',()=>{const draft=buildDraftChordPro('line one\nline two','Song','Artist','C');assert.match(draft,/needs verification/);assert.match(draft,/\[G\/B]line two/)});
+test('chunks long drafts for balanced full layout columns',()=>{const lyrics=Array.from({length:10},(_,i)=>`line ${i+1}`).join('\n');const draft=buildDraftChordPro(lyrics,'Song','Artist','C');assert.match(draft,/start_of_verse: Draft 1/);assert.match(draft,/start_of_verse: Draft 2/)});
