@@ -14,8 +14,8 @@ export const metadata: Metadata = {
   icons: { icon: '/Chordly/icons/icon.svg', apple: '/Chordly/icons/icon.svg' }
 };
 
-export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', themeColor:[{media:'(prefers-color-scheme: light)',color:'#f7f7f9'},{media:'(prefers-color-scheme: dark)',color:'#09090b'}] };
+export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', themeColor:'#09090b' };
 
 export default function RootLayout({children}:{children:React.ReactNode}) {
-  return <html lang="th"><body><ServiceWorker/><header className="siteHeader"><div className="headerInner"><Logo/><div className="headerSearch"><SearchBox compact/></div><a className="backToTai" href="/">TaiThai Apps</a></div></header>{children}<footer><Logo/><p>คอร์ดที่อ่านง่าย สำหรับช่วงเวลาที่อยากเล่นเพลง</p><span>Demo content ใช้เนื้อร้องสมมติสำหรับการพัฒนา</span></footer></body></html>;
+  return <html lang="th"><body><ServiceWorker/><header className="siteHeader"><div className="headerInner"><Logo/><nav className="streamNav" aria-label="เมนูหลัก"><a href="/Chordly/">หน้าแรก</a><a href="/Chordly/#trending">เพลงฮิต</a><a href="/Chordly/#ready">คอร์ดพร้อมเล่น</a></nav><div className="headerSearch"><SearchBox compact/></div><a className="backToTai" href="/">TaiThai Apps</a></div></header>{children}<footer><Logo/><p>คอร์ดที่อ่านง่าย สำหรับช่วงเวลาที่อยากเล่นเพลง</p><span>คอร์ดอัตโนมัติอาจต้องตรวจสอบกับเสียงต้นฉบับ</span></footer></body></html>;
 }

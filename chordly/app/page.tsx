@@ -1,20 +1,14 @@
-import { SearchBox } from '@/components/search-box';
-import { SongCard } from '@/components/song-card';
 import { demoSongs } from '@/data/demo-songs';
-import { RecentSongs } from '@/components/recent-songs';
 import { TrendingSongs } from '@/components/trending-songs';
+import { MusicRail, type RailSong } from '@/components/music-rail';
+import { RecentSongs } from '@/components/recent-songs';
+
+function toRailSong(song:typeof demoSongs[number],label?:string):RailSong{return {id:song.id,title:song.title,artist:song.artist,artwork:song.artwork,href:`/song/${song.slug}/`,label}}
 
 export default function HomePage(){
-  const latest=[...demoSongs].sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
-  const artists=[...new Set(demoSongs.map(s=>s.artist))].slice(0,4);
-  return <main>
-    <section className="homeHero"><div className="heroGlow one"/><div className="heroGlow two"/><div className="heroContent"><span className="eyebrow">PLAY YOUR SONG</span><h1>เพลงที่อยากเล่น<br/><em>อยู่ใกล้แค่หนึ่งค้นหา</em></h1><p>ค้นหาคอร์ด ปรับคีย์ เลือก Capo แล้วเริ่มเล่นได้ทันที</p><SearchBox/><div className="quickSearch"><span>ลองค้นหา</span>{['ลมหนาว','Morning','รถไฟ'].map(q=><span key={q}>{q}</span>)}</div></div></section>
-    <div className="homeContent wrap">
-      <TrendingSongs/>
-      <section className="contentSection"><div className="sectionHead"><div><span className="eyebrow">READY TO PLAY</span><h2>เพลงที่มีคอร์ดพร้อมเล่น</h2></div><span>เปิดแล้วเล่นได้ทันที</span></div><div className="songList">{demoSongs.slice().sort((a,b)=>b.views-a.views).slice(0,4).map((song,i)=><SongCard key={song.id} song={song} rank={i+1}/>)}</div></section>
-      <section className="splitSections"><div className="contentSection"><div className="sectionHead"><div><span className="eyebrow">EASY CHORDS</span><h2>เพลงเล่นง่าย</h2></div></div><div className="tileGrid">{demoSongs.filter(song=>song.difficulty==='ง่าย').slice(0,2).map(song=><SongCard key={song.id} song={song}/>)}</div></div><div className="contentSection"><div className="sectionHead"><div><span className="eyebrow">NEW CHORDS</span><h2>เพลงล่าสุด</h2></div></div><div className="tileGrid">{latest.slice(0,2).map(song=><SongCard key={song.id} song={song}/>)}</div></div></section>
-      <section className="contentSection"><div className="sectionHead"><div><span className="eyebrow">ARTISTS</span><h2>ศิลปินยอดนิยม</h2></div></div><div className="artistGrid">{artists.map((artist,i)=><div className="artistCard" key={artist}><div style={{background:demoSongs[i].artwork}}>{artist.slice(0,1)}</div><strong>{artist}</strong><span>{demoSongs.filter(s=>s.artist===artist).length} เพลง</span></div>)}</div></section>
-      <RecentSongs/>
-    </div>
-  </main>;
+  const popular=[...demoSongs].sort((a,b)=>b.views-a.views).map(song=>toRailSong(song,`Key ${song.originalKey}`));
+  const easy=demoSongs.filter(song=>song.difficulty==='ง่าย').map(song=>toRailSong(song,'เล่นง่าย'));
+  const latest=[...demoSongs].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(song=>toRailSong(song,'คอร์ดใหม่'));
+  const thai=demoSongs.filter(song=>song.tags.includes('thai')).map(song=>toRailSong(song,'เพลงไทย'));
+  return <main className="netflixHome"><TrendingSongs/><div className="streamRows"><MusicRail id="ready" title="คอร์ดพร้อมเล่น" subtitle="เปิดแล้วเล่นได้ทันที" songs={popular}/><MusicRail title="เพลงเล่นง่าย" songs={easy}/><MusicRail title="เพลงไทย" songs={thai}/><MusicRail title="คอร์ดมาใหม่" songs={latest}/><RecentSongs/></div></main>;
 }
