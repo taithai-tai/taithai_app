@@ -1,0 +1,160 @@
+/*
+ * Chordly soft-shape layer
+ * Keeps artwork square for album recognition while turning controls,
+ * surfaces and supporting UI into circles, capsules and generous curves.
+ */
+:root{
+  --curve-xs:14px;
+  --curve-sm:20px;
+  --curve-md:28px;
+  --curve-lg:38px;
+  --curve-pill:999px;
+}
+
+/* Shared proportions */
+.wrap{width:min(1180px,calc(100% - 48px))}
+.siteHeader{border-bottom:0}
+.headerInner{width:min(1240px,calc(100% - 40px));gap:22px}
+.logoMark{width:38px;height:38px;border-radius:50%}
+.streamNav{padding:4px;border-radius:var(--curve-pill);background:color-mix(in srgb,var(--surface) 72%,transparent)}
+.streamNav a{min-height:38px;padding:0 15px;display:inline-flex;align-items:center;border-radius:var(--curve-pill)}
+.streamNav a:hover{background:color-mix(in srgb,var(--text) 9%,transparent)}
+.backToTai{min-height:38px;padding:0 14px;display:inline-flex;align-items:center;border-radius:var(--curve-pill);background:color-mix(in srgb,var(--surface) 74%,transparent)}
+
+/* Search is the main action, so it gets the clearest capsule */
+.searchBox,.searchBox.compact,.streamHeroSearch .searchBox{
+  border-radius:var(--curve-pill);
+  padding-inline:22px;
+}
+.searchBox.compact{padding-inline:15px}
+.clearSearch{flex:0 0 36px}
+.suggestions{top:calc(100% + 12px);padding:10px;border-radius:var(--curve-md)}
+.suggestions button{border-radius:var(--curve-sm)}
+.suggestionArt,.artistSuggestion,.searchMore{border-radius:50%!important}
+.allResultsButton{margin-top:5px;border:0!important;border-radius:var(--curve-pill)!important;background:var(--surface2)!important}
+.quickSearch span:not(:first-child){padding:7px 13px;border:0;border-radius:var(--curve-pill)}
+
+/* Streaming home */
+.streamHero{min-height:650px}
+.streamHeroContent{padding-block:138px 146px}
+.streamHeroContent h1{max-width:680px;font-size:clamp(46px,6vw,76px);line-height:1.02}
+.streamTopBadge,.streamHeroActions a{border-radius:var(--curve-pill)}
+.streamTopBadge{padding:5px 13px 5px 5px;background:rgba(20,20,20,.58);backdrop-filter:blur(16px)}
+.streamTopBadge b{border-radius:50%}
+.streamHeroActions{gap:12px}
+.streamHeroActions a{min-height:50px;padding-inline:23px}
+.streamRowsLead{margin-top:-82px}
+.streamRailSection{margin-bottom:52px}
+.streamRailHead{align-items:center;margin-bottom:16px}
+.streamRailHead h2{font-size:clamp(21px,1.8vw,26px)}
+.railButtons button{border-radius:50%}
+.streamRail{gap:18px}
+.streamTile{flex-basis:clamp(164px,15vw,214px)}
+.streamTileArt{margin-bottom:13px;border-radius:var(--curve-md);box-shadow:0 14px 36px rgba(0,0,0,.32)}
+.streamRank{left:10px;bottom:10px;min-width:40px;height:40px;border-radius:50%}
+.streamLabel{top:10px;left:10px;padding:6px 10px;border-radius:var(--curve-pill)}
+.streamTileSkeleton{flex-basis:clamp(164px,15vw,214px);aspect-ratio:1;border-radius:var(--curve-md)}
+.streamInlineError{border:0;border-radius:var(--curve-pill)}
+.streamEmptyHistory{padding:24px 28px;border:0;border-radius:var(--curve-lg);background:#151515}
+
+/* Search results: independent soft rows instead of a framed rectangle */
+.searchPageHead{max-width:760px}
+.artistResults{gap:14px;padding-block:4px}
+.artistResults a{min-width:240px;padding:12px 16px 12px 12px;border:0;border-radius:var(--curve-pill);box-shadow:inset 0 0 0 1px var(--line)}
+.artistResults a>span,.onlineCover{border-radius:50%!important}
+.songList,.onlineResults{display:grid;gap:10px;border:0;border-radius:0;overflow:visible;background:transparent}
+.songCard,.onlineResults a{
+  min-height:78px;
+  padding:11px 15px 11px 11px;
+  border:0!important;
+  border-radius:var(--curve-pill);
+  background:var(--surface);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+.songCard:hover,.onlineResults a:hover{background:var(--surface2)}
+.artwork.small,.onlineCover{width:56px;height:56px;border-radius:50%;flex-basis:56px!important}
+.keyPill,.availability{padding:7px 11px;border-radius:var(--curve-pill)}
+.noOnline,.missingState{border-radius:var(--curve-lg)}
+
+/* Song header and controls */
+.songHero{gap:32px;align-items:center;padding-block:40px}
+.heroArt,.lookupPoster{border-radius:var(--curve-lg)}
+.songFacts>span,.softButton{border-radius:var(--curve-pill)}
+.songFacts>span{padding:7px 12px}
+.softButton{min-height:46px;padding-inline:17px}
+.controlDock,.autoChordControls{border-block:0;padding-block:7px}
+.keyControl,.fontControl,.scrollControl,.instrumentTabs,.selectControl,.autoControlScroll label,.draftTranspose{
+  border:0;
+  border-radius:var(--curve-pill);
+  box-shadow:inset 0 0 0 1px var(--line);
+}
+.keyControl button,.fontControl button,.scrollControl button,.instrumentTabs button,.draftTranspose button{border-radius:50%;min-width:36px;height:36px}
+.keyControl .resetButton,.scrollControl>button:first-child,.instrumentTabs button{border-radius:var(--curve-pill)}
+.selectControl select,.autoControlScroll input,.autoControlScroll select{border-radius:var(--curve-pill)}
+.viewModeBar,.draftViewBar{border:0;background:transparent;padding-block:18px}
+.viewModeTabs{padding:5px;border-radius:var(--curve-pill);background:var(--surface2)}
+.viewModeTabs button{border:0;border-radius:var(--curve-pill);background:transparent}
+
+/* Chord sheet: one calm rounded surface, fewer nested frames */
+.songLayout{gap:30px;padding-top:24px}
+.sheetColumn{border:0;border-radius:var(--curve-lg);box-shadow:0 16px 50px rgba(30,24,45,.07)}
+.playingSummary{gap:8px;padding:10px;border:0;background:transparent}
+.playingSummary>div{border-radius:var(--curve-sm);background:var(--surface2)}
+.sectionTitle{padding:7px 13px;border-radius:var(--curve-pill)}
+.fullSheet .instrumentBlock{border:0;border-radius:var(--curve-md)}
+.diagramCard,.asideCard{border:0;border-radius:var(--curve-md);box-shadow:inset 0 0 0 1px var(--line)}
+.asideCard>button{min-height:46px;padding-inline:15px;border-radius:var(--curve-pill)}
+.diagramSheet{border-radius:var(--curve-lg)}
+.diagramSheet .diagramCard{border-radius:inherit}
+.toast{border-radius:var(--curve-pill)}
+.emptyPage a{min-height:46px;display:inline-flex;align-items:center;border-radius:var(--curve-pill)}
+
+/* Auto-generated song page */
+.lookupHero{align-items:center;gap:30px}
+.autoReadyBadge{padding:7px 13px 7px 7px;border-radius:var(--curve-pill)}
+.autoReadyBadge>span{width:24px;height:24px}
+.autoChordStatus{border:0;border-radius:var(--curve-md);box-shadow:inset 0 0 0 1px var(--line)}
+.generatedDraft{border:0;border-radius:var(--curve-lg);box-shadow:0 16px 50px rgba(30,24,45,.07)}
+
+footer{border-top:0}
+
+@media(hover:hover){
+  .streamTile:hover{transform:translateY(-4px) scale(1.018)}
+}
+
+@media(max-width:760px){
+  .wrap,.headerInner{width:min(100% - 28px,1180px)}
+  .headerInner{gap:12px}
+  .logoMark{width:36px;height:36px}
+  .backToTai{padding-inline:12px}
+  .streamHero{min-height:660px}
+  .streamHeroContent{padding:270px 0 100px}
+  .streamHeroContent h1{font-size:38px;letter-spacing:-1.7px}
+  .streamHeroActions a{min-height:48px;padding-inline:18px}
+  .streamRowsLead{margin-top:-38px}
+  .streamRailSection{margin-bottom:42px}
+  .streamRail{gap:13px}
+  .streamTile{flex-basis:148px}
+  .streamTileArt{border-radius:24px}
+  .streamTileSkeleton{flex-basis:148px;border-radius:24px}
+  .streamEmptyHistory{border-radius:30px}
+  .searchPage{padding-top:34px}
+  .songCard,.onlineResults a{border-radius:28px}
+  .songHero{gap:18px;padding-block:24px}
+  .heroArt,.lookupPoster{border-radius:30px}
+  .controlDock,.autoChordControls{padding-block:4px}
+  .controlScroll,.autoControlScroll{gap:9px}
+  .sheetColumn{border-radius:32px 32px 0 0!important}
+  .playingSummary{padding:8px}
+  .playingSummary>div{padding:11px 12px;border-radius:18px}
+  .generatedDraft,.generatedDraft.draftFull{border-radius:32px 32px 0 0}
+  .diagramSheet .diagramCard{border-radius:32px 32px 0 0}
+}
+
+@media(max-width:390px){
+  .streamHeroContent h1{font-size:34px}
+  .streamHeroActions{display:grid;grid-template-columns:1fr 1fr}
+  .streamHeroActions a{padding-inline:12px}
+  .streamTile{flex-basis:138px}
+  .streamTileSkeleton{flex-basis:138px}
+}

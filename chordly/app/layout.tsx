@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import './soft-shapes.css';
 import { Logo } from '@/components/logo';
 import { SearchBox } from '@/components/search-box';
 import { ServiceWorker } from '@/components/service-worker';
