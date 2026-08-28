@@ -19,7 +19,7 @@ interface AppleChartResponse {
   feed?:{updated?:string;results?:AppleChartResult[]};
 }
 
-const CHART_URL='https://rss.marketingtools.apple.com/api/v2/th/music/most-played/25/songs.json';
+const CHART_URL='/api/chordly/charts';
 
 export function mapAppleChart(data:AppleChartResponse):TrendingSong[]{
   return (data.feed?.results||[]).filter(item=>item.name&&item.artistName).map((item,index)=>({

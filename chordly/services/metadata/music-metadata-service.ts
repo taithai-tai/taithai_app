@@ -7,7 +7,7 @@ export interface MusicMetadataProvider { search(query: string, signal?: AbortSig
 export class ItunesMetadataProvider implements MusicMetadataProvider {
   async search(query: string, signal?: AbortSignal) {
     if (query.trim().length < 2) return [];
-    const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(query.slice(0,100))}&country=TH&media=music&entity=song&limit=15`, {signal});
+    const response = await fetch(`/api/chordly/metadata?q=${encodeURIComponent(query.slice(0,100))}`, {signal});
     if (!response.ok) return [];
     const data = await response.json() as { results?: Array<Record<string, unknown>> };
     return (data.results || []).map(item => ({
