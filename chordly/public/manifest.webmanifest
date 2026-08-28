@@ -1,0 +1,11 @@
+{
+  "name": "Chordly — Chords & Lyrics",
+  "short_name": "Chordly",
+  "description": "ค้นหาคอร์ดเพลง ปรับคีย์ เลือก Capo และเปิด Auto Scroll",
+  "start_url": "/Chordly/",
+  "scope": "/Chordly/",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#e84269",
+  "icons": [{"src":"/Chordly/icons/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}

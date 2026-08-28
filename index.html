@@ -877,7 +877,7 @@
       <div class="stats-bar" aria-label="App collection summary">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">7</span>
+          <span class="stat-num">8</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -950,6 +950,14 @@
           </div>
           <div class="app-card-footer"><span class="app-tag" id="appTag7"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
+        <a class="app-card" href="./Chordly/" onclick="goToChordly(event)">
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/chordly.svg" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
+          <div>
+            <h3 class="app-name" id="appName8"></h3>
+            <div class="app-desc" id="appDesc8"></div>
+          </div>
+          <div class="app-card-footer"><span class="app-tag" id="appTag8"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
+        </a>
       </div>
     </div>
   </main>
@@ -969,6 +977,7 @@
     const DOCTOR_PLAN_URL = "./Bangkok%20Doctor%20Plan/";
     const MOVIE_MEMORY_URL = "./Movie%20Memory/";
     const PUBLIC_DRIVE_URL = "./Public%20Drive/index.html";
+    const CHORDLY_URL = "./Chordly/";
 
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
@@ -1024,6 +1033,9 @@
         appName7: "Taithai Public Drive",
         appDesc7: "A shared public drop space where anyone can upload, browse, and download files without signing in.",
         appTag7: "☁️ Public Files",
+        appName8: "Chordly",
+        appDesc8: "Find chords and lyrics, transpose keys, choose a capo, view diagrams, and auto-scroll while you play.",
+        appTag8: "🎸 Chords & Lyrics",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -1038,6 +1050,7 @@
         noLinkYet5: "No link added yet for BU Degree Plan Explorer",
         openingText6: "Opening Movie Memory… 🎞️",
         openingText7: "Opening Taithai Public Drive… ☁️",
+        openingText8: "Opening Chordly… 🎸",
         loginBtnText: "Sign in with Google",
         logoutBtnText: "Sign Out",
         welcomePrefix: "Welcome back, ",
@@ -1080,6 +1093,9 @@
         appName7: "Taithai Public Drive",
         appDesc7: "พื้นที่ฝากไฟล์สาธารณะ ทุกคนสามารถอัปโหลด ดู และดาวน์โหลดไฟล์ร่วมกันได้โดยไม่ต้องล็อกอิน",
         appTag7: "☁️ ไฟล์สาธารณะ",
+        appName8: "Chordly",
+        appDesc8: "ค้นหาคอร์ดและเนื้อเพลง ปรับคีย์ เลือก Capo ดูแผนภาพคอร์ด และเลื่อนอัตโนมัติระหว่างเล่นเพลง",
+        appTag8: "🎸 คอร์ดและเนื้อเพลง",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -1094,6 +1110,7 @@
         noLinkYet5: "ยังไม่ได้ใส่ลิงก์ของ ตัวอ่าน Degree Plan BU",
         openingText6: "กำลังเปิด Movie Memory… 🎞️",
         openingText7: "กำลังเปิด Taithai Public Drive… ☁️",
+        openingText8: "กำลังเปิด Chordly… 🎸",
         loginBtnText: "เข้าสู่ระบบด้วย Google",
         logoutBtnText: "ออกจากระบบ",
         welcomePrefix: "ยินดีต้อนรับคุณ ",
@@ -1149,6 +1166,9 @@
       document.getElementById("appName7").textContent = t.appName7;
       document.getElementById("appDesc7").textContent = t.appDesc7;
       document.getElementById("appTag7").textContent = t.appTag7;
+      document.getElementById("appName8").textContent = t.appName8;
+      document.getElementById("appDesc8").textContent = t.appDesc8;
+      document.getElementById("appTag8").textContent = t.appTag8;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -1249,6 +1269,14 @@
       showToast(i18n[currentLang].openingText7);
       setTimeout(() => {
         window.location.href = PUBLIC_DRIVE_URL;
+      }, 250);
+    }
+
+    function goToChordly(event) {
+      event?.preventDefault();
+      showToast(i18n[currentLang].openingText8);
+      setTimeout(() => {
+        window.location.href = CHORDLY_URL;
       }, 250);
     }
 
