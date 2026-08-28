@@ -2,7 +2,8 @@ import type { ParsedLine, ChordToken } from '../lib/types.ts';
 
 const sectionNames: Record<string,string> = {
   intro: 'Intro', verse: 'Verse', chorus: 'Chorus', pre_chorus: 'Pre-Chorus',
-  post_chorus: 'Post-Chorus', bridge: 'Bridge', solo: 'Solo', instrumental: 'Instrumental', outro: 'Outro'
+  hook: 'Hook', prehook: 'Pre-Hook', pre_hook: 'Pre-Hook', post_chorus: 'Post-Chorus',
+  bridge: 'Bridge', solo: 'Solo', instrumental: 'Instrumental', outro: 'Outro'
 };
 
 export function parseChordLine(line: string): ChordToken[] {
