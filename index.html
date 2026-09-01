@@ -764,6 +764,20 @@
     .card-arrow { color: var(--text-faint); font-size: 19px; line-height: 1; transition: .2s ease; }
     .app-card:hover .card-arrow { color: var(--accent); transform: translate(2px,-2px); }
 
+    .private-app-card {
+      border-color: rgba(74, 109, 222, .24);
+      background:
+        radial-gradient(circle at 92% 10%, rgba(118, 142, 245, .18), transparent 9rem),
+        var(--surface);
+    }
+    .private-app-card:hover { border-color: rgba(74, 109, 222, .46); }
+    .private-app-icon {
+      background: linear-gradient(145deg, #eaf0ff, #bdcaff);
+      color: #2949a8;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.88), 0 8px 22px rgba(55, 84, 183, .16);
+    }
+    .private-app-tag { background: #edf1ff; color: #3854b3; }
+
     footer { border-top: 1px solid var(--border-soft); }
     .footer-inner { max-width: 1120px; min-height: 92px; }
     .footer-left, .footer-right { color: var(--text-faint); }
@@ -799,6 +813,9 @@
       body { background: radial-gradient(circle at 88% 8%, rgba(216,100,69,.14), transparent 28rem), var(--bg); }
       header { background: rgba(17,17,19,.78); }
       .app-icon { border-color: rgba(255,255,255,.08); background: linear-gradient(145deg,#3a2e2b,#5b352b); }
+      .private-app-card { background: radial-gradient(circle at 92% 10%, rgba(100,126,235,.20), transparent 9rem), var(--surface); }
+      .private-app-icon { background: linear-gradient(145deg,#26335f,#3c56a8); color: #edf2ff; }
+      .private-app-tag { background: rgba(92,116,214,.20); color: #b9c8ff; }
       .status-online { color: #62c982; }
     }
     @media (prefers-contrast: more) { .app-card, .google-login-btn, .lang-switch { border-width: 2px; } }
@@ -877,7 +894,7 @@
       <div class="stats-bar" aria-label="App collection summary">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">8</span>
+          <span class="stat-num">9</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -958,6 +975,14 @@
           </div>
           <div class="app-card-footer"><span class="app-tag" id="appTag8"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
+        <a class="app-card private-app-card" href="./Private%20Drive/" onclick="goToPrivateDrive(event)">
+          <div class="app-icon private-app-icon" aria-hidden="true">🔐</div>
+          <div>
+            <h3 class="app-name" id="appName9"></h3>
+            <div class="app-desc" id="appDesc9"></div>
+          </div>
+          <div class="app-card-footer"><span class="app-tag private-app-tag" id="appTag9"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
+        </a>
       </div>
     </div>
   </main>
@@ -978,6 +1003,7 @@
     const MOVIE_MEMORY_URL = "./Movie%20Memory/";
     const PUBLIC_DRIVE_URL = "./Public%20Drive/index.html";
     const CHORDLY_URL = "./Chordly/";
+    const PRIVATE_DRIVE_URL = "./Private%20Drive/";
 
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
@@ -1036,6 +1062,9 @@
         appName8: "Chordly",
         appDesc8: "Find chords and lyrics, transpose keys, choose a capo, view diagrams, and auto-scroll while you play.",
         appTag8: "🎸 Chords & Lyrics",
+        appName9: "Taithai Private Drive",
+        appDesc9: "Your private cloud for browsing, uploading, and downloading files from anywhere with one access code.",
+        appTag9: "🔐 Private App",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -1051,6 +1080,7 @@
         openingText6: "Opening Movie Memory… 🎞️",
         openingText7: "Opening Taithai Public Drive… ☁️",
         openingText8: "Opening Chordly… 🎸",
+        openingText9: "Opening Taithai Private Drive… 🔐",
         loginBtnText: "Sign in with Google",
         logoutBtnText: "Sign Out",
         welcomePrefix: "Welcome back, ",
@@ -1096,6 +1126,9 @@
         appName8: "Chordly",
         appDesc8: "ค้นหาคอร์ดและเนื้อเพลง ปรับคีย์ เลือก Capo ดูแผนภาพคอร์ด และเลื่อนอัตโนมัติระหว่างเล่นเพลง",
         appTag8: "🎸 คอร์ดและเนื้อเพลง",
+        appName9: "ไพรเวทแอป · Taithai Drive",
+        appDesc9: "คลาวด์ส่วนตัวสำหรับดู อัปโหลด และดาวน์โหลดไฟล์จากทุกที่ เข้าใช้งานด้วยรหัสเพียงครั้งเดียว",
+        appTag9: "🔐 ไพรเวทแอป",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -1111,6 +1144,7 @@
         openingText6: "กำลังเปิด Movie Memory… 🎞️",
         openingText7: "กำลังเปิด Taithai Public Drive… ☁️",
         openingText8: "กำลังเปิด Chordly… 🎸",
+        openingText9: "กำลังเปิดไพรเวทแอป… 🔐",
         loginBtnText: "เข้าสู่ระบบด้วย Google",
         logoutBtnText: "ออกจากระบบ",
         welcomePrefix: "ยินดีต้อนรับคุณ ",
@@ -1169,6 +1203,9 @@
       document.getElementById("appName8").textContent = t.appName8;
       document.getElementById("appDesc8").textContent = t.appDesc8;
       document.getElementById("appTag8").textContent = t.appTag8;
+      document.getElementById("appName9").textContent = t.appName9;
+      document.getElementById("appDesc9").textContent = t.appDesc9;
+      document.getElementById("appTag9").textContent = t.appTag9;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;
@@ -1277,6 +1314,14 @@
       showToast(i18n[currentLang].openingText8);
       setTimeout(() => {
         window.location.href = CHORDLY_URL;
+      }, 250);
+    }
+
+    function goToPrivateDrive(event) {
+      event?.preventDefault();
+      showToast(i18n[currentLang].openingText9);
+      setTimeout(() => {
+        window.location.href = PRIVATE_DRIVE_URL;
       }, 250);
     }
 

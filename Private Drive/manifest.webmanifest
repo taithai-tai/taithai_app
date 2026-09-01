@@ -1,0 +1,19 @@
+{
+  "name": "Taithai Private Drive",
+  "short_name": "Private Drive",
+  "description": "เปิด ดู อัปโหลด และดาวน์โหลดไฟล์จากทุกอุปกรณ์",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#4668df",
+  "icons": [
+    {
+      "src": "../assets/home-icons/public-drive.webp",
+      "sizes": "256x256",
+      "type": "image/webp",
+      "purpose": "any maskable"
+    }
+  ]
+}
