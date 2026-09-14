@@ -894,7 +894,7 @@
       <div class="stats-bar" aria-label="App collection summary">
         <div class="stat-pill">
           <div class="stat-dot"></div>
-          <span class="stat-num">9</span>
+          <span class="stat-num">10</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -974,6 +974,14 @@
             <div class="app-desc" id="appDesc8"></div>
           </div>
           <div class="app-card-footer"><span class="app-tag" id="appTag8"></span><span class="card-arrow" aria-hidden="true">↗</span></div>
+        </a>
+        <a class="app-card" href="./ACE/">
+          <div class="app-icon" aria-hidden="true"><img src="./assets/home-icons/ace.svg" alt="" width="256" height="256" loading="lazy" decoding="async" /></div>
+          <div>
+            <h3 class="app-name" id="appName10">ACE</h3>
+            <div class="app-desc" id="appDesc10">จัดเวลา จัดข้อมูล และร่างข้อความ ด้วยผู้ช่วย AI สำหรับชีวิตประจำวัน</div>
+          </div>
+          <div class="app-card-footer"><span class="app-tag" id="appTag10">ผู้ช่วย AI</span><span class="card-arrow" aria-hidden="true">↗</span></div>
         </a>
         <a class="app-card private-app-card" href="./Private%20Drive/" onclick="goToPrivateDrive(event)">
           <div class="app-icon private-app-icon" aria-hidden="true">🔐</div>
@@ -1065,6 +1073,9 @@
         appName9: "Taithai Private Drive",
         appDesc9: "Your private cloud for browsing, uploading, and downloading files from anywhere with one access code.",
         appTag9: "🔐 Private App",
+        appName10: "ACE",
+        appDesc10: "Plan your day, organize information, and draft everyday messages with an AI assistant. An educational project.",
+        appTag10: "AI for everyday life",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "Made with love ♡",
@@ -1129,6 +1140,9 @@
         appName9: "ไพรเวทแอป · Taithai Drive",
         appDesc9: "คลาวด์ส่วนตัวสำหรับดู อัปโหลด และดาวน์โหลดไฟล์จากทุกที่ เข้าใช้งานด้วยรหัสเพียงครั้งเดียว",
         appTag9: "🔐 ไพรเวทแอป",
+        appName10: "ACE",
+        appDesc10: "จัดเวลา จัดข้อมูล และร่างข้อความ ด้วยผู้ช่วย AI สำหรับชีวิตประจำวัน เว็บไซต์โครงงานการศึกษา",
+        appTag10: "ผู้ช่วย AI",
 
         footerLeft: `🌸 Taithai Apps · <span id="yearInline"></span>`,
         footerRight: "สร้างด้วยความรัก ♡",
@@ -1206,6 +1220,9 @@
       document.getElementById("appName9").textContent = t.appName9;
       document.getElementById("appDesc9").textContent = t.appDesc9;
       document.getElementById("appTag9").textContent = t.appTag9;
+      document.getElementById("appName10").textContent = t.appName10;
+      document.getElementById("appDesc10").textContent = t.appDesc10;
+      document.getElementById("appTag10").textContent = t.appTag10;
 
       document.getElementById("footerLeft").innerHTML = t.footerLeft;
       document.getElementById("footerRight").textContent = t.footerRight;

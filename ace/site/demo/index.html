@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ทดลองใช้ ACE — วางแผน สรุปข้อมูล และร่างข้อความ</title>
+  <meta name="description" content="ทดลองใช้ ACE AI จริงสำหรับจัดแผนตามเวลาว่าง สรุปเอกสารตัวอย่าง และร่างข้อความจากข้อมูลที่กรอก โดยผู้ใช้ยังตรวจสอบและตัดสินใจขั้นสุดท้าย">
+  <meta name="theme-color" content="#f7f8fa"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/styles.css">
+  <script defer src="/assets/site-data.js?v=ace-ai-r4"></script><script defer src="/assets/site.js"></script><script defer src="/assets/demo-engine.js"></script><script defer src="/assets/ai-client.js?v=ace-ai-r4"></script><script defer src="/assets/demo.js?v=ace-ai-r4"></script>
+</head>
+<body data-page="demo">
+  <ace-header></ace-header>
+  <noscript><div class="container noscript">หน้าทดลองต้องใช้ JavaScript เพื่อคำนวณและสร้างผลลัพธ์ โปรดเปิด JavaScript ก่อนใช้งาน</div></noscript>
+  <main id="main-content" tabindex="-1">
+    <section class="page-hero"><div class="container"><span class="eyebrow">ACE AI</span><h1>วันนี้อยากให้ ACE ช่วยอะไร?</h1><p class="lead">จัดแผน สรุปข้อมูล หรือเริ่มร่างข้อความด้วย ACE AI เมื่อกดประมวลผล ข้อมูลที่จำเป็นจะส่งผ่านระบบของ ACE ไปยังบริการ AI ภายนอก <a href="/privacy/">ดูการจัดการข้อมูล</a></p><div class="notice notice-warning" style="margin-top: 28px"><span class="notice-mark" aria-hidden="true">!</span><p><strong>โหมด AI จริง</strong>อย่าใส่รหัสผ่าน รหัส OTP API key ข้อมูลการเงิน หรือข้อมูลลับ คำตอบอาจผิดพลาดได้และยังต้องตรวจสอบก่อนนำไปใช้ หากเชื่อมต่อ AI ไม่สำเร็จ ระบบจะแจ้งข้อผิดพลาดโดยไม่แสดงผลจำลองแทน</p></div></div></section>
+
+    <section class="section-sm section-surface"><div class="container">
+      <div class="demo-tabs" role="tablist" aria-label="เลือกรูปแบบตัวอย่าง">
+        <button class="demo-tab" id="tab-planner" role="tab" aria-selected="true" aria-controls="panel-planner" data-mode="planner" type="button"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3v4M17 3v4M4 10h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"/><path d="m8 15 2 2 5-5"/></svg><span>จัดแผนงาน</span></button>
+        <button class="demo-tab" id="tab-summary" role="tab" aria-selected="false" aria-controls="panel-summary" data-mode="summary" tabindex="-1" type="button"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"/></svg><span>ดูตัวอย่างสรุป</span></button>
+        <button class="demo-tab" id="tab-writer" role="tab" aria-selected="false" aria-controls="panel-writer" data-mode="writer" tabindex="-1" type="button"><svg class="ui-icon" aria-hidden="true" viewBox="0 0 24 24"><path d="m4 20 4-1L19 8a2 2 0 0 0-3-3L5 16l-1 4ZM14 7l3 3"/></svg><span>ร่างข้อความ</span></button>
+      </div>
+
+      <section class="demo-panel" id="panel-planner" role="tabpanel" aria-labelledby="tab-planner">
+        <div class="section-heading"><p class="kicker">ตัวอย่าง A · กฎที่ตรวจสอบได้ + AI</p><h2>จัดแผนงานวันนี้</h2><p>เริ่มจากงานที่มีอยู่ได้เลย ระบบเรียงความสำคัญสูงก่อน ถ้าเท่ากันใช้ลำดับที่กรอก และไม่ใส่งานเกินเวลาว่าง จากนั้นให้ AI แนะนำวิธีเริ่ม โดยไม่เปลี่ยนแผนที่คำนวณแล้ว</p></div>
+        <div class="demo-workspace">
+          <form class="form-panel" id="planner-form" novalidate>
+            <div class="field"><label for="available-minutes">เวลาที่มีทั้งหมด (นาที)</label><input id="available-minutes" type="number" min="1" step="1" inputmode="numeric" value="180" aria-describedby="available-hint available-error" required><span class="hint" id="available-hint">ตัวอย่าง: 180 นาที เท่ากับ 3 ชั่วโมง</span><span class="field-error" id="available-error"></span></div>
+            <div><div class="button-row" style="justify-content: space-between"><h3 style="margin: 0">รายการงาน</h3><button class="button button-quiet" id="add-task" type="button">เพิ่มอีกงาน</button></div><p class="field-error" id="task-list-error"></p><div class="task-list" id="task-list"></div></div>
+            <div class="button-row"><button class="button button-primary" id="planner-submit" type="submit" disabled>จัดแผนและขอคำแนะนำ AI</button><button class="button button-secondary" id="planner-reset" type="button">ล้างข้อมูล</button></div>
+          </form>
+          <section class="result-panel" id="planner-result-panel" aria-live="polite" aria-busy="false">
+            <div class="status-line" id="planner-status" data-status="idle"><span class="status-dot" aria-hidden="true"></span><span>ก่อนเริ่ม — กรอกข้อมูลให้ครบ แล้วกดสร้างแผน</span></div>
+            <div id="planner-result"><div class="result-placeholder">ผลลัพธ์จะแสดงเวลารวม งานที่ใส่ในแผนได้ และงานที่ยังเกินเวลาว่าง</div></div>
+            <div class="output-actions"><button class="button button-secondary" id="copy-plan" type="button" disabled>คัดลอกแผน</button><button class="button button-secondary" id="export-plan" type="button" disabled>ส่งออกเป็นข้อความ</button></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="demo-panel" id="panel-summary" role="tabpanel" aria-labelledby="tab-summary" hidden>
+        <div class="section-heading"><p class="kicker">ตัวอย่าง B · AI จริง</p><h2>ดูตัวอย่างสรุปข้อมูล</h2><p>เลือกเอกสารสมมติที่เตรียมไว้ แล้ว AI จะสรุปจากต้นฉบับนั้นจริง พร้อมชี้ข้อมูลที่ไม่ได้ระบุโดยไม่แต่งเติม</p></div>
+        <div class="demo-workspace"><form class="form-panel" id="summary-form" novalidate><h3>เริ่มจากเอกสารตัวอย่าง</h3><p class="muted">รองรับเฉพาะ 2 ตัวอย่างที่เตรียมไว้ ลองเลือกแล้วตรวจคำตอบคู่กับต้นฉบับได้เลย</p><div class="field"><label for="sample-document">เลือกเอกสารตัวอย่าง</label><select id="sample-document" aria-describedby="sample-document-error" required><option value="">— เลือกเอกสารตัวอย่าง —</option><option value="group-meeting" selected>บันทึกประชุมงานกลุ่ม</option><option value="activity-plan">บันทึกแผนกิจกรรมชมรม</option></select><span class="field-error" id="sample-document-error"></span></div><div class="button-row"><button class="button button-primary" id="summary-submit" type="submit" disabled>สรุปด้วย AI</button><button class="button button-secondary" id="summary-reset" type="button">ล้างผลลัพธ์</button></div></form>
+        <section class="result-panel" id="summary-result-panel" aria-live="polite" aria-busy="false">
+          <div class="status-line" id="summary-status" data-status="idle"><span class="status-dot" aria-hidden="true"></span><span>ก่อนเริ่ม — เลือกเอกสารแล้วกดแสดงตัวอย่างสรุป</span></div>
+          <div class="source-summary-grid" id="summary-result"><div class="source-box"><h3>ต้นฉบับ</h3><p class="source-text" id="source-preview"></p></div><div class="summary-box"><h3>สรุป</h3><div class="result-placeholder">ประเด็นสำคัญ งานที่ต้องทำ และสิ่งที่ไม่ได้ระบุจะแสดงที่นี่</div></div></div>
+          <div class="output-actions"><button class="button button-secondary" id="copy-summary" type="button" disabled>คัดลอกสรุป</button><button class="button button-secondary" id="export-summary" type="button" disabled>ส่งออกเป็นข้อความ</button></div>
+        </section></div>
+      </section>
+
+      <section class="demo-panel" id="panel-writer" role="tabpanel" aria-labelledby="tab-writer" hidden>
+        <div class="section-heading"><p class="kicker">ตัวอย่าง C · AI จริง</p><h2>ช่วยร่างข้อความ</h2><p>AI จะใช้ประเภทข้อความ ผู้รับ ประเด็น และระดับความเป็นทางการที่กรอกเพื่อสร้างร่าง โดยได้รับคำสั่งไม่ให้แต่งเหตุการณ์หรือข้อเท็จจริงเพิ่ม</p></div>
+        <div class="demo-workspace">
+          <form class="form-panel" id="writer-form" novalidate>
+            <div class="field"><label for="message-type">ประเภทข้อความ</label><select id="message-type"><option value="appointment">ขอนัดพูดคุย</option><option value="email">อีเมลแจ้งข้อมูล</option><option value="follow-up">ติดตามเรื่องที่เคยคุย</option></select></div>
+            <div class="field"><label for="message-recipient">ผู้รับ</label><input id="message-recipient" type="text" value="อาจารย์ประจำวิชา" maxlength="100" aria-describedby="recipient-error" required><span class="field-error" id="recipient-error"></span></div>
+            <div class="field"><label for="message-points">ประเด็นสำคัญที่ต้องการสื่อ</label><textarea id="message-points" maxlength="1200" aria-describedby="points-hint points-error" required>ขอนัดคุยเรื่องขอบเขตงานกลุ่มและสอบถามเวลาที่อาจารย์สะดวก</textarea><span class="hint" id="points-hint">ใส่เฉพาะข้อเท็จจริงที่ต้องการให้ปรากฏในร่าง</span><span class="field-error" id="points-error"></span></div>
+            <div class="field"><label for="message-tone">ระดับความเป็นทางการ</label><select id="message-tone"><option value="formal">สุภาพเป็นทางการ</option><option value="friendly">สุภาพเป็นกันเอง</option><option value="concise">กระชับตรงประเด็น</option></select></div>
+            <div class="button-row"><button class="button button-primary" id="writer-submit" type="submit" disabled>สร้างร่างด้วย AI</button><button class="button button-secondary" id="writer-reset" type="button">ล้างข้อมูล</button></div>
+          </form>
+          <section class="result-panel" id="writer-result-panel" aria-live="polite" aria-busy="false">
+            <div class="status-line" id="writer-status" data-status="idle"><span class="status-dot" aria-hidden="true"></span><span>ก่อนเริ่ม — กรอกข้อมูลให้ครบ แล้วกดสร้างร่าง</span></div>
+            <label for="writer-output" style="display:block;font-weight:500;margin-bottom:8px">ร่างที่แก้ไขต่อได้</label>
+            <textarea class="editable-output" id="writer-output" aria-describedby="writer-sent-note" placeholder="ร่างข้อความจะแสดงที่นี่" readonly></textarea>
+            <p class="small muted" id="writer-sent-note" style="margin-top: 10px">ร่างนี้ยังไม่ได้ถูกส่งไปหาใคร โปรดตรวจชื่อ รายละเอียด และน้ำเสียงก่อนนำไปใช้</p>
+            <div class="output-actions"><button class="button button-secondary" id="edit-writer" type="button" disabled>แก้ไขร่าง</button><button class="button button-secondary" id="copy-writer" type="button" disabled>คัดลอกร่าง</button><button class="button button-secondary" id="export-writer" type="button" disabled>ส่งออกเป็นข้อความ</button></div>
+          </section>
+        </div>
+      </section>
+    </div></section>
+
+    <section class="section-sm"><div class="container closing-cta"><div><h2>ตัวอย่างนี้ตรงกับเรื่องที่อยากแก้ไหม?</h2><p>ถ้ายังไม่ตรง เล่าความต้องการเพื่อสร้างสรุปคำขอได้ โดยข้อมูลจะยังไม่ถูกส่ง และยังไม่มีการยืนยันนัดหมาย</p></div><a class="button button-primary" href="/contact/">ขอคำปรึกษา</a></div></section>
+  </main>
+  <ace-footer><div class="container education-note"><strong>เว็บไซต์นี้จัดทำขึ้นเพื่อวัตถุประสงค์ทางการศึกษาเท่านั้น</strong><br><span lang="en">This website is created for educational purposes only.</span></div></ace-footer>
+</body>
+</html>

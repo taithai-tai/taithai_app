@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ace-everyday-taithai.taithai5002.chatgpt.site/sitemap.xml

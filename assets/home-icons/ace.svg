@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="pearl" x2=".8" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#e8f0ff"/></linearGradient>
+    <linearGradient id="glass" x2="1" y2="1"><stop stop-color="#fff"/><stop offset=".5" stop-color="#bddbff"/><stop offset="1" stop-color="#dcd3fb"/></linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="180%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#637496" flood-opacity=".15"/></filter>
+  </defs>
+  <rect x="2" y="2" width="252" height="252" rx="60" fill="url(#pearl)" stroke="#fff" stroke-width="4"/>
+  <ellipse cx="150" cy="106" rx="67" ry="41" transform="rotate(-35 150 106)" fill="none" stroke="url(#glass)" stroke-width="19" filter="url(#shadow)"/>
+  <ellipse cx="149" cy="103" rx="69" ry="43" transform="rotate(-35 149 103)" fill="none" stroke="#fff" stroke-width="2"/>
+  <rect x="37" y="113" width="182" height="87" rx="29" fill="#fff" fill-opacity=".92" stroke="#fff" stroke-width="2" filter="url(#shadow)"/>
+  <g fill="none" stroke="#171a20" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m61 176 16-39 16 39m-26-13h20M136 144c-17-19-36 1-24 25 6 11 17 10 25 4m36-33h-23v35h23m-23-18h19"/>
+  </g>
+</svg>

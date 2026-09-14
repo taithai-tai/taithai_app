@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="154" height="52" viewBox="0 0 154 52" role="img" aria-labelledby="title desc">
+  <title id="title">ACE</title>
+  <desc id="desc">โลโก้คำว่า ACE พร้อมสัญลักษณ์เส้นโค้ง</desc>
+  <g fill="none" stroke="#171a20" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 32C14 12 34 8 46 20" stroke-width="5"/>
+    <path d="M8 32C18 28 30 30 39 40" stroke-width="5"/>
+  </g>
+  <text x="57" y="38" fill="#171a20" font-family="Arial, sans-serif" font-size="36" font-weight="700" letter-spacing="1">ACE</text>
+</svg>

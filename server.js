@@ -3,6 +3,8 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js';
+import aceHandler from './ace/api/ace.js';
+import { buildACE } from './ace/scripts/build.mjs';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 try {
@@ -15,6 +17,7 @@ try {
   }
 }
 const port = Number(process.env.PORT) || 3000;
+await buildACE({ output: path.join(root, 'public', 'ACE'), basePath: '/ACE' });
 const mimeTypes = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -37,6 +40,12 @@ function safePath(urlPath) {
 
 async function resolveFile(requestPath) {
   const pathname = decodeURIComponent(requestPath.split('?')[0]);
+  if (pathname === '/ACE' || pathname.startsWith('/ACE/')) {
+    const aceRoot = path.join(root, 'public', 'ACE');
+    let target = path.resolve(aceRoot, `.${pathname.slice(4) || '/'}`);
+    if (target !== aceRoot && !target.startsWith(`${aceRoot}${path.sep}`)) return null;
+    try { if ((await stat(target)).isDirectory()) target = path.join(target, 'index.html'); await stat(target); return target; } catch { return null; }
+  }
   if (pathname.startsWith('/movie-memory-assets/')) {
     if (pathname.startsWith('/movie-memory-assets/feature-icons/')) {
       const iconName = path.basename(pathname);
@@ -189,6 +198,10 @@ async function serveTicketAnalysis(req, res) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    if (/^\/api\/ace\/?(?:\?|$)/.test(req.url || '')) {
+      await aceHandler(req, res);
+      return;
+    }
     if ((req.url || '').startsWith('/api/movie-poster?')) {
       await serveMoviePoster(req.url, res);
       return;

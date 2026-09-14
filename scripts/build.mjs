@@ -2,13 +2,14 @@ import { cp, mkdir, readdir, rm } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { buildACE } from '../ace/scripts/build.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'public');
 const excluded = new Set([
   '.git', '.github', '.agents', '.codex', 'api', '.gitignore', 'node_modules',
   'public', 'scripts', 'chordly', 'package.json', 'package-lock.json', 'server.js',
-  'vercel.json', 'README.md', 'firebase-blueprint.json', 'firebase.json',
+  'vercel.json', 'README.md', 'ace', 'firebase-blueprint.json', 'firebase.json',
   '.firebaserc', 'firestore.rules', 'storage.rules', 'ticket-analyzer.js'
 ]);
 
@@ -54,7 +55,9 @@ for (const [route, source] of [['game', 'game.html'], ['dashboard', 'dashboard.h
   await cp(path.join(movieMemorySource, source), path.join(routeDirectory, 'index.html'));
 }
 
+await buildACE({ output: path.join(output, 'ACE'), basePath: '/ACE', siteUrl: 'https://taithai.app/ACE' });
+
 await run(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build', 'chordly']);
 await cp(path.join(root, 'chordly', 'out'), path.join(output, 'Chordly'), { recursive: true });
 
-console.log('Static site and Chordly prepared in public/');
+console.log('Static site, Chordly and ACE prepared in public/');

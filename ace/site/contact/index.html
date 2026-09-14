@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ขอคำปรึกษากับ ACE — เตรียมสรุปความต้องการ</title>
+  <meta name="description" content="เล่าเรื่องที่อยากให้ AI ช่วย เลือกบริการและแพ็กเกจ แล้วสร้างสรุปคำขอเพื่อคัดลอกหรือดาวน์โหลด แบบฟอร์มปัจจุบันยังไม่ส่งข้อมูลจริง">
+  <meta name="theme-color" content="#f7f8fa"><link rel="icon" href="/assets/favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="/assets/styles.css">
+  <script defer src="/assets/site-data.js"></script><script defer src="/assets/site.js"></script><script defer src="/assets/contact.js"></script>
+</head>
+<body data-page="contact">
+  <ace-header></ace-header><noscript><div class="container noscript">แบบฟอร์มนี้ต้องใช้ JavaScript เพื่อสร้างสรุป โปรดเปิด JavaScript ก่อนใช้งาน</div></noscript>
+  <main id="main-content" tabindex="-1">
+    <section class="page-hero"><div class="container"><span class="eyebrow">คำขอปรึกษา</span><h1>อยากให้ AI ช่วยเรื่องไหน<br>เล่าให้ ACE ฟัง</h1><p class="lead">หน้านี้ช่วยจัดข้อมูลความต้องการให้เป็นสรุป ไม่ใช่การยืนยันนัด การสั่งซื้อ หรือการชำระเงิน และยังไม่มีการส่งข้อมูลให้ผู้จัดทำ</p></div></section>
+
+    <section class="section-sm section-surface"><div class="container contact-layout">
+      <aside class="contact-aside stack" style="--stack-space: 20px"><div><p class="kicker">ก่อนเริ่ม</p><h2>กรอกเท่าที่จำเป็น</h2><p class="muted">ยิ่งอธิบายปัญหาและผลลัพธ์ที่อยากได้ชัดเจน สรุปที่ได้ยิ่งเหมาะสำหรับนำไปคุยต่อ</p></div><div class="notice notice-warning"><span class="notice-mark" aria-hidden="true">!</span><p><strong>แบบฟอร์มสาธิต</strong>ข้อมูลที่กรอกยังไม่ถูกส่งหรือบันทึกเป็นคำขอ คุณสามารถคัดลอกหรือดาวน์โหลดสรุปเก็บไว้เองได้</p></div><div><h3>อย่าใส่ข้อมูลเหล่านี้</h3><ul class="plain-list"><li>รหัสผ่าน รหัส OTP หรือ API key</li><li>เลขบัตรประชาชนหรือข้อมูลการเงิน</li><li>ข้อมูลสุขภาพหรือข้อมูลอ่อนไหวที่ไม่จำเป็น</li><li>ไฟล์หรือตัวอย่างงานที่เป็นความลับ</li></ul></div><a class="text-link" href="/privacy/">อ่านการจัดการข้อมูล</a></aside>
+
+      <form class="contact-form" id="contact-form" novalidate>
+        <div class="form-status status-line" id="contact-status" data-status="idle" role="status" aria-live="polite"><span class="status-dot" aria-hidden="true"></span><span>ก่อนเริ่ม — กรอกช่องที่จำเป็นให้ครบ</span></div>
+        <div class="field"><label for="contact-name">ชื่อที่ใช้ติดต่อ <span aria-hidden="true">*</span></label><input id="contact-name" type="text" autocomplete="name" maxlength="100" aria-describedby="name-error" required><span class="field-error" id="name-error"></span></div>
+        <div class="field"><label for="contact-email">อีเมล <span aria-hidden="true">*</span></label><input id="contact-email" type="email" inputmode="email" autocomplete="email" maxlength="160" aria-describedby="email-hint email-error" required><span class="hint" id="email-hint">ใช้เพื่อเตรียมข้อมูลติดต่อในสรุปเท่านั้น ขณะนี้ยังไม่มีการส่งอีเมล</span><span class="field-error" id="email-error"></span></div>
+        <div class="field-row">
+          <div class="field"><label for="contact-service">บริการที่สนใจ <span aria-hidden="true">*</span></label><select id="contact-service" aria-describedby="service-error" required><option value="">เลือกบริการ</option></select><span class="field-error" id="service-error"></span></div>
+          <div class="field"><label for="contact-package">แพ็กเกจที่สนใจ</label><select id="contact-package"><option value="">ยังไม่แน่ใจ</option></select></div>
+        </div>
+        <div class="field"><label for="contact-need">เรื่องที่อยากให้ช่วย <span aria-hidden="true">*</span></label><textarea id="contact-need" minlength="20" maxlength="2000" aria-describedby="need-hint need-error" required></textarea><span class="hint" id="need-hint">ตัวอย่าง: งานที่กระจัดกระจายอยู่ที่ไหน อยากเห็นผลลัพธ์แบบใด และมีข้อจำกัดอะไร (อย่างน้อย 20 ตัวอักษร)</span><span class="field-error" id="need-error"></span></div>
+        <div class="field"><label for="contact-time">ช่วงเวลาที่สะดวก (ไม่บังคับ)</label><input id="contact-time" type="text" maxlength="300" aria-describedby="time-hint"><span class="hint" id="time-hint">ใช้ระบุช่วงเวลาที่สะดวกเบื้องต้น ไม่ได้หมายความว่าเป็นคิวว่างหรือเวลานัดที่ยืนยันแล้ว</span></div>
+        <div class="button-row"><button class="button button-primary" id="contact-submit" type="submit" disabled>สร้างสรุปคำขอ</button><button class="button button-secondary" id="contact-reset" type="button">ล้างข้อมูล</button></div>
+        <section class="request-preview" id="request-preview" hidden aria-labelledby="preview-title"><h3 id="preview-title">สรุปคำขอที่ยังไม่ได้ส่ง</h3><p class="small">สรุปนี้สร้างจากข้อมูลที่คุณกรอก แต่ยังไม่ได้ส่งหรือบันทึกเป็นคำขอปรึกษา</p><pre id="request-text" tabindex="0"></pre><div class="output-actions"><button class="button button-secondary" id="copy-request" type="button">คัดลอกสรุป</button><button class="button button-secondary" id="export-request" type="button">ดาวน์โหลดสรุป</button><a class="button button-quiet" href="/thank-you/">ดูสถานะระบบรับคำขอ</a></div></section>
+      </form>
+    </div></section>
+  </main>
+  <ace-footer><div class="container education-note"><strong>เว็บไซต์นี้จัดทำขึ้นเพื่อวัตถุประสงค์ทางการศึกษาเท่านั้น</strong><br><span lang="en">This website is created for educational purposes only.</span></div></ace-footer>
+</body>
+</html>

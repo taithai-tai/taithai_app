@@ -10,25 +10,7 @@
   },
   "headers": [
     {
-      "source": "/firebase-auth.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-store, max-age=0"
-        }
-      ]
-    },
-    {
-      "source": "/Chordly/sw.js",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache"
-        }
-      ]
-    },
-    {
-      "source": "/ACE/assets/:path*",
+      "source": "/assets/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -37,7 +19,7 @@
       ]
     },
     {
-      "source": "/ACE/:path*",
+      "source": "/:path*",
       "headers": [
         {
           "key": "X-Content-Type-Options",

@@ -1,5 +1,14 @@
 # Taithai Apps
 
+## ACE — ผู้ช่วย AI สำหรับชีวิตประจำวัน
+
+ACE เพิ่มเป็นแอปที่ 10 ในหน้ารวมแอป เปิดที่ `/ACE/` และมีครบ 9 หน้า
+โค้ดแอปแยกอยู่ใน `ace/` ดูคู่มือ build และตั้งค่า backend ที่ `ace/README.md`
+คำสั่ง `npm run dev` เตรียมหน้า ACE ให้โดยอัตโนมัติ
+ก่อนใช้ AI บน Vercel ต้องกำหนด `NINEARM_API_KEY` เป็น server environment variable
+บนโปรเจกต์ taithai-app แล้ว deploy ใหม่ ไม่ต้องเปลี่ยน provider หรือคีย์เดิม
+การตั้งค่าคีย์บนโฮสต์อื่นไม่ย้ายมาตามโค้ด Git
+
 ชุดเว็บแอปขนาดเล็กของ Taithai รวมถึง Movie Memory, Temporary Chat,
 QR Code tools, URL Shortener และ Degree Plan Explorer
 
