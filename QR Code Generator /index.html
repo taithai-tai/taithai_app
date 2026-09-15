@@ -109,6 +109,50 @@
       font-size: 1rem;
       transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
     }
+    .logo-upload {
+      margin-top: 16px;
+      padding: 14px;
+      border: 1px solid rgba(117, 88, 66, 0.12);
+      background: var(--white-soft);
+      border-radius: 18px;
+    }
+    .logo-upload-row { display: flex; align-items: center; gap: 12px; }
+    .logo-picker {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 10px 14px;
+      border: 1px dashed rgba(138, 106, 82, 0.35);
+      border-radius: 14px;
+      color: var(--accent);
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .logo-picker:hover { background: #f4e8dc; }
+    .logo-picker input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+    .logo-thumb {
+      width: 48px;
+      height: 48px;
+      padding: 4px;
+      object-fit: contain;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fff;
+      display: none;
+    }
+    .logo-controls { display: none; margin-top: 12px; }
+    .logo-controls.active { display: block; }
+    .logo-control-head { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 0.88rem; }
+    input[type="range"] { width: 100%; margin-top: 8px; accent-color: var(--accent); }
+    .remove-logo {
+      padding: 9px 13px;
+      color: var(--danger);
+      background: rgba(186, 107, 97, 0.1);
+      box-shadow: none;
+      display: none;
+    }
     textarea {
       min-height: 150px;
       resize: vertical;
@@ -315,6 +359,22 @@
           </div>
         </div>
 
+        <div class="logo-upload">
+          <label for="logoInput">โลโก้ตรงกลาง QR (ไม่บังคับ)</label>
+          <div class="logo-upload-row">
+            <img id="logoThumb" class="logo-thumb" alt="ตัวอย่างโลโก้" />
+            <label class="logo-picker" for="logoInput">
+              <input type="file" id="logoInput" accept="image/png,image/jpeg,image/webp" />
+              <span id="logoPickerText">เลือกรูปโลโก้ PNG, JPG หรือ WebP</span>
+            </label>
+            <button type="button" class="remove-logo" id="removeLogoBtn">เอาออก</button>
+          </div>
+          <div class="logo-controls" id="logoControls">
+            <div class="logo-control-head"><span>ขนาดโลโก้</span><strong id="logoSizeValue">20%</strong></div>
+            <input type="range" id="logoSize" min="12" max="24" value="20" step="1" aria-label="ขนาดโลโก้ตรงกลาง QR" />
+          </div>
+        </div>
+
         <div class="row">
           <div>
             <label>สีพื้นหลัง</label>
@@ -382,8 +442,17 @@
     const placeholder = document.getElementById('placeholder');
     const statusEl = document.getElementById('status');
     const testOutput = document.getElementById('testOutput');
+    const logoInput = document.getElementById('logoInput');
+    const logoThumb = document.getElementById('logoThumb');
+    const logoPickerText = document.getElementById('logoPickerText');
+    const logoControls = document.getElementById('logoControls');
+    const logoSizeEl = document.getElementById('logoSize');
+    const logoSizeValue = document.getElementById('logoSizeValue');
+    const removeLogoBtn = document.getElementById('removeLogoBtn');
 
     let currentQrUrl = '';
+    let currentOutputUrl = '';
+    let logoDataUrl = '';
 
     function syncColorLabels() {
       darkValueEl.textContent = darkColorEl.value.toUpperCase();
@@ -410,7 +479,62 @@
       const encoded = encodeTextForApi(text);
       const dark = normalizeHexColor(darkColor) || '000000';
       const light = normalizeHexColor(lightColor) || 'ffffff';
-      return `https://api.qrserver.com/v1/create-qr-code/?size=${finalSize}x${finalSize}&margin=${finalMargin}&color=${dark}&bgcolor=${light}&data=${encoded}`;
+      return `https://api.qrserver.com/v1/create-qr-code/?size=${finalSize}x${finalSize}&margin=${finalMargin}&ecc=H&color=${dark}&bgcolor=${light}&data=${encoded}`;
+    }
+
+    function loadImage(src) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = src;
+      });
+    }
+
+    function canvasToBlob(canvas) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('สร้างไฟล์ภาพไม่สำเร็จ')), 'image/png');
+      });
+    }
+
+    function replaceOutputUrl(blob) {
+      if (currentOutputUrl) URL.revokeObjectURL(currentOutputUrl);
+      currentOutputUrl = URL.createObjectURL(blob);
+      qrImage.src = currentOutputUrl;
+    }
+
+    async function composeQrImage(qrBlob) {
+      const qrObjectUrl = URL.createObjectURL(qrBlob);
+      try {
+        const qr = await loadImage(qrObjectUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = qr.naturalWidth;
+        canvas.height = qr.naturalHeight;
+        const context = canvas.getContext('2d');
+        context.drawImage(qr, 0, 0, canvas.width, canvas.height);
+
+        if (logoDataUrl) {
+          const logo = await loadImage(logoDataUrl);
+          const boxSize = canvas.width * (Number(logoSizeEl.value) / 100);
+          const padding = Math.max(5, canvas.width * 0.018);
+          const x = (canvas.width - boxSize) / 2;
+          const y = (canvas.height - boxSize) / 2;
+          const radius = Math.max(8, boxSize * 0.18);
+
+          context.fillStyle = lightColorEl.value;
+          context.beginPath();
+          context.roundRect(x - padding, y - padding, boxSize + padding * 2, boxSize + padding * 2, radius);
+          context.fill();
+
+          const ratio = Math.min(boxSize / logo.naturalWidth, boxSize / logo.naturalHeight);
+          const width = logo.naturalWidth * ratio;
+          const height = logo.naturalHeight * ratio;
+          context.drawImage(logo, (canvas.width - width) / 2, (canvas.height - height) / 2, width, height);
+        }
+        return canvasToBlob(canvas);
+      } finally {
+        URL.revokeObjectURL(qrObjectUrl);
+      }
     }
 
     function setPreviewVisible(visible) {
@@ -426,7 +550,7 @@
       if (type === 'bad') statusEl.classList.add('bad');
     }
 
-    function generateQR() {
+    async function generateQR() {
       const text = textEl.value.trim();
       if (!text) {
         currentQrUrl = '';
@@ -445,29 +569,29 @@
       );
 
       setStatus('กำลังสร้าง QR code...', 'warn');
-      qrImage.onload = () => {
+      try {
+        const response = await fetch(currentQrUrl, { mode: 'cors' });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const outputBlob = await composeQrImage(await response.blob());
+        replaceOutputUrl(outputBlob);
         setPreviewVisible(true);
-        setStatus('สร้าง QR code เรียบร้อยแล้ว', 'ok');
-      };
-      qrImage.onerror = () => {
+        setStatus(logoDataUrl ? 'สร้าง QR code พร้อมโลโก้เรียบร้อยแล้ว' : 'สร้าง QR code เรียบร้อยแล้ว', 'ok');
+      } catch (error) {
+        console.error(error);
         setPreviewVisible(false);
         setStatus('ไม่สามารถโหลดภาพ QR code ได้ ตรวจสอบอินเทอร์เน็ตหรือบริการสร้าง QR อีกครั้ง', 'bad');
-      };
-      qrImage.src = currentQrUrl;
+      }
     }
 
     async function downloadQR() {
-      if (!currentQrUrl) {
+      if (!currentOutputUrl) {
         setStatus('กรุณาสร้าง QR code ก่อนดาวน์โหลด', 'warn');
         return;
       }
 
       try {
         setStatus('กำลังดาวน์โหลด...', 'warn');
-        const response = await fetch(currentQrUrl, { mode: 'cors' });
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
+        const response = await fetch(currentOutputUrl, { mode: 'cors' });
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -488,6 +612,10 @@
         return;
       }
       try {
+        if (logoDataUrl) {
+          setStatus('QR ที่ใส่โลโก้ไม่มีลิงก์รูปถาวร กรุณาใช้ปุ่มดาวน์โหลด PNG', 'warn');
+          return;
+        }
         await navigator.clipboard.writeText(currentQrUrl);
         setStatus('คัดลอกลิงก์รูป QR แล้ว', 'ok');
       } catch (error) {
@@ -499,18 +627,65 @@
     function clearAll() {
       textEl.value = '';
       currentQrUrl = '';
+      if (currentOutputUrl) URL.revokeObjectURL(currentOutputUrl);
+      currentOutputUrl = '';
       qrImage.removeAttribute('src');
       setPreviewVisible(false);
       setStatus('', '');
     }
 
     function openImageInNewTab() {
-      if (!currentQrUrl) {
+      if (!currentOutputUrl) {
         setStatus('กรุณาสร้าง QR code ก่อนเปิดรูป', 'warn');
         return;
       }
-      window.open(currentQrUrl, '_blank', 'noopener');
+      window.open(currentOutputUrl || currentQrUrl, '_blank', 'noopener');
     }
+
+    function removeLogo() {
+      logoDataUrl = '';
+      logoInput.value = '';
+      logoThumb.removeAttribute('src');
+      logoThumb.style.display = 'none';
+      removeLogoBtn.style.display = 'none';
+      logoControls.classList.remove('active');
+      logoPickerText.textContent = 'เลือกรูปโลโก้ PNG, JPG หรือ WebP';
+      if (currentQrUrl) generateQR();
+    }
+
+    logoInput.addEventListener('change', () => {
+      const file = logoInput.files && logoInput.files[0];
+      if (!file) return;
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+        setStatus('รองรับเฉพาะไฟล์ PNG, JPG และ WebP', 'bad');
+        logoInput.value = '';
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setStatus('ไฟล์โลโก้ต้องมีขนาดไม่เกิน 5 MB', 'bad');
+        logoInput.value = '';
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        logoDataUrl = String(reader.result);
+        logoThumb.src = logoDataUrl;
+        logoThumb.style.display = 'block';
+        removeLogoBtn.style.display = 'inline-flex';
+        logoControls.classList.add('active');
+        logoPickerText.textContent = file.name;
+        setStatus('เพิ่มโลโก้แล้ว กดสร้าง QR Code เพื่อดูตัวอย่าง', 'ok');
+        if (currentQrUrl) generateQR();
+      };
+      reader.onerror = () => setStatus('อ่านไฟล์โลโก้ไม่สำเร็จ', 'bad');
+      reader.readAsDataURL(file);
+    });
+
+    logoSizeEl.addEventListener('input', () => {
+      logoSizeValue.textContent = `${logoSizeEl.value}%`;
+    });
+    logoSizeEl.addEventListener('change', () => { if (currentQrUrl) generateQR(); });
+    removeLogoBtn.addEventListener('click', removeLogo);
 
     function assert(name, condition) {
       return `${condition ? '✅' : '❌'} ${name}`;
