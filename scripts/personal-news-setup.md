@@ -20,3 +20,11 @@ The publisher creates a pairing file only when absent, appends the edition witho
 The requested other computer has not been made available to this task. Codex UI cannot be controlled by Computer Use. The user must finish pairing through Codex Connections. No email/Teams refresh worker or cloud-to-Codex job API has been configured. Do not represent the Update button as a live mail/Teams scan until an authenticated request queue and working host-side consumer are implemented and verified. Do not expose an unauthenticated local server or store account tokens on the public site. No API credentials or third-party tokens were added by this implementation.
 
 Initial edition: source account danupol.saen@bumail.net, 22 messages dated Sep 22–29, 2026. Other accounts and direct Teams remain pending; the edition states this explicitly. Previous Firebase user data is left intact; automatic migration is not implemented.
+
+## US short-term stock column
+
+Optional `edition.markets` stores a dated, sourced editorial plan in the same encrypted snapshot. It contains USD closing references, quote and review timestamps, the intended US session, entry ranges, two sell targets, stop levels, conditions, rationale, and explicit limitations. Levels are AI analysis, not an external analyst consensus or live signals. Never represent reference closes as streaming prices. Selling means closing a hypothetical long position; no portfolio holdings are assumed.
+
+`markets.js` rejects invalid price geometry/dates/links, computes reward:risk using the least favorable entry in the range, labels pre-session/expired/historical states, and refreshes that label every minute and when the tab becomes visible. Plans expire for new entries at `validUntil`. Selecting old editions never substitutes a newer market plan. The initial column uses the Sep 28, 2026 closing data from the linked Stock Analysis historical pages; personal mail coverage remains explicitly at its earlier check time.
+
+Run `node scripts/test-news-markets.mjs` for expiry, archival behavior, invalid-data rejection, and ratio calculations. The fixtures in this test are not published as news. An authenticated remote update worker and live market data remain unconfigured.

@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {tradeMetrics,marketStatus} from '../taithai/news/markets.js';
+const pick={entryLow:100,entryHigh:101,stop:99,targets:[105,107],reference:102,source:{url:'https://example.com/'}};
+const m={currency:'USD',checkedAt:'2026-09-28T22:00:00Z',quoteAsOf:'2026-09-28T20:00:00Z',validFrom:'2026-09-29T13:30:00Z',validUntil:'2026-09-29T20:00:00Z',picks:[pick]};
+assert.equal(tradeMetrics(pick).rewardRisk,2);
+assert.equal(marketStatus(m,Date.parse('2026-09-29T12:00:00Z')),'upcoming');
+assert.equal(marketStatus(m,Date.parse(m.validFrom)),'watch');
+assert.equal(marketStatus(m,Date.parse(m.validUntil)),'expired');
+assert.equal(marketStatus(m,Date.parse(m.validUntil),true),'historical');
+assert.equal(marketStatus(undefined),'missing');
+for(const bad of [{...pick,stop:101},{...pick,entryHigh:99},{...pick,targets:[100,105]},{...pick,targets:[105]},{...pick,reference:NaN},{...pick,source:{url:'javascript:alert(1)'}}])assert.equal(marketStatus({...m,picks:[bad]},Date.parse(m.validFrom)),'invalid');
+assert.equal(marketStatus({...m,validUntil:'bad'}),'invalid');
+assert.equal(marketStatus({...m,checkedAt:'2030-01-01T00:00:00Z'},Date.parse(m.validFrom)),'invalid');
+console.log('PASS: market expiry, historical editions, missing/invalid prices, reward-to-risk arithmetic, safe sources');
