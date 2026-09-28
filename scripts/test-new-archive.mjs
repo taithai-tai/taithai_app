@@ -1,0 +1,8 @@
+import assert from 'node:assert/strict';
+import {webcrypto} from 'node:crypto';
+import {importPair,encrypt,decrypt,validateArchive,safeLink,bangkokDate,encode} from '../taithai/new/crypto.js';
+const pair={version:1,feed:'12345678-1234-1234-1234-123456789012',key:encode(webcrypto.getRandomValues(new Uint8Array(32)))};
+const {key}=await importPair(pair);assert.equal(key.extractable,false);
+const value={private:'not public',body:'ภาษาไทย'};const a=await encrypt(key,value),b=await encrypt(key,value);assert.notEqual(a.iv,b.iv);assert.deepEqual(await decrypt(key,a),value);assert.ok(!JSON.stringify(a).includes(value.private));
+const other=await importPair({...pair,key:encode(webcrypto.getRandomValues(new Uint8Array(32)))});await assert.rejects(()=>decrypt(other.key,a));await assert.rejects(()=>decrypt(key,a,'different-context'));await assert.rejects(()=>decrypt(key,{...a,data:(a.data[0]==='A'?'B':'A')+a.data.slice(1)}));await assert.rejects(()=>importPair({...pair,feed:'../../private'}));
+const e={id:'new',date:'2026-09-29',createdAt:'2026-09-29T01:00:00Z',headline:'real',events:[],stories:[],deadlines:[],alerts:[]};const old={...e,id:'old',createdAt:'2026-09-28T01:00:00Z'};assert.equal(validateArchive({version:1,editions:[old,e]}).editions[0].id,'new');assert.throws(()=>validateArchive({version:1,editions:[e,e]}));assert.equal(safeLink('javascript:alert(1)'),null);assert.equal(safeLink('https://mail.google.com/'),'https://mail.google.com/');assert.equal(bangkokDate(new Date('2026-09-28T17:00:00Z')),'2026-09-29');console.log('PASS: encryption, wrong key, tampering, context binding, private key storage, archive ordering, duplicate rejection, links, Bangkok date');
