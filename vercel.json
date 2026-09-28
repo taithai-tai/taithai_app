@@ -73,6 +73,11 @@
   ],
   "redirects": [
     {
+      "source": "/taithai/new/",
+      "destination": "/taithai/news/",
+      "permanent": true
+    },
+    {
       "source": "/taithai/new/:path*",
       "destination": "/taithai/news/:path*",
       "permanent": true
