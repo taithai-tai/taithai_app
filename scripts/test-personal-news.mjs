@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import {dayKey,dayWindow,todayTasks,safeGoogleLink,loadCalendar,scanMail,prioritizeMail,getJson} from '../taithai/new/data.js';
+import {dayKey,dayWindow,todayTasks,safeGoogleLink,loadCalendar,scanMail,prioritizeMail,getJson} from '../taithai/news/data.js';
 assert.equal(dayKey(new Date('2026-09-28T17:05:00Z')),'2026-09-29');
 assert.deepEqual(dayWindow(new Date('2026-09-28T17:05:00Z')),{timeMin:'2026-09-28T17:00:00.000Z',timeMax:'2026-09-29T17:00:00.000Z'});
 assert.deepEqual(todayTasks([{date:'2026-09-29',time:'10:00'},{date:'2026-09-28',time:'09:00'},{date:'2026-09-29',time:'08:00'}],'2026-09-29').map(x=>x.time),['08:00','10:00']);
@@ -17,7 +17,7 @@ const news=prioritizeMail({internalDate:String(Date.now()),payload:{headers:[{na
 assert(news.reasons.length>=2);
 const old=prioritizeMail({internalDate:'1',payload:{headers:[{name:'Subject',value:'deadline'}]}});assert(old.age>30);
 console.log('Personal news: date boundaries, private task dates, safe links, pagination, all-mail scan, cancellation, auth failure and ranking passed.');
-const {graphPages,scanMicrosoftMail,safeMailLink}=await import('../taithai/new/data.js');
+const {graphPages,scanMicrosoftMail,safeMailLink}=await import('../taithai/news/data.js');
 await assert.rejects(()=>graphPages('https://evil.example/v1.0/me/messages','test'),/Invalid Microsoft/);
 assert.equal(safeMailLink('https://outlook.office.com/mail/id/123','fallback'),'https://outlook.office.com/mail/id/123');
 assert.equal(safeMailLink('https://outlook.office.com.evil.example/','fallback'),'fallback');

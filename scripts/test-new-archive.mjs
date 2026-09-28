@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {webcrypto} from 'node:crypto';
-import {importPair,encrypt,decrypt,validateArchive,safeLink,bangkokDate,encode} from '../taithai/new/crypto.js';
+import {importPair,encrypt,decrypt,validateArchive,safeLink,bangkokDate,encode} from '../taithai/news/crypto.js';
 const pair={version:1,feed:'12345678-1234-1234-1234-123456789012',key:encode(webcrypto.getRandomValues(new Uint8Array(32)))};
 const {key}=await importPair(pair);assert.equal(key.extractable,false);
 const value={private:'not public',body:'ภาษาไทย'};const a=await encrypt(key,value),b=await encrypt(key,value);assert.notEqual(a.iv,b.iv);assert.deepEqual(await decrypt(key,a),value);assert.ok(!JSON.stringify(a).includes(value.private));

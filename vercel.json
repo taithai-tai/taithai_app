@@ -50,7 +50,7 @@
       ]
     },
     {
-      "source": "/taithai/new/:path*",
+      "source": "/taithai/news/:path*",
       "headers": [
         {
           "key": "Cache-Control",
@@ -69,6 +69,13 @@
           "value": "nosniff"
         }
       ]
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/taithai/new/:path*",
+      "destination": "/taithai/news/:path*",
+      "permanent": true
     }
   ]
 }
