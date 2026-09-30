@@ -4,15 +4,16 @@ export function setupGeneration({getArchive,refresh}){
  function configure(){const config=getArchive()?.queueConfig;if(!config)return null;if(identity!==config.uid){client=createQueueClient(config);identity=config.uid;}return client;}
  const set=s=>{label.textContent=s;};
  function show(q){
-  const r=q?.request;const lastSeen=Date.parse(q?.workerSeenAt);const offline=!Number.isFinite(lastSeen)||Date.now()-lastSeen>5*60000;
-  button.disabled=Boolean(r&&['queued','running'].includes(r.state));
-  if(!r){set('สร้างข่าวอัตโนมัติทุกวัน 06:00 น. · กดสร้างฉบับพิเศษได้ทุกเมื่อ');return;}
+  const r=q?.request;const lastSeen=Date.parse(q?.workerSeenAt);const offline=q?.workerMode==='event'?!(Date.parse(q.listenerUntil)>Date.now()):q?.workerMode==='paused'||!Number.isFinite(lastSeen)||Date.now()-lastSeen>5*60000;
+  const paused=q?.workerMode==='paused';const showStatus=message=>set(message+(paused?' · ตัวรับคำขอหยุดอยู่ชั่วคราว':''));
+  button.disabled=paused||Boolean(r&&['queued','running'].includes(r.state));
+  if(!r){showStatus(paused?'รอบข่าวเช้า 06:00 น. ยังเปิดอยู่':'สร้างข่าวอัตโนมัติทุกวัน 06:00 น. · กดสร้างฉบับพิเศษได้ทุกเมื่อ');return;}
   const when=new Date(r.requestedAt).toLocaleTimeString('th-TH',{timeZone:'Asia/Bangkok',hour:'2-digit',minute:'2-digit'});
-  if(r.state==='queued')set(offline?'รับคำขอแล้ว '+when+' น. · รอเครื่องจัดทำข่าวออนไลน์':'รับคำขอแล้ว '+when+' น. · รอ Codex รับงานรอบถัดไป');
-  if(r.state==='running')set('กำลังอ่านข้อมูลและจัดทำข่าวใหม่ · ใช้เวลาหลายนาที คุณปิดหน้านี้ได้');
-  if(r.state==='failed')set('จัดทำฉบับใหม่ไม่สำเร็จ · ข่าวฉบับเดิมยังอยู่ กดสร้างใหม่เพื่อลองอีกครั้ง');
+  if(r.state==='queued')showStatus(offline?'รับคำขอแล้ว '+when+' น. · รอเครื่องจัดทำข่าวออนไลน์':'รับคำขอแล้ว '+when+' น. · กำลังส่งให้เครื่องจัดทำข่าว');
+  if(r.state==='running')showStatus('กำลังอ่านข้อมูลและจัดทำข่าวใหม่ · ใช้เวลาหลายนาที คุณปิดหน้านี้ได้');
+  if(r.state==='failed')showStatus('จัดทำฉบับใหม่ไม่สำเร็จ · ข่าวฉบับเดิมยังอยู่ กดสร้างใหม่เพื่อลองอีกครั้ง');
   if(r.state==='succeeded'){
-   const current=getArchive()?.editions?.[0];set(current?.id===r.editionId?'ฉบับใหม่พร้อมอ่านแล้ว':'จัดทำฉบับใหม่เสร็จแล้ว กำลังโหลด…');
+   const current=getArchive()?.editions?.[0];showStatus(current?.id===r.editionId?'ฉบับใหม่พร้อมอ่านแล้ว':'จัดทำฉบับใหม่เสร็จแล้ว กำลังโหลด…');
    if(current?.id!==r.editionId)refresh();
   }
  }
