@@ -12,11 +12,11 @@ for(const p of [source,pairPath]){const rel=path.relative(root,path.resolve(p));
 let pair;
 try{pair=JSON.parse(await readFile(pairPath,'utf8'));}catch(e){if(e.code!=='ENOENT')throw e;pair={version:1,feed:randomUUID(),key:randomBytes(32).toString('base64url')};await mkdir(path.dirname(path.resolve(pairPath)),{recursive:true,mode:0o700});await writeFile(pairPath,JSON.stringify(pair),{mode:0o600,flag:'wx'});}
 const imported=await importPair(pair),destination=path.join(root,'taithai/news/feeds',pair.feed+'.json');
-let editions=[];try{const old=validateArchive(await decrypt(imported.key,JSON.parse(await readFile(destination,'utf8'))));editions=old.editions;}catch(e){if(e.code!=='ENOENT')throw e;}
+let editions=[],metadata={};try{const old=validateArchive(await decrypt(imported.key,JSON.parse(await readFile(destination,'utf8'))));editions=old.editions;if(old.queueConfig)metadata.queueConfig=old.queueConfig;}catch(e){if(e.code!=='ENOENT')throw e;}
 const edition=JSON.parse(await readFile(source,'utf8'));
 if(edition.markets && marketStatus(edition.markets)==='invalid')throw new Error('Invalid market plan; check prices, dates, targets, and sources.');
 if(editions.some(e=>e.id===edition.id))throw new Error('Edition ids are immutable; use a new id for an actual new edition.');
-const archive=validateArchive({version:1,editions:[edition,...editions]});
+const archive=validateArchive({...metadata,version:1,editions:[edition,...editions]});
 await mkdir(path.dirname(destination),{recursive:true});
 await writeFile(destination,JSON.stringify(await encrypt(imported.key,archive))+'\n');
 console.log(`Encrypted archive published: ${archive.editions.length} edition(s). Pairing key was not printed.`);
