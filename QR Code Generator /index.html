@@ -334,7 +334,7 @@
             </div>
           </div>
         </div>
-        <p class="sub">วางข้อความ ลิงก์ เบอร์โทร หรือข้อมูลอะไรก็ได้ แล้วกดสร้าง QR code ได้ทันที ปรับความหนาแน่น รูปทรง และกรอบมุม แล้วดาวน์โหลดเป็น PNG</p>
+        <p class="sub">วางข้อความ ลิงก์ เบอร์โทร หรือข้อมูลอะไรก็ได้ แล้วกดสร้าง QR code ได้ทันที เลือกจำนวนช่อง รูปทรง และกรอบมุม แล้วดาวน์โหลดเป็น PNG</p>
 
         <label for="text">ข้อมูลที่ต้องการแปลง</label>
         <textarea id="text" placeholder="เช่น https://example.com หรือข้อความที่ต้องการ"></textarea>
@@ -378,11 +378,49 @@
 
         <div class="row">
           <div>
-            <label for="density">ความหนาแน่นของข้อมูล</label>
+            <label for="density">จำนวนช่อง QR</label>
             <select id="density">
-              <option value="L" selected>ช่องน้อย · ช่องใหญ่</option>
-              <option value="M">สมดุล</option>
-              <option value="H">ทนต่อความเสียหาย · ช่องมาก</option>
+              <option value="0" selected>อัตโนมัติ · ใช้จำนวนช่องน้อยที่สุด</option>
+              <option value="1">21 × 21 ช่อง</option>
+              <option value="2">25 × 25 ช่อง</option>
+              <option value="3">29 × 29 ช่อง</option>
+              <option value="4">33 × 33 ช่อง</option>
+              <option value="5">37 × 37 ช่อง</option>
+              <option value="6">41 × 41 ช่อง</option>
+              <option value="7">45 × 45 ช่อง</option>
+              <option value="8">49 × 49 ช่อง</option>
+              <option value="9">53 × 53 ช่อง</option>
+              <option value="10">57 × 57 ช่อง</option>
+              <option value="11">61 × 61 ช่อง</option>
+              <option value="12">65 × 65 ช่อง</option>
+              <option value="13">69 × 69 ช่อง</option>
+              <option value="14">73 × 73 ช่อง</option>
+              <option value="15">77 × 77 ช่อง</option>
+              <option value="16">81 × 81 ช่อง</option>
+              <option value="17">85 × 85 ช่อง</option>
+              <option value="18">89 × 89 ช่อง</option>
+              <option value="19">93 × 93 ช่อง</option>
+              <option value="20">97 × 97 ช่อง</option>
+              <option value="21">101 × 101 ช่อง</option>
+              <option value="22">105 × 105 ช่อง</option>
+              <option value="23">109 × 109 ช่อง</option>
+              <option value="24">113 × 113 ช่อง</option>
+              <option value="25">117 × 117 ช่อง</option>
+              <option value="26">121 × 121 ช่อง</option>
+              <option value="27">125 × 125 ช่อง</option>
+              <option value="28">129 × 129 ช่อง</option>
+              <option value="29">133 × 133 ช่อง</option>
+              <option value="30">137 × 137 ช่อง</option>
+              <option value="31">141 × 141 ช่อง</option>
+              <option value="32">145 × 145 ช่อง</option>
+              <option value="33">149 × 149 ช่อง</option>
+              <option value="34">153 × 153 ช่อง</option>
+              <option value="35">157 × 157 ช่อง</option>
+              <option value="36">161 × 161 ช่อง</option>
+              <option value="37">165 × 165 ช่อง</option>
+              <option value="38">169 × 169 ช่อง</option>
+              <option value="39">173 × 173 ช่อง</option>
+              <option value="40">177 × 177 ช่อง</option>
             </select>
           </div>
           <div>
@@ -404,7 +442,7 @@
             </select>
           </div>
         </div>
-        <p class="hint">โหมดช่องน้อยใช้จำนวนช่องต่ำสุดที่พอดีกับข้อมูล ข้อความหรือลิงก์ยิ่งสั้น ช่องและกรอบมุมจะยิ่งใหญ่เมื่อเทียบกับภาพ กรอบมุมคงสัดส่วนมาตรฐานเพื่อให้สแกนได้ เมื่อใส่โลโก้จะใช้โหมดทนต่อความเสียหายโดยอัตโนมัติ</p>
+        <p class="hint">เลือกได้ตั้งแต่ 21 × 21 ช่อง หากต้องการน้อยกว่า 37 × 37 ให้ลอง 21, 25, 29 หรือ 33 ช่องต่อด้าน ข้อมูลต้องพอดีกับจำนวนช่องที่เลือก เมื่อใส่โลโก้จะเก็บข้อมูลได้น้อยลงเพราะต้องเผื่อการกู้คืนข้อมูล</p>
 
         <div class="logo-upload">
           <label for="logoInput">โลโก้ตรงกลาง QR (ไม่บังคับ)</label>
@@ -502,9 +540,12 @@
     let currentCanvas = null;
     qrcode.stringToBytes = text => Array.from(new TextEncoder().encode(text));
 
-    function createMatrix(text, level) {
-      const qr = qrcode(0, level);
-      qr.addData(text);
+    function createMatrix(text, level, version = 0) {
+      const qr = qrcode(version, level);
+      // Preserve the exact text; compact modes use fewer bits when applicable.
+      const mode = /^[0-9]+$/.test(text) ? 'Numeric'
+        : /^[0-9A-Z $%*+./:-]+$/.test(text) ? 'Alphanumeric' : 'Byte';
+      qr.addData(text, mode);
       qr.make();
       return qr;
     }
@@ -616,7 +657,7 @@
       }
 
       try {
-        const qr = createMatrix(text, logoDataUrl ? 'H' : densityEl.value);
+        const qr = createMatrix(text, logoDataUrl ? 'H' : 'L', Number(densityEl.value));
         const count = qr.getModuleCount();
         if (count + Number(marginEl.value) * 2 > Number(sizeEl.value)) {
           throw new Error('ข้อมูลมากเกินขนาดภาพ กรุณาเลือกภาพขนาดใหญ่ขึ้น');
@@ -636,14 +677,18 @@
         currentQrUrl = currentCanvas.toDataURL('image/png');
         qrImage.src = currentQrUrl;
         setPreviewVisible(true);
-        setStatus(`สร้างแล้ว · ${count} × ${count} ช่อง · เปลี่ยนตัวเลือกเพื่อดูตัวอย่างทันที`, 'ok');
+        setStatus(`สร้างแล้ว · ${count} × ${count} ช่อง${logoDataUrl ? ' · พร้อมโลโก้' : ''} · เปลี่ยนตัวเลือกเพื่อดูตัวอย่างทันที`, 'ok');
       } catch (error) {
         if (request !== generation) return;
         currentCanvas = null;
         currentQrUrl = '';
         qrImage.removeAttribute('src');
         setPreviewVisible(false);
-        setStatus('สร้างไม่ได้: ข้อมูลอาจยาวเกินไป ลองย่อข้อความหรือเลือกภาพขนาดใหญ่ขึ้น', 'bad');
+        const version = Number(densityEl.value);
+        const selectedCount = 17 + version * 4;
+        setStatus(version
+          ? `ข้อมูลไม่พอดีกับ ${selectedCount} × ${selectedCount} ช่อง กรุณาย่อข้อมูล เลือกจำนวนช่องเพิ่ม หรือใช้อัตโนมัติ`
+          : 'ข้อมูลยาวเกินความจุ QR กรุณาย่อข้อความหรือลิงก์', 'bad');
       }
     }
 
@@ -766,7 +811,9 @@
       const compact = createMatrix('https://example.com', 'L');
       const robust = createMatrix('https://example.com', 'H');
       const results = [
-        assert('โหมดช่องน้อยมีจำนวนช่องไม่เกินโหมดทนต่อความเสียหาย', compact.getModuleCount() <= robust.getModuleCount()),
+        assert('จำนวนช่องอัตโนมัติใช้พื้นที่ตามปริมาณข้อมูล', compact.getModuleCount() <= robust.getModuleCount()),
+        assert('เลือก 21 × 21 ช่องได้', createMatrix('https://x.co', 'L', 1).getModuleCount() === 21),
+        assert('เลือก 33 × 33 ช่องได้', createMatrix('test', 'L', 4).getModuleCount() === 33),
         assert('รองรับข้อความไทย', createMatrix('สวัสดีประเทศไทย', 'L').getModuleCount() >= 21),
         assert('กรอบมุมมาตรฐาน', compact.isDark(0, 0) && !compact.isDark(1, 1) && compact.isDark(3, 3))
       ];
