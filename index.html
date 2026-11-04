@@ -1017,19 +1017,9 @@
     const SHORTLINK_STORE_KEY = "taithai_short_links_v2";
 
     (function resolveRootShortLink() {
-      const parts = window.location.pathname.split("/").filter(Boolean);
-      const pathCode = parts.length === 1 ? parts[0] : (parts[0] === "S" ? parts[1] : "");
-      const queryCode = new URLSearchParams(window.location.search).get("c");
-      const code = (/^[a-zA-Z0-9_-]{4,32}$/.test(pathCode || "") ? pathCode : queryCode);
-      if (!code) return;
-
-      try {
-        const db = JSON.parse(localStorage.getItem(SHORTLINK_STORE_KEY) || "{}");
-        if (db[code]?.url) {
-          window.location.replace(db[code].url);
-        }
-      } catch (e) {
-        console.warn("Shortlink lookup failed", e);
+      const code = new URLSearchParams(window.location.search).get('c');
+      if (/^[a-zA-Z0-9_-]{4,32}$/.test(code || '')) {
+        window.location.replace('/S/?c=' + encodeURIComponent(code));
       }
     })();
 

@@ -82,5 +82,11 @@
       "destination": "/taithai/news/:path*",
       "permanent": true
     }
+  ],
+  "rewrites": [
+    {
+      "source": "/S/:code",
+      "destination": "/api/shortlinks?code=:code"
+    }
   ]
 }

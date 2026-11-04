@@ -3,6 +3,7 @@ import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js';
+import shortlinksHandler from './api/shortlinks.js';
 import aceHandler from './ace/api/ace.js';
 import { buildACE } from './ace/scripts/build.mjs';
 
@@ -198,6 +199,14 @@ async function serveTicketAnalysis(req, res) {
 
 const server = http.createServer(async (req, res) => {
   try {
+    const requestUrl = new URL(req.url || '/', 'http://localhost');
+    const shortCode = requestUrl.pathname.match(/^\/S\/([^/]+)\/?$/);
+    if (requestUrl.pathname.replace(/\/$/, '') === '/api/shortlinks' || shortCode) {
+      req.query = Object.fromEntries(requestUrl.searchParams);
+      if (shortCode) req.query.code = decodeURIComponent(shortCode[1]);
+      await shortlinksHandler(req, res);
+      return;
+    }
     if (/^\/api\/ace\/?(?:\?|$)/.test(req.url || '')) {
       await aceHandler(req, res);
       return;

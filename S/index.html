@@ -54,53 +54,15 @@
         </div>
       </div>
     </div>
-    <p>วางลิงก์ยาว แล้วกดสร้าง Shortlink ได้ทันที</p>
+    <p>วางลิงก์ยาว แล้วสร้างลิงก์ย่อที่เปิดได้ข้ามอุปกรณ์และใช้กับ QR Code</p>
     <label class="sr-only" for="longUrl">ลิงก์ที่ต้องการย่อ</label>
     <input id="longUrl" type="url" inputmode="url" autocomplete="url" placeholder="https://example.com/page" />
     <button id="createBtn">สร้าง Shortlink</button>
+    <p style="margin-top:12px">ลิงก์ใหม่ใช้บริการ is.gd เก็บปลายทาง กรุณาอย่าใส่ลิงก์ที่มีรหัสผ่านหรือข้อมูลลับ</p>
     <div id="result" role="status" aria-live="polite"></div>
   </main>
 
-<script>
-const BASE_DOMAIN=location.origin;
-const STORE_KEY='taithai_short_links_v2';
-const params=new URLSearchParams(location.search);
-const pathCode=location.pathname.split('/').filter(Boolean).pop();
-const parts=location.pathname.split('/').filter(Boolean);
-const scopedCode=(parts[0]==='S'&&parts[1])?parts[1]:pathCode;
-const maybeCode=(/^[a-zA-Z0-9_-]{4,32}$/.test(scopedCode||'')?scopedCode:null);
-
-function load(){return JSON.parse(localStorage.getItem(STORE_KEY)||'{}')}
-function save(db){localStorage.setItem(STORE_KEY,JSON.stringify(db))}
-function validUrl(s){try{const u=new URL(s);return ['http:','https:'].includes(u.protocol)}catch{return false}}
-function randCode(){const chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';let out='';for(let i=0;i<4;i++) out+=chars[Math.floor(Math.random()*chars.length)];return out}
-
-(function tryRedirect(){
-  if(!maybeCode) return;
-  const db=load();
-  if(db[maybeCode]?.url) location.replace(db[maybeCode].url);
-})();
-
-document.getElementById('createBtn').onclick=()=>{
-  const longUrl=document.getElementById('longUrl').value.trim();
-  if(!validUrl(longUrl)){alert('กรุณาใส่ URL ที่ถูกต้อง (http/https)');return;}
-
-  const db=load();
-  let code='';
-  do{code=randCode()}while(db[code]);
-  db[code]={url:longUrl,createdAt:Date.now()};
-  save(db);
-
-  const shortUrl=`${BASE_DOMAIN}/S/${code}`;
-  const result=document.getElementById('result');
-  result.style.display='block';
-  result.innerHTML=`<b>Shortlink ของคุณ:</b><br><a href="${shortUrl}" target="_blank" rel="noopener">${shortUrl}</a><br><br><button id="copyBtn" type="button" style="margin-top:0">คัดลอกลิงก์</button>`;
-  document.getElementById('copyBtn').onclick=async event=>{
-    await navigator.clipboard.writeText(shortUrl);
-    event.currentTarget.textContent='คัดลอกแล้ว ✓';
-  };
-};
-</script>
+<script src="/shortlinks.js"></script>
 
 <script src="../local-auth-bridge.js"></script>
 <script type="module">
