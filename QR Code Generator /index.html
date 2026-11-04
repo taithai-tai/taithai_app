@@ -244,7 +244,6 @@
       max-width: 100%;
       max-height: 100%;
       display: none;
-      border-radius: 16px;
       background: white;
     }
     .placeholder {
@@ -335,7 +334,7 @@
             </div>
           </div>
         </div>
-        <p class="sub">วางข้อความ ลิงก์ เบอร์โทร หรือข้อมูลอะไรก็ได้ แล้วกดสร้าง QR code ได้ทันที พร้อมดาวน์โหลดเป็นไฟล์ภาพ PNG โดยไม่ต้องพึ่งตัวแปร <code>QRCode</code> จากไลบรารีภายนอก</p>
+        <p class="sub">วางข้อความ ลิงก์ เบอร์โทร หรือข้อมูลอะไรก็ได้ แล้วกดสร้าง QR code ได้ทันที ปรับความหนาแน่น รูปทรง และกรอบมุม แล้วดาวน์โหลดเป็น PNG</p>
 
         <label for="text">ข้อมูลที่ต้องการแปลง</label>
         <textarea id="text" placeholder="เช่น https://example.com หรือข้อความที่ต้องการ"></textarea>
@@ -353,11 +352,59 @@
           <div>
             <label>สี QR</label>
             <div class="color-wrap">
-              <input type="color" id="darkColor" value="#000000" aria-label="เลือกสี QR" />
+              <input type="color" id="darkColor" value="#000000" />
               <span id="darkValue">#000000</span>
             </div>
           </div>
         </div>
+
+        <div class="row">
+          <div>
+            <label>สีพื้นหลัง</label>
+            <div class="color-wrap">
+              <input type="color" id="lightColor" value="#ffffff" />
+              <span id="lightValue">#ffffff</span>
+            </div>
+          </div>
+          <div>
+            <label for="margin">ขอบรอบ QR</label>
+            <select id="margin">
+              <option value="4" selected>ปกติ · 4 ช่อง</option>
+              <option value="6">กว้าง · 6 ช่อง</option>
+              <option value="8">กว้างมาก · 8 ช่อง</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="density">ความหนาแน่นของข้อมูล</label>
+            <select id="density">
+              <option value="L" selected>ช่องน้อย · ช่องใหญ่</option>
+              <option value="M">สมดุล</option>
+              <option value="H">ทนต่อความเสียหาย · ช่องมาก</option>
+            </select>
+          </div>
+          <div>
+            <label for="dotStyle">รูปทรงช่องข้อมูล</label>
+            <select id="dotStyle">
+              <option value="square">สี่เหลี่ยม</option>
+              <option value="rounded">สี่เหลี่ยมมุมมน</option>
+              <option value="circle">วงกลมต่อกัน</option>
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label for="cornerStyle">กรอบมุมใหญ่ทั้ง 3 มุม</label>
+            <select id="cornerStyle">
+              <option value="square">สี่เหลี่ยม</option>
+              <option value="rounded">มุมโค้งมน</option>
+              <option value="circle">วงกลม</option>
+            </select>
+          </div>
+        </div>
+        <p class="hint">โหมดช่องน้อยใช้จำนวนช่องต่ำสุดที่พอดีกับข้อมูล ข้อความหรือลิงก์ยิ่งสั้น ช่องและกรอบมุมจะยิ่งใหญ่เมื่อเทียบกับภาพ กรอบมุมคงสัดส่วนมาตรฐานเพื่อให้สแกนได้ เมื่อใส่โลโก้จะใช้โหมดทนต่อความเสียหายโดยอัตโนมัติ</p>
 
         <div class="logo-upload">
           <label for="logoInput">โลโก้ตรงกลาง QR (ไม่บังคับ)</label>
@@ -375,33 +422,15 @@
           </div>
         </div>
 
-        <div class="row">
-          <div>
-            <label>สีพื้นหลัง</label>
-            <div class="color-wrap">
-              <input type="color" id="lightColor" value="#ffffff" aria-label="เลือกสีพื้นหลัง" />
-              <span id="lightValue">#ffffff</span>
-            </div>
-          </div>
-          <div>
-            <label for="margin">ขอบรอบ QR</label>
-            <select id="margin">
-              <option value="1">เล็ก</option>
-              <option value="2" selected>ปกติ</option>
-              <option value="4">กว้าง</option>
-            </select>
-          </div>
-        </div>
-
         <div class="actions">
           <button class="primary" id="generateBtn">สร้าง QR Code</button>
           <button class="secondary" id="downloadBtn">ดาวน์โหลด PNG</button>
-          <button class="secondary" id="copyBtn">คัดลอกลิงก์รูป</button>
+          <button class="secondary" id="copyBtn">คัดลอกรูป PNG</button>
           <button class="secondary" id="clearBtn">ล้างข้อมูล</button>
         </div>
 
         <div class="status" id="status" role="status" aria-live="polite"></div>
-        <p class="network-note">หมายเหตุ: เวอร์ชันนี้สร้าง QR ผ่านบริการสร้างรูป QR ออนไลน์โดยตรง จึงไม่เกิดปัญหา <code>QRCode is not defined</code> แต่ต้องมีอินเทอร์เน็ตขณะสร้างภาพ</p>
+        <p class="network-note">สร้างภาพในอุปกรณ์ของคุณ ข้อมูลไม่ถูกส่งไปบริการสร้าง QR ภายนอก ควรทดลองสแกนก่อนนำไปใช้งานจริง</p>
       </section>
 
       <section class="right">
@@ -409,6 +438,7 @@
           <img id="qrImage" alt="QR code preview" />
           <div class="placeholder" id="placeholder">ตัวอย่าง QR code<br>จะปรากฏตรงนี้</div>
         </div>
+        <p class="hint" id="lastUpdated"></p>
         <p class="hint">รองรับการสร้างจากข้อความทั่วไป, URL, เบอร์โทร, อีเมล หรือข้อมูลอื่น ๆ ที่อยู่ในรูปแบบตัวอักษร</p>
 
         <div class="footer-tools">
@@ -424,6 +454,8 @@
     </div>
   </div>
 
+  <script src="../release-info.js"></script>
+  <script src="./vendor/qrcode.js"></script>
   <script>
     const textEl = document.getElementById('text');
     const sizeEl = document.getElementById('size');
@@ -442,6 +474,7 @@
     const placeholder = document.getElementById('placeholder');
     const statusEl = document.getElementById('status');
     const testOutput = document.getElementById('testOutput');
+
     const logoInput = document.getElementById('logoInput');
     const logoThumb = document.getElementById('logoThumb');
     const logoPickerText = document.getElementById('logoPickerText');
@@ -450,36 +483,62 @@
     const logoSizeValue = document.getElementById('logoSizeValue');
     const removeLogoBtn = document.getElementById('removeLogoBtn');
 
-    let currentQrUrl = '';
-    let currentOutputUrl = '';
     let logoDataUrl = '';
+    let currentQrUrl = '';
+    let generation = 0;
 
     function syncColorLabels() {
       darkValueEl.textContent = darkColorEl.value.toUpperCase();
       lightValueEl.textContent = lightColorEl.value.toUpperCase();
     }
 
-    function encodeTextForApi(text) {
-      return encodeURIComponent(text);
-    }
-
-    function normalizeHexColor(hex) {
-      return String(hex || '').replace('#', '').trim();
-    }
-
     function makeSafeFilename(text) {
-      const raw = String(text || '').trim().slice(0, 30);
-      const cleaned = raw.replace(/[^a-zA-Z0-9ก-๙_-]/g, '_').replace(/_+/g, '_').replace(/^_+|_+$/g, '');
-      return cleaned || 'qr-code';
+      return String(text).trim().slice(0, 30).replace(/[^a-zA-Z0-9ก-๙_-]/g, '_') || 'qr-code';
     }
 
-    function buildQrUrl(text, size, darkColor, lightColor, margin) {
-      const finalSize = Number(size) || 320;
-      const finalMargin = Number(margin) || 2;
-      const encoded = encodeTextForApi(text);
-      const dark = normalizeHexColor(darkColor) || '000000';
-      const light = normalizeHexColor(lightColor) || 'ffffff';
-      return `https://api.qrserver.com/v1/create-qr-code/?size=${finalSize}x${finalSize}&margin=${finalMargin}&ecc=H&color=${dark}&bgcolor=${light}&data=${encoded}`;
+    const densityEl = document.getElementById('density');
+    const dotStyleEl = document.getElementById('dotStyle');
+    const cornerStyleEl = document.getElementById('cornerStyle');
+    let currentCanvas = null;
+    qrcode.stringToBytes = text => Array.from(new TextEncoder().encode(text));
+
+    function createMatrix(text, level) {
+      const qr = qrcode(0, level);
+      qr.addData(text);
+      qr.make();
+      return qr;
+    }
+
+    function renderQR(qr, size, margin, style, corner, dark, light) {
+      const count = qr.getModuleCount();
+      const canvas = document.createElement('canvas');
+      // Whole pixel modules keep square edges crisp and preserve the quiet zone.
+      const unit = Math.max(1, Math.floor(size / (count + margin * 2)));
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = light;
+      ctx.fillRect(0, 0, size, size);
+      const offset = (size - count * unit) / 2;
+      function shape(x, y, width, type, color) {
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        if (type === 'circle') ctx.arc(x + width / 2, y + width / 2, width / 2, 0, Math.PI * 2);
+        else if (type === 'rounded') ctx.roundRect(x, y, width, width, width * 0.22);
+        else ctx.rect(x, y, width, width);
+        ctx.fill();
+      }
+      for (let row = 0; row < count; row++) {
+        for (let col = 0; col < count; col++) {
+          if ((row < 7 && (col < 7 || col >= count - 7)) || (row >= count - 7 && col < 7)) continue;
+          if (qr.isDark(row, col)) shape(offset + col * unit, offset + row * unit, unit, style, dark);
+        }
+      }
+      for (const [col, row] of [[0, 0], [count - 7, 0], [0, count - 7]]) {
+        for (const [inset, width, color] of [[0, 7, dark], [1, 5, light], [2, 3, dark]]) {
+          shape(offset + (col + inset) * unit, offset + (row + inset) * unit, width * unit, corner, color);
+        }
+      }
+      return canvas;
     }
 
     function loadImage(src) {
@@ -495,12 +554,6 @@
       return new Promise((resolve, reject) => {
         canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('สร้างไฟล์ภาพไม่สำเร็จ')), 'image/png');
       });
-    }
-
-    function replaceOutputUrl(blob) {
-      if (currentOutputUrl) URL.revokeObjectURL(currentOutputUrl);
-      currentOutputUrl = URL.createObjectURL(blob);
-      qrImage.src = currentOutputUrl;
     }
 
     async function composeQrImage(qrBlob) {
@@ -551,8 +604,10 @@
     }
 
     async function generateQR() {
+      const request = ++generation;
       const text = textEl.value.trim();
       if (!text) {
+        currentCanvas = null;
         currentQrUrl = '';
         qrImage.removeAttribute('src');
         setPreviewVisible(false);
@@ -560,38 +615,50 @@
         return;
       }
 
-      currentQrUrl = buildQrUrl(
-        text,
-        sizeEl.value,
-        darkColorEl.value,
-        lightColorEl.value,
-        marginEl.value
-      );
-
-      setStatus('กำลังสร้าง QR code...', 'warn');
       try {
-        const response = await fetch(currentQrUrl, { mode: 'cors' });
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const outputBlob = await composeQrImage(await response.blob());
-        replaceOutputUrl(outputBlob);
+        const qr = createMatrix(text, logoDataUrl ? 'H' : densityEl.value);
+        const count = qr.getModuleCount();
+        if (count + Number(marginEl.value) * 2 > Number(sizeEl.value)) {
+          throw new Error('ข้อมูลมากเกินขนาดภาพ กรุณาเลือกภาพขนาดใหญ่ขึ้น');
+        }
+        const renderedCanvas = renderQR(qr, Number(sizeEl.value), Number(marginEl.value), dotStyleEl.value,
+          cornerStyleEl.value, darkColorEl.value, lightColorEl.value);
+        if (logoDataUrl) {
+          const blob = await composeQrImage(await canvasToBlob(renderedCanvas));
+          if (request !== generation) return;
+          const image = await loadImage(URL.createObjectURL(blob));
+          const imageUrl = image.src;
+          renderedCanvas.getContext('2d').drawImage(image, 0, 0);
+          URL.revokeObjectURL(imageUrl);
+        }
+        if (request !== generation) return;
+        currentCanvas = renderedCanvas;
+        currentQrUrl = currentCanvas.toDataURL('image/png');
+        qrImage.src = currentQrUrl;
         setPreviewVisible(true);
-        setStatus(logoDataUrl ? 'สร้าง QR code พร้อมโลโก้เรียบร้อยแล้ว' : 'สร้าง QR code เรียบร้อยแล้ว', 'ok');
+        setStatus(`สร้างแล้ว · ${count} × ${count} ช่อง · เปลี่ยนตัวเลือกเพื่อดูตัวอย่างทันที`, 'ok');
       } catch (error) {
-        console.error(error);
+        if (request !== generation) return;
+        currentCanvas = null;
+        currentQrUrl = '';
+        qrImage.removeAttribute('src');
         setPreviewVisible(false);
-        setStatus('ไม่สามารถโหลดภาพ QR code ได้ ตรวจสอบอินเทอร์เน็ตหรือบริการสร้าง QR อีกครั้ง', 'bad');
+        setStatus('สร้างไม่ได้: ข้อมูลอาจยาวเกินไป ลองย่อข้อความหรือเลือกภาพขนาดใหญ่ขึ้น', 'bad');
       }
     }
 
     async function downloadQR() {
-      if (!currentOutputUrl) {
+      if (!currentQrUrl) {
         setStatus('กรุณาสร้าง QR code ก่อนดาวน์โหลด', 'warn');
         return;
       }
 
       try {
         setStatus('กำลังดาวน์โหลด...', 'warn');
-        const response = await fetch(currentOutputUrl, { mode: 'cors' });
+        const response = await fetch(currentQrUrl, { mode: 'cors' });
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
         const blob = await response.blob();
         const blobUrl = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -602,44 +669,48 @@
         setStatus('ดาวน์โหลดไฟล์ PNG แล้ว', 'ok');
       } catch (error) {
         console.error(error);
-        setStatus('ดาวน์โหลดไม่สำเร็จ อาจเกิดจากข้อจำกัด CORS ของเบราว์เซอร์หรือเครือข่าย', 'bad');
+        setStatus('ดาวน์โหลดไม่สำเร็จ กรุณาลองอีกครั้ง', 'bad');
       }
     }
 
     async function copyQrLink() {
-      if (!currentQrUrl) {
-        setStatus('กรุณาสร้าง QR code ก่อนคัดลอกลิงก์รูป', 'warn');
+      if (!currentCanvas) {
+        setStatus('กรุณาสร้าง QR code ก่อนคัดลอกรูป', 'warn');
         return;
       }
       try {
-        if (logoDataUrl) {
-          setStatus('QR ที่ใส่โลโก้ไม่มีลิงก์รูปถาวร กรุณาใช้ปุ่มดาวน์โหลด PNG', 'warn');
-          return;
-        }
-        await navigator.clipboard.writeText(currentQrUrl);
-        setStatus('คัดลอกลิงก์รูป QR แล้ว', 'ok');
+        const blob = await new Promise(resolve => currentCanvas.toBlob(resolve, 'image/png'));
+        await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+        setStatus('คัดลอกรูป PNG แล้ว', 'ok');
       } catch (error) {
-        console.error(error);
-        setStatus('คัดลอกลิงก์ไม่สำเร็จ เบราว์เซอร์อาจไม่อนุญาต', 'bad');
+        setStatus('เบราว์เซอร์ไม่รองรับการคัดลอกรูป กรุณาใช้ดาวน์โหลด PNG', 'warn');
       }
     }
 
     function clearAll() {
+      generation++;
       textEl.value = '';
+      currentCanvas = null;
       currentQrUrl = '';
-      if (currentOutputUrl) URL.revokeObjectURL(currentOutputUrl);
-      currentOutputUrl = '';
       qrImage.removeAttribute('src');
       setPreviewVisible(false);
       setStatus('', '');
     }
 
+    function awaitImageBlob() {
+      const bytes = atob(currentQrUrl.split(',')[1]);
+      return new Blob([Uint8Array.from(bytes, char => char.charCodeAt(0))], { type: 'image/png' });
+    }
+
     function openImageInNewTab() {
-      if (!currentOutputUrl) {
+      if (!currentQrUrl) {
         setStatus('กรุณาสร้าง QR code ก่อนเปิดรูป', 'warn');
         return;
       }
-      window.open(currentOutputUrl || currentQrUrl, '_blank', 'noopener');
+      const blob = awaitImageBlob();
+      const url = URL.createObjectURL(blob);
+      window.open(url, '_blank', 'noopener');
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
     }
 
     function removeLogo() {
@@ -692,14 +763,13 @@
     }
 
     function runSelfTests() {
-      const results = [];
-      results.push(assert('encodeTextForApi เข้ารหัสช่องว่างได้', encodeTextForApi('hello world') === 'hello%20world'));
-      results.push(assert('normalizeHexColor ตัด # ออกได้', normalizeHexColor('#AABBCC') === 'AABBCC'));
-      results.push(assert('makeSafeFilename แปลงอักขระพิเศษได้', makeSafeFilename('https://x.com/a b?c=1') === 'https___x_com_a_b_c_1'));
-      const url = buildQrUrl('https://example.com', 320, '#000000', '#ffffff', 2);
-      results.push(assert('buildQrUrl สร้างโดเมนถูกต้อง', url.startsWith('https://api.qrserver.com/v1/create-qr-code/')));
-      results.push(assert('buildQrUrl มีขนาดถูกต้อง', url.includes('size=320x320')));
-      results.push(assert('buildQrUrl มีข้อมูลที่ encode แล้ว', url.includes('data=https%3A%2F%2Fexample.com')));
+      const compact = createMatrix('https://example.com', 'L');
+      const robust = createMatrix('https://example.com', 'H');
+      const results = [
+        assert('โหมดช่องน้อยมีจำนวนช่องไม่เกินโหมดทนต่อความเสียหาย', compact.getModuleCount() <= robust.getModuleCount()),
+        assert('รองรับข้อความไทย', createMatrix('สวัสดีประเทศไทย', 'L').getModuleCount() >= 21),
+        assert('กรอบมุมมาตรฐาน', compact.isDark(0, 0) && !compact.isDark(1, 1) && compact.isDark(3, 3))
+      ];
       testOutput.textContent = results.join('\n');
     }
 
@@ -718,6 +788,12 @@
       }
     });
 
+    for (const control of [sizeEl, marginEl, densityEl, dotStyleEl, cornerStyleEl, darkColorEl, lightColorEl]) {
+      control.addEventListener('change', () => { if (textEl.value.trim()) generateQR(); });
+    }
+    document.getElementById('lastUpdated').textContent = 'อัปเดตล่าสุด ' + new Intl.DateTimeFormat('th-TH', {
+      dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Bangkok'
+    }).format(new Date(window.TAITHAI_RELEASE.updatedAt)) + ' น. (เวลาไทย)';
     syncColorLabels();
     runSelfTests();
   </script>

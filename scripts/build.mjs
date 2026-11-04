@@ -1,4 +1,4 @@
-import { cp, mkdir, readdir, rm } from 'node:fs/promises';
+import { cp, mkdir, readdir, rm, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -29,6 +29,8 @@ for (const entry of entries) {
   if (excluded.has(entry.name) || entry.name.startsWith('.env')) continue;
   await cp(path.join(root, entry.name), path.join(output, entry.name), { recursive: true });
 }
+
+await writeFile(path.join(output, 'release-info.js'), `window.TAITHAI_RELEASE = ${JSON.stringify({ updatedAt: new Date().toISOString() })};\n`);
 
 const movieMemorySource = path.join(root, 'Movie Memory');
 const movieMemoryAssets = path.join(output, 'movie-memory-assets');

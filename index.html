@@ -1002,6 +1002,7 @@
     </div>
   </footer>
 
+  <script src="./release-info.js"></script>
   <script>
     const TEMP_CHAT_URL = "./temporary%20chat/";
     const QR_GENERATOR_URL = "./QR%20Code%20Generator%20/";
@@ -1040,7 +1041,7 @@
         heroTitle: `Welcome to<br><span class="hi">Taithai Apps</span>`,
         heroDesc: "A clean page featuring your real apps in one place for quick access.",
         totalAppsLabel: "apps",
-        updatedTodayLabel: "Updated today",
+        updatedTodayLabel: "Last updated",
         gridLabel: "Available apps",
 
         appName1: "Taithai Temporary Chat",
@@ -1107,7 +1108,7 @@
         heroTitle: `ยินดีต้อนรับสู่<br><span class="hi">Taithai Apps</span>`,
         heroDesc: "หน้าเว็บแบบเรียบง่ายที่รวมแอปจริงของคุณไว้ในที่เดียวเพื่อให้เข้าถึงได้รวดเร็ว",
         totalAppsLabel: "แอป",
-        updatedTodayLabel: "อัปเดตล่าสุดวันนี้",
+        updatedTodayLabel: "อัปเดตล่าสุด",
         gridLabel: "แอปที่ใช้งานได้",
 
         appName1: "Taithai Temporary Chat",
@@ -1187,7 +1188,10 @@
       document.getElementById("heroTitle").innerHTML = t.heroTitle;
       document.getElementById("heroDesc").textContent = t.heroDesc;
       document.getElementById("totalAppsLabel").textContent = t.totalAppsLabel;
-      document.getElementById("updatedTodayLabel").textContent = t.updatedTodayLabel;
+      document.getElementById("updatedTodayLabel").textContent = t.updatedTodayLabel + " · " +
+        new Intl.DateTimeFormat(currentLang === 'th' ? 'th-TH' : 'en-GB', {
+          dateStyle: 'long', timeStyle: 'short', timeZone: 'Asia/Bangkok'
+        }).format(new Date(window.TAITHAI_RELEASE.updatedAt)) + (currentLang === 'th' ? ' น. (เวลาไทย)' : ' (Bangkok)');
       document.getElementById("gridLabel").textContent = t.gridLabel;
 
       document.getElementById("appName1").textContent = t.appName1;

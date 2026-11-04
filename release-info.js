@@ -1,0 +1,1 @@
+window.TAITHAI_RELEASE = {"updatedAt": "2026-11-04T12:57:30.607977+00:00"};
