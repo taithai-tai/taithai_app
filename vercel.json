@@ -85,8 +85,8 @@
   ],
   "rewrites": [
     {
-      "source": "/S/:code",
-      "destination": "/api/shortlinks?code=:code"
+      "source": "/S/:code/",
+      "destination": "/api/shortlinks/?code=:code"
     }
   ]
 }
