@@ -218,3 +218,10 @@ form.addEventListener('submit', async (event) => {
     sendQuestion.disabled = false;
   }
 });
+
+document.querySelector('#xray-questions').addEventListener('click', (event) => {
+  const preset = event.target.closest('button[data-prompt]');
+  if (!preset) return;
+  question.value = preset.dataset.prompt;
+  question.focus();
+});

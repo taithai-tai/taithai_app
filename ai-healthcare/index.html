@@ -42,6 +42,15 @@
     <label class="toggle"><input id="public-consent" type="checkbox"> ฉันมีสิทธิ์เผยแพร่รูปนี้ รูปไม่มีข้อมูลผู้ป่วยหรือข้อมูลส่วนตัว และทุกคนสามารถดูและนำรูปไปใช้ซ้ำได้</label>
     <button type="button" id="gallery-login" hidden>เข้าสู่ระบบ Google เพื่อเผยแพร่รูป</button>
   </div>
+  <div>
+    <p id="xray-questions-title"><strong>คำถามแนะนำสำหรับภาพเอกซเรย์</strong> · กดเพื่อเติมคำถาม</p>
+    <div class="questions" id="xray-questions" role="group" aria-labelledby="xray-questions-title">
+      <button type="button" data-prompt="ภาพเอกซเรย์นี้เห็นความผิดปกติเด่นชัดไหม? สรุปก่อนแล้วอธิบายสิ่งที่เห็น">เห็นความผิดปกติไหม?</button>
+      <button type="button" data-prompt="ถ้าเห็นความผิดปกติในภาพเอกซเรย์นี้ ลักษณะเข้าได้กับภาวะอะไรที่สุด และมีหลักฐานจากภาพตรงไหน?">เข้าได้กับภาวะอะไร?</button>
+      <button type="button" data-prompt="ภาพเอกซเรย์นี้ควรสังเกตบริเวณไหนเป็นพิเศษ? บอกตำแหน่งและลักษณะที่เห็น">ควรสังเกตตรงไหน?</button>
+      <button type="button" data-prompt="ภาพเอกซเรย์นี้ชัดพอประเมินส่วนไหนบ้าง และมีข้อจำกัดตรงไหน?">ภาพชัดพอประเมินไหม?</button>
+    </div>
+  </div>
   <label for="question">คำถาม</label>
   <textarea id="question" maxlength="600" rows="3" required placeholder="เช่น ในรูปนี้มีป้ายเขียนว่าอะไร?"></textarea>
   <button type="submit" id="send-question">ส่งคำถามให้ AI</button>
