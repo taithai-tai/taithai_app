@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#d5e8f1">
+<title>See Beyond the Image CU | AI Healthcare Learning Lab</title>
+<link rel="stylesheet" href="./lab.css">
+<script type="module" src="./lab.js"></script>
+</head>
+<body>
+<header><a href="./">SEE BEYOND THE IMAGE <b>CU</b></a><span>AI HEALTHCARE LEARNING LAB</span></header>
+<main>
+<section class="hero">
+<p class="eyebrow">OPEN HOUSE · COMPUTER UNION</p>
+<h1>มองให้ลึกกว่า<span>ภาพทางการแพทย์</span></h1>
+<p>ลองสังเกตภาพสองช่วงเวลา เปิดตัวช่วยชี้จุด แล้วคุยกับ AI ว่าภาพบอกอะไรได้บ้าง</p>
+<a class="button" href="#lab">เริ่มทดลองเคส ↓</a>
+<div class="watermark" aria-hidden="true">✚</div>
+</section>
+<section id="lab" aria-labelledby="lab-title">
+<p class="eyebrow">01 / CASE CLINIC</p>
+<h2 id="lab-title">เทียบภาพก่อนและหลัง</h2>
+<p>เลือกเคส แล้วลองมองหาความเปลี่ยนแปลงก่อนเปิดจุดสังเกต</p>
+<div class="controls"><label for="case">เคสจำลอง</label><select id="case"></select><label class="toggle"><input type="checkbox" id="markers"> แสดงจุดสังเกต</label></div>
+<div id="images" class="images"></div>
+<p id="observation" class="notice" aria-live="polite"></p>
+</section>
+<section aria-labelledby="ai-title">
+<p class="eyebrow">02 / ASK THE AI</p>
+<h2 id="ai-title">ถาม AI จากเคสที่เลือก</h2>
+<p>เลือกคำถามเพื่อให้ AI อธิบายข้อมูลของเคสจำลอง ระบบส่งเฉพาะชื่อเคสและคำถามที่เลือก</p>
+<div class="questions" id="questions"></div>
+<div class="answer" id="answer" role="status" aria-live="polite">คำอธิบายจาก AI จะแสดงตรงนี้</div>
+</section>
+</main>
+<footer>SEE BEYOND THE IMAGE CU · ภาพประกอบและข้อมูลทั้งหมดเป็นเคสสมมติเพื่อการเรียนรู้ การประเมินผู้ป่วยจริงเป็นหน้าที่ของบุคลากรทางการแพทย์</footer>
+</body>
+</html>
