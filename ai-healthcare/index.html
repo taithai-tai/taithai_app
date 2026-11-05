@@ -34,15 +34,27 @@
 <div class="answer" id="answer" role="status" aria-live="polite">คำอธิบายจาก AI จะแสดงตรงนี้</div>
 <form id="ask-form" class="ask-form">
   <h3>ถามด้วยคำถามของคุณเอง</h3>
-  <p id="upload-help">แนบภาพตัวอย่างหรือภาพจำลองได้ 1 รูป (JPEG, PNG, WebP สูงสุด 10 MB) รูปและคำถามจะถูกส่งไปยัง 9arm Gateway เมื่อกดส่ง กรุณาใช้ภาพที่ไม่มีข้อมูลผู้ป่วยหรือข้อมูลส่วนตัว</p>
+  <p id="upload-help">แนบภาพตัวอย่างหรือภาพจำลองได้ 1 รูป (JPEG, PNG, WebP สูงสุด 10 MB) รูปที่ส่งใหม่จะปรากฏในแกลเลอรีสาธารณะ ส่วนรูปและคำถามจะถูกส่งไปยัง 9arm Gateway เพื่อให้ AI ตอบ กรุณาใช้ภาพที่ไม่มีข้อมูลผู้ป่วยหรือข้อมูลส่วนตัว</p>
   <label for="upload">แนบรูป (ไม่บังคับ)</label>
   <input id="upload" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="upload-help">
   <div id="preview" hidden><img id="preview-image" alt="ตัวอย่างรูปที่แนบ"><button id="remove-image" type="button">เอารูปออก</button></div>
+  <div id="publish-options" hidden>
+    <label class="toggle"><input id="public-consent" type="checkbox"> ฉันมีสิทธิ์เผยแพร่รูปนี้ รูปไม่มีข้อมูลผู้ป่วยหรือข้อมูลส่วนตัว และทุกคนสามารถดูและนำรูปไปใช้ซ้ำได้</label>
+    <button type="button" id="gallery-login" hidden>เข้าสู่ระบบ Google เพื่อเผยแพร่รูป</button>
+  </div>
   <label for="question">คำถาม</label>
   <textarea id="question" maxlength="600" rows="3" required placeholder="เช่น ในรูปนี้มีป้ายเขียนว่าอะไร?"></textarea>
   <button type="submit" id="send-question">ส่งคำถามให้ AI</button>
   <p id="custom-answer" class="answer" role="status" aria-live="polite">คำตอบจะแสดงตรงนี้</p>
 </form>
+</section>
+<section aria-labelledby="history-title">
+<p class="eyebrow">03 / HISTORY</p>
+<h2 id="history-title">แกลเลอรีรูปสาธารณะ</h2>
+<p>ทุกคนเปิดดูและใช้รูปจากแกลเลอรีซ้ำได้ คำถามและคำตอบจะแสดงในหน้าที่ถาม</p>
+<p id="history-status" role="status" aria-live="polite"></p>
+<div id="history-list"></div>
+<button id="history-more" type="button" hidden>ดูรูปเก่ากว่านี้</button>
 </section>
 </main>
 <footer>SEE BEYOND THE IMAGE CU · ภาพประกอบและข้อมูลทั้งหมดเป็นเคสสมมติเพื่อการเรียนรู้ การประเมินผู้ป่วยจริงเป็นหน้าที่ของบุคลากรทางการแพทย์</footer>

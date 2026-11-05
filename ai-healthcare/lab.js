@@ -1,5 +1,7 @@
 import { cases, questions } from './cases.js';
 
+const galleryModule = import('./gallery.js').catch(() => null);
+
 const select = document.querySelector('#case');
 const markers = document.querySelector('#markers');
 const images = document.querySelector('#images');
@@ -79,10 +81,35 @@ const question = document.querySelector('#question');
 const sendQuestion = document.querySelector('#send-question');
 const customAnswer = document.querySelector('#custom-answer');
 let previewUrl;
+let reusedImage;
+let publishedImageId;
+let refreshGallery;
+const publishOptions = document.querySelector('#publish-options');
+const publicConsent = document.querySelector('#public-consent');
+
+galleryModule.then((gallery) => {
+  if (!gallery) {
+    document.querySelector('#history-status').textContent = 'แกลเลอรีไม่พร้อมใช้งาน กรุณาลองรีเฟรชหน้า';
+    return;
+  }
+  refreshGallery = gallery.mountGallery((image) => {
+    clearPreview();
+    upload.value = '';
+    reusedImage = image;
+    previewImage.src = image;
+    preview.hidden = false;
+    customAnswer.textContent = 'เลือกรูปจากแกลเลอรีแล้ว';
+    question.focus();
+  });
+});
 
 function clearPreview() {
   if (previewUrl) URL.revokeObjectURL(previewUrl);
   previewUrl = undefined;
+  reusedImage = undefined;
+  publishedImageId = undefined;
+  publicConsent.checked = false;
+  publishOptions.hidden = true;
   previewImage.removeAttribute('src');
   preview.hidden = true;
 }
@@ -99,7 +126,8 @@ upload.addEventListener('change', () => {
   previewUrl = URL.createObjectURL(file);
   previewImage.src = previewUrl;
   preview.hidden = false;
-  customAnswer.textContent = 'แนบรูปแล้ว พร้อมส่งเมื่อคุณกดปุ่ม';
+  publishOptions.hidden = false;
+  customAnswer.textContent = 'ตรวจรูปและยืนยันการเผยแพร่ก่อนส่ง';
 });
 document.querySelector('#remove-image').addEventListener('click', () => {
   upload.value = '';
@@ -123,7 +151,11 @@ async function encodeImage(file) {
     context.fillStyle = '#fff';
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL('image/jpeg', 0.83);
+    for (const quality of [0.83, 0.65, 0.42, 0.23]) {
+      const image = canvas.toDataURL('image/jpeg', quality);
+      if (image.length <= 400000) return image;
+    }
+    throw new Error('เปิดรูปได้ แต่รูปมีรายละเอียดมากเกินไป กรุณาลดขนาดรูปก่อนส่ง');
   } finally {
     bitmap.close();
   }
@@ -141,10 +173,36 @@ form.addEventListener('submit', async (event) => {
 
   const file = upload.files[0];
   const caseId = select.value;
+  const previousImage = reusedImage;
+  if (file && !publicConsent.checked) {
+    customAnswer.textContent = 'ยืนยันการเผยแพร่รูปสาธารณะก่อนส่ง';
+    publicConsent.focus();
+    return;
+  }
   sendQuestion.disabled = true;
   customAnswer.textContent = 'กำลังขอคำตอบจาก AI…';
   try {
-    const image = file ? await encodeImage(file) : undefined;
+    const image = file ? await encodeImage(file) : previousImage;
+    if (file && !publishedImageId) {
+      const gallery = await galleryModule;
+      if (!gallery) {
+        customAnswer.textContent = 'แกลเลอรีไม่พร้อมใช้งาน กรุณาลองใหม่';
+        return;
+      }
+      if (!gallery.galleryUser()) {
+        customAnswer.textContent = 'เข้าสู่ระบบ Google ก่อนเผยแพร่รูปใหม่';
+        return;
+      }
+      const imageId = crypto.randomUUID();
+      try {
+        await gallery.publishImage(image, imageId);
+      } catch {
+        customAnswer.textContent = 'บันทึกรูปลงแกลเลอรีไม่สำเร็จ กรุณาลองใหม่';
+        return;
+      }
+      if (upload.files[0] === file) publishedImageId = imageId;
+      void refreshGallery?.();
+    }
     const response = await fetch('/api/healthcare-learning/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

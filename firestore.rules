@@ -54,6 +54,18 @@ service cloud.firestore {
       allow delete: if resource.data.uploadedAt is timestamp
                     && resource.data.uploadedAt < request.time - duration.value(7, 'd');
     }
+    match /healthcarePublicImages/{imageId} {
+      allow get: if true;
+      allow list: if request.query.limit <= 12;
+      allow create: if request.auth != null
+                    && request.resource.data.keys().hasOnly(['owner', 'image', 'createdAt'])
+                    && request.resource.data.owner == request.auth.uid
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.image is string
+                    && request.resource.data.image.size() <= 400000
+                    && request.resource.data.image.matches('data:image/jpeg;base64,/9j/[A-Za-z0-9+/]*={0,2}');
+      allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
+    }
     match /{document=**} {
       allow read, write: if false;
     }
