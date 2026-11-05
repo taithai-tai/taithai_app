@@ -70,3 +70,93 @@ select.addEventListener('change', () => {
 });
 markers.addEventListener('change', renderCase);
 renderCase();
+
+const form = document.querySelector('#ask-form');
+const upload = document.querySelector('#upload');
+const preview = document.querySelector('#preview');
+const previewImage = document.querySelector('#preview-image');
+const question = document.querySelector('#question');
+const sendQuestion = document.querySelector('#send-question');
+const customAnswer = document.querySelector('#custom-answer');
+let previewUrl;
+
+function clearPreview() {
+  if (previewUrl) URL.revokeObjectURL(previewUrl);
+  previewUrl = undefined;
+  previewImage.removeAttribute('src');
+  preview.hidden = true;
+}
+
+upload.addEventListener('change', () => {
+  clearPreview();
+  const file = upload.files[0];
+  if (!file) return;
+  if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type) || file.size > 10 * 1024 * 1024) {
+    upload.value = '';
+    customAnswer.textContent = 'เลือกไฟล์ JPEG, PNG หรือ WebP ขนาดไม่เกิน 10 MB';
+    return;
+  }
+  previewUrl = URL.createObjectURL(file);
+  previewImage.src = previewUrl;
+  preview.hidden = false;
+  customAnswer.textContent = 'แนบรูปแล้ว พร้อมส่งเมื่อคุณกดปุ่ม';
+});
+document.querySelector('#remove-image').addEventListener('click', () => {
+  upload.value = '';
+  clearPreview();
+  customAnswer.textContent = 'เอารูปออกแล้ว';
+});
+
+async function encodeImage(file) {
+  let bitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    throw new Error('เปิดรูปนี้ไม่ได้ ลองเปลี่ยนไฟล์แล้วส่งอีกครั้ง');
+  }
+  try {
+    const scale = Math.min(1, 1280 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+    canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+    const context = canvas.getContext('2d', { alpha: false });
+    context.fillStyle = '#fff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    return canvas.toDataURL('image/jpeg', 0.83);
+  } finally {
+    bitmap.close();
+  }
+}
+
+form.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  if (sendQuestion.disabled) return;
+  const prompt = question.value.trim();
+  if (!prompt) {
+    customAnswer.textContent = 'พิมพ์คำถามก่อนส่ง';
+    question.focus();
+    return;
+  }
+
+  const file = upload.files[0];
+  const caseId = select.value;
+  sendQuestion.disabled = true;
+  customAnswer.textContent = 'กำลังขอคำตอบจาก AI…';
+  try {
+    const image = file ? await encodeImage(file) : undefined;
+    const response = await fetch('/api/healthcare-learning/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caseId, prompt, image }),
+    });
+    const result = await response.json();
+    customAnswer.textContent = response.ok ? result.answer : result.error;
+  } catch (error) {
+    customAnswer.textContent = error.message.startsWith('เปิดรูป')
+      ? error.message
+      : 'เชื่อมต่อ AI ไม่สำเร็จ ลองใหม่อีกครั้ง';
+  } finally {
+    sendQuestion.disabled = false;
+  }
+});
