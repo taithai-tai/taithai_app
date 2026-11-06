@@ -84,12 +84,11 @@ let previewUrl;
 let reusedImage;
 let publishedImageId;
 let refreshGallery;
-const publishOptions = document.querySelector('#publish-options');
-const publicConsent = document.querySelector('#public-consent');
+let accountVersion = 0;
 
 galleryModule.then((gallery) => {
   if (!gallery) {
-    document.querySelector('#history-status').textContent = 'แกลเลอรีไม่พร้อมใช้งาน กรุณาลองรีเฟรชหน้า';
+    document.querySelector('#history-status').textContent = 'ประวัติส่วนตัวไม่พร้อมใช้งาน กรุณาลองรีเฟรชหน้า';
     return;
   }
   refreshGallery = gallery.mountGallery((image) => {
@@ -98,8 +97,14 @@ galleryModule.then((gallery) => {
     reusedImage = image;
     previewImage.src = image;
     preview.hidden = false;
-    customAnswer.textContent = 'เลือกรูปจากแกลเลอรีแล้ว';
+    customAnswer.textContent = 'เลือกรูปจากประวัติส่วนตัวแล้ว';
     question.focus();
+  }, () => {
+    accountVersion++;
+    clearPreview();
+    upload.value = '';
+    question.value = '';
+    customAnswer.textContent = 'คำตอบจะแสดงตรงนี้';
   });
 });
 
@@ -108,8 +113,6 @@ function clearPreview() {
   previewUrl = undefined;
   reusedImage = undefined;
   publishedImageId = undefined;
-  publicConsent.checked = false;
-  publishOptions.hidden = true;
   previewImage.removeAttribute('src');
   preview.hidden = true;
 }
@@ -126,8 +129,7 @@ upload.addEventListener('change', () => {
   previewUrl = URL.createObjectURL(file);
   previewImage.src = previewUrl;
   preview.hidden = false;
-  publishOptions.hidden = false;
-  customAnswer.textContent = 'ตรวจรูปและยืนยันการเผยแพร่ก่อนส่ง';
+  customAnswer.textContent = 'แนบรูปแล้ว พร้อมส่งเมื่อคุณลงชื่อเข้าใช้';
 });
 document.querySelector('#remove-image').addEventListener('click', () => {
   upload.value = '';
@@ -174,32 +176,32 @@ form.addEventListener('submit', async (event) => {
   const file = upload.files[0];
   const caseId = select.value;
   const previousImage = reusedImage;
-  if (file && !publicConsent.checked) {
-    customAnswer.textContent = 'ยืนยันการเผยแพร่รูปสาธารณะก่อนส่ง';
-    publicConsent.focus();
-    return;
-  }
+  const version = accountVersion;
   sendQuestion.disabled = true;
   customAnswer.textContent = 'กำลังขอคำตอบจาก AI…';
   try {
     const image = file ? await encodeImage(file) : previousImage;
+    if (version !== accountVersion) return;
     if (file && !publishedImageId) {
       const gallery = await galleryModule;
+      if (version !== accountVersion) return;
       if (!gallery) {
-        customAnswer.textContent = 'แกลเลอรีไม่พร้อมใช้งาน กรุณาลองใหม่';
+        customAnswer.textContent = 'ประวัติส่วนตัวไม่พร้อมใช้งาน กรุณาลองใหม่';
         return;
       }
       if (!gallery.galleryUser()) {
-        customAnswer.textContent = 'เข้าสู่ระบบ Google ก่อนเผยแพร่รูปใหม่';
+        customAnswer.textContent = 'เข้าสู่ระบบ Google ที่ส่วนประวัติรูปของฉันก่อนส่งรูปใหม่';
         return;
       }
       const imageId = crypto.randomUUID();
       try {
-        await gallery.publishImage(image, imageId);
+        await gallery.saveImage(image, imageId);
       } catch {
-        customAnswer.textContent = 'บันทึกรูปลงแกลเลอรีไม่สำเร็จ กรุณาลองใหม่';
+        if (version !== accountVersion) return;
+        customAnswer.textContent = 'บันทึกรูปลงประวัติส่วนตัวไม่สำเร็จ กรุณาลองใหม่';
         return;
       }
+      if (version !== accountVersion) return;
       if (upload.files[0] === file) publishedImageId = imageId;
       void refreshGallery?.();
     }
@@ -209,8 +211,9 @@ form.addEventListener('submit', async (event) => {
       body: JSON.stringify({ caseId, prompt, image }),
     });
     const result = await response.json();
-    customAnswer.textContent = response.ok ? result.answer : result.error;
+    if (version === accountVersion) customAnswer.textContent = response.ok ? result.answer : result.error;
   } catch (error) {
+    if (version !== accountVersion) return;
     customAnswer.textContent = error.message.startsWith('เปิดรูป')
       ? error.message
       : 'เชื่อมต่อ AI ไม่สำเร็จ ลองใหม่อีกครั้ง';

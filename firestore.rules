@@ -55,8 +55,9 @@ service cloud.firestore {
                     && resource.data.uploadedAt < request.time - duration.value(7, 'd');
     }
     match /healthcarePublicImages/{imageId} {
-      allow get: if true;
-      allow list: if request.query.limit <= 12;
+      allow get: if request.auth != null && resource.data.owner == request.auth.uid;
+      allow list: if request.auth != null && resource.data.owner == request.auth.uid
+                  && request.query.limit <= 12;
       allow create: if request.auth != null
                     && request.resource.data.keys().hasOnly(['owner', 'image', 'createdAt'])
                     && request.resource.data.owner == request.auth.uid
