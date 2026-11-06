@@ -10,6 +10,7 @@ const list = document.querySelector('#history-list');
 const status = document.querySelector('#history-status');
 const more = document.querySelector('#history-more');
 const login = document.querySelector('#gallery-login');
+const loginStatus = document.querySelector('#login-status');
 const logoutButton = document.querySelector('#gallery-logout');
 const account = document.querySelector('#gallery-account');
 const pageSize = 6;
@@ -88,14 +89,14 @@ export function mountGallery(onReuse, onAccountChange) {
     try {
       await loginWithGoogle();
     } catch {
-      status.textContent = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่';
+      loginStatus.textContent = 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองใหม่';
     }
   };
   logoutButton.onclick = async () => {
     try {
       await logout();
     } catch {
-      status.textContent = 'ออกจากระบบไม่สำเร็จ กรุณาลองใหม่';
+      loginStatus.textContent = 'ออกจากระบบไม่สำเร็จ กรุณาลองใหม่';
     }
   };
   let activeUid = null;
@@ -107,6 +108,7 @@ export function mountGallery(onReuse, onAccountChange) {
     cursor = undefined;
     list.replaceChildren();
     more.hidden = true;
+    loginStatus.textContent = '';
     login.hidden = Boolean(user);
     logoutButton.hidden = !user;
     account.textContent = user?.email ?? '';

@@ -86,9 +86,18 @@ let publishedImageId;
 let refreshGallery;
 let accountVersion = 0;
 
+document.querySelector('#gallery-login').addEventListener('click', () => {
+  document.querySelector('#login-status').textContent = 'กำลังเตรียมเข้าสู่ระบบ Google…';
+});
+
 galleryModule.then((gallery) => {
   if (!gallery) {
-    document.querySelector('#history-status').textContent = 'ประวัติส่วนตัวไม่พร้อมใช้งาน กรุณาลองรีเฟรชหน้า';
+    const status = document.querySelector('#login-status');
+    status.textContent = 'ระบบเข้าสู่บัญชียังโหลดไม่สำเร็จ กรุณาลองรีเฟรชหน้า';
+    document.querySelector('#gallery-login').addEventListener('click', () => {
+      status.textContent = 'ระบบเข้าสู่บัญชียังโหลดไม่สำเร็จ กรุณาลองรีเฟรชหน้า';
+      status.scrollIntoView({ block: 'center' });
+    });
     return;
   }
   refreshGallery = gallery.mountGallery((image) => {

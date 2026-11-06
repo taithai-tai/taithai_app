@@ -9,7 +9,15 @@
 <script type="module" src="./lab.js"></script>
 </head>
 <body>
-<header><a href="./">SEE BEYOND THE IMAGE <b>CU</b></a><span>AI HEALTHCARE LEARNING LAB</span></header>
+<header class="site-header">
+<a href="./">SEE BEYOND THE IMAGE <b>CU</b></a>
+<div class="account-controls" aria-label="บัญชี Google">
+  <button id="gallery-login" type="button">เข้าสู่ระบบ Google</button>
+  <span id="gallery-account"></span>
+  <small id="login-status" role="status"></small>
+  <button id="gallery-logout" type="button" hidden>ออกจากระบบ</button>
+</div>
+</header>
 <main>
 <section class="hero">
 <p class="eyebrow">OPEN HOUSE · COMPUTER UNION</p>
@@ -38,7 +46,7 @@
   <label for="upload">แนบรูป (ไม่บังคับ)</label>
   <input id="upload" type="file" accept="image/jpeg,image/png,image/webp" aria-describedby="upload-help">
   <div id="preview" hidden><img id="preview-image" alt="ตัวอย่างรูปที่แนบ"><button id="remove-image" type="button">เอารูปออก</button></div>
-  <p><a href="#history-title">เข้าสู่ระบบเพื่อส่งรูปและเปิดประวัติของฉัน</a></p>
+  <p><a href="#history-title">เปิดประวัติรูปของฉัน</a></p>
   <div>
     <p id="xray-questions-title"><strong>คำถามแนะนำสำหรับภาพเอกซเรย์</strong> · กดเพื่อเติมคำถาม</p>
     <div class="questions" id="xray-questions" role="group" aria-labelledby="xray-questions-title">
@@ -58,11 +66,6 @@
 <p class="eyebrow">03 / HISTORY</p>
 <h2 id="history-title">ประวัติรูปของฉัน</h2>
 <p>เข้าสู่ระบบด้วยบัญชี Google เดิมเพื่อดูและใช้รูปของคุณซ้ำได้จากทุกเครื่อง คำถามและคำตอบจะแสดงในหน้าที่ถาม</p>
-<div class="history-actions">
-<button id="gallery-login" type="button" hidden>เข้าสู่ระบบ Google</button>
-<button id="gallery-logout" type="button" hidden>ออกจากระบบ</button>
-<span id="gallery-account"></span>
-</div>
 <p id="history-status" role="status" aria-live="polite"></p>
 <div id="history-list"></div>
 <button id="history-more" type="button" hidden>ดูรูปเก่ากว่านี้</button>
