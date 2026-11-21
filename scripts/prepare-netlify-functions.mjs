@@ -33,7 +33,10 @@ export async function prepareNetlifyFunctions() {
       target: 'node22',
       // Firebase's bundled CommonJS wrapper reaches this package through an
       // esbuild helper. Keep a static import so NFT traces its runtime files.
-      banner: { js: "import '@google-cloud/firestore';" },
+      // Bundled CommonJS dependencies still use native Node built-ins. Supply
+      // require explicitly; Lambda disables require(ESM), so pure JS email HTML
+      // parsing stays bundled rather than relying on that experimental path.
+      banner: { js: "import '@google-cloud/firestore'; import { createRequire as netlifyCreateRequire } from 'node:module'; const require = netlifyCreateRequire(import.meta.url);" },
       external: ['@google-cloud/firestore', 'imapflow', 'nodemailer', 'mailparser', 'stripe'],
       logLevel: 'warning',
     });

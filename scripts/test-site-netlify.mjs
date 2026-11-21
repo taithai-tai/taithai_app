@@ -11,6 +11,19 @@ import { createACEFunction } from '../netlify/functions/ace.js';
 import shortlinks from '../api/shortlinks.js';
 
 const origin='https://trial-example.netlify.app';
+test('mail HTML can load HTTPS images inside a self frame without relaxing account or admin pages',async()=>{
+  const netlify=await readFile(new URL('../netlify.toml',import.meta.url),'utf8');
+  const mailBlock=netlify.split('for = "/mail/*"')[1].split('[[headers]]')[0];
+  assert.match(mailBlock,/frame-src 'self' https:\/\/accounts/);assert.match(mailBlock,/img-src 'self' data: https:;/);
+  assert.match(mailBlock,/object-src 'none'/);assert.match(mailBlock,/base-uri 'self'/);
+  const vercel=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
+  for(const source of ['/membership/:path*','/admin/:path*']){
+    const policy=vercel.headers.find(h=>h.source===source).headers.find(h=>h.key==='Content-Security-Policy').value;
+    assert.doesNotMatch(policy,/img-src 'self' data: https:;/);
+  }
+  const policy=vercel.headers.find(h=>h.source==='/mail/:path*').headers.find(h=>h.key==='Content-Security-Policy').value;
+  assert.match(policy,/frame-src 'self'/);assert.match(policy,/img-src 'self' data: https:;/);
+});
 function policy(patch={}) {
   const settings=normalizeAppSettings(null);
   for(const [id,visibility]of Object.entries(patch))settings.apps[id].visibility=visibility;

@@ -349,7 +349,7 @@ test('unavailable inventory blocks new creation while preserving existing owner 
   assert.equal((await f.store.get(`siteMailboxes/${user.uid}`)).status, 'active'); assert.deepEqual(f.calls.sending, []); assert.equal(f.calls.create.length, 1);
 });
 
-test('inbox outputs contain bounded inert metadata/plain text and no HTML, raw MIME, attachments or credentials', async () => {
+test('inbox outputs contain bounded metadata and sanitized detail HTML without raw MIME or credentials', async () => {
   const f = fixture(); await f.service.create(user, { localPart: 'sunny' });
   f.raw.html = '<script>bad</script>'; f.raw.source = Buffer.from('raw source'); f.raw.text = 't'.repeat(MAIL_LIMITS.maxReadText + 10);
   f.raw.attachments[0].content = Buffer.from('secret attachment');
@@ -357,7 +357,8 @@ test('inbox outputs contain bounded inert metadata/plain text and no HTML, raw M
   assert.equal(list.messages[0].subject.includes('<'), false); assert.equal(list.messages[0].from.includes('<'), false);
   const result = await f.service.message(user, { id: list.messages[0].id });
   assert.equal(result.message.text.length, MAIL_LIMITS.maxReadText); assert.equal(result.message.truncated, true);
-  for (const key of ['html', 'source', 'headers', 'credential', 'password']) assert.equal(key in result.message, false);
+  assert.equal(result.message.html,''); assert.equal(result.message.hasHtml,false);
+  for (const key of ['source', 'headers', 'credential', 'password']) assert.equal(key in result.message, false);
   assert.equal('content' in result.message.attachments[0], false);
   assert.equal(f.calls.messages[0].credentials.address, 'sunny@taithai.app');
 });
@@ -568,7 +569,7 @@ test('real SMTP adapter fixes sender/envelope and prevents URL/file access with 
   await assert.rejects(smtp.send(credentials, { from: 'victim@example.com' }), code('INVALID_SENDER'));
 });
 
-test('HTML-only mail becomes inert text without scripts, image elements or tracking-pixel URLs', async () => {
+test('HTML-only mail has sanitized HTML alongside inert plain text without scripts', async () => {
   const { simpleParser } = await import('mailparser');
   class HtmlImap {
     constructor() { this.mailbox = { uidValidity: 123n }; }
@@ -581,7 +582,7 @@ test('HTML-only mail becomes inert text without scripts, image elements or track
   const { imap } = createMailProtocolAdapters({ ImapFlow: HtmlImap, simpleParser, createTransport() {} });
   const result = await imap.message({ address: 'sunny@taithai.app', password: 'fixture' }, decodeMailMessageId(messageId()));
   assert.match(result.text, /Hello friend/); assert.equal(result.text.includes('<script>'), false); assert.equal(result.text.includes('attack()'), false);
-  assert.equal('html' in result, false); assert.equal(result.text.includes('<img'), false); assert.equal(result.text.includes('no-network.invalid'), false);
+  assert.equal(result.hasHtml,true); assert.match(result.html, /<img/); assert.doesNotMatch(result.html, /script|attack\(\)/); assert.equal(result.text.includes('<img'), false); assert.equal(result.text.includes('no-network.invalid'), false);
 });
 
 test('HTML verification preserves case-sensitive OTPs and exact actionable URLs while dropping tracking/hidden content', () => {

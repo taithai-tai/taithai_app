@@ -4,6 +4,7 @@ import { assertMembershipOperationActive, combineMembershipOperationSignal } fro
 import { createHostingerAliasAdapter, createMailboxAliasService } from './site-mail-aliases.js';
 import { createMailboxReceivingNameService } from './site-mail-receiving-names.js';
 import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata, mailRecipientCandidates } from './site-mail-recipients.js';
+import { MAIL_HTML_LIMITS, sanitizeMailHtml, normalizeMailCid, mailHtmlCidReferences, mailInlineImageData } from './site-mail-html.js';
 
 // Server-only. No provider calls happen at import time. Never expose these
 // collections to a client SDK; credentials are encrypted before every write.
@@ -235,6 +236,9 @@ function safeMessage(raw, folder, uidValidity, body = false, mailboxId, recipien
     }
     result.text = bounded(raw.text, MAIL_LIMITS.maxReadText);
     result.truncated = raw.truncated === true || String(raw.text || '').length > MAIL_LIMITS.maxReadText;
+    const html = sanitizeMailHtml(raw.html || '');
+    result.html = html.html; result.hasHtml = html.hasHtml;
+    result.htmlTruncated = raw.htmlTruncated === true || html.htmlTruncated;
     result.attachments = (raw.attachments || []).slice(0, 50).map(item => ({ name: metadata(item.name || item.filename, 200),
       type: metadata(item.type || item.contentType, 100), size: Math.max(0, Number(item.size) || 0) }));
   }
@@ -920,11 +924,24 @@ export function createMailProtocolAdapters({ ImapFlow, createTransport, simplePa
       return await operation(client, folders);
     } finally { lock.release(); }
   }
-  function bodyParts(node, out = { texts: [], attachments: [], count: 0 }, depth = 0) {
+  function bodyParts(node, out = { texts: [], images: [], attachments: [], count: 0 }, depth = 0) {
     if (!node || depth > 12 || ++out.count > 100) return out;
     const type = String(node.type || '').toLowerCase();
-    if (type.startsWith('text/') && node.disposition !== 'attachment' && node.part) out.texts.push(node);
-    else if (node.disposition === 'attachment' || node.dispositionParameters?.filename || node.parameters?.name) {
+    const disposition = String(node.disposition || '').toLowerCase();
+    // ImapFlow omits `part` on a single-part root, including ordinary HTML
+    // newsletters. Its download(uid, '1') maps that case to TEXT/HEADER.
+    // Never pass an absent part to download: that requests the full raw MIME.
+    if (depth === 0 && !node.part && !node.childNodes?.length && disposition !== 'attachment' && ['text/plain','text/html'].includes(type)) node = { ...node, part: '1' };
+    if (type === 'message/rfc822') {
+      out.attachments.push({ name: node.dispositionParameters?.filename || node.parameters?.name || 'message.eml', type, size: node.size || 0 });
+      return out;
+    }
+    if (type.startsWith('text/') && disposition !== 'attachment' && node.part) out.texts.push(node);
+    else if (['image/png','image/jpeg','image/gif','image/webp'].includes(type) && node.part && normalizeMailCid(node.id)) {
+      out.images.push(node);
+      if (node.dispositionParameters?.filename || node.parameters?.name || disposition === 'attachment') out.attachments.push({ name: node.dispositionParameters?.filename || node.parameters?.name || 'image', type, size: node.size || 0 });
+      return out;
+    } else if (disposition === 'attachment' || node.dispositionParameters?.filename || node.parameters?.name) {
       out.attachments.push({ name: node.dispositionParameters?.filename || node.parameters?.name || 'attachment', type, size: node.size || 0 });
       return out;
     }
@@ -959,19 +976,26 @@ export function createMailProtocolAdapters({ ImapFlow, createTransport, simplePa
       const parts = bodyParts(raw.bodyStructure);
       const plain = parts.texts.find(item => String(item.type).toLowerCase() === 'text/plain');
       const html = parts.texts.find(item => String(item.type).toLowerCase() === 'text/html');
-      raw.text = ''; raw.attachments = parts.attachments;
+      raw.text = ''; raw.html = ''; raw.attachments = parts.attachments;
       let remaining = MAIL_LIMITS.maxBodyBytes;
-      async function textPart(body) {
-        const maximum = remaining;
+      async function partBytes(body, maximum, decodeText) {
+        if (maximum < 1) return null;
+        const downloaded = await client.download(ref.uid, body.part, { uid: true, decodeText, maxBytes: maximum });
+        if (!downloaded.content) return null;
+        const chunks = []; let bytes = 0;
+        for await (const chunk of downloaded.content) { bytes += chunk.length; remaining -= chunk.length; if (bytes > maximum) { raw.truncated = true; fail('MESSAGE_TOO_LARGE', 413); } chunks.push(chunk); }
+        raw.truncated ||= bytes >= maximum;
+        return { buffer: Buffer.concat(chunks), meta: downloaded.meta || {}, possiblyTruncated: bytes >= maximum };
+      }
+      async function textPart(body, cap = remaining) {
+        const maximum = Math.min(remaining, cap);
         // ImapFlow documents and implements UTF-8 text conversion by default;
         // request it explicitly. Its meta.charset becomes utf-8 after decoding.
-        const downloaded = await client.download(ref.uid, body.part, { uid: true, decodeText: true, maxBytes: maximum });
-        if (downloaded.content) {
-          const chunks = []; let bytes = 0;
-          for await (const chunk of downloaded.content) { bytes += chunk.length; if (bytes > maximum) fail('MESSAGE_TOO_LARGE', 413); chunks.push(chunk); }
-          remaining -= bytes; raw.truncated ||= bytes >= maximum;
-          const buffer = Buffer.concat(chunks); const type = String(body.type).toLowerCase();
-          const charset = String(downloaded.meta?.charset || 'utf-8').toLowerCase().trim();
+        const downloaded = await partBytes(body, maximum, true);
+        if (downloaded) {
+          const buffer = downloaded.buffer; const type = String(body.type).toLowerCase();
+          if (type === 'text/html' && downloaded.possiblyTruncated) raw.htmlTruncated = true;
+          const charset = String(downloaded.meta.charset || 'utf-8').toLowerCase().trim();
           let text;
           if (/^(?:utf-?8|(?:us-?)?ascii)$/.test(charset)) text = buffer.toString('utf8');
           else {
@@ -983,12 +1007,31 @@ export function createMailProtocolAdapters({ ImapFlow, createTransport, simplePa
               skipHtmlToText: true, skipImageLinks: true, skipTextToHtml: true, skipTextLinks: true });
             text = type === 'text/html' ? parsed.html || '' : parsed.text || '';
           }
-          return type === 'text/html' ? readableMailHtml(text) : text;
+          return text;
         }
         return '';
       }
-      if (plain || html) raw.text = await textPart(plain || html);
-      if (plain && html && !raw.text.trim() && remaining > 0) raw.text = await textPart(html);
+      if (plain) raw.text = await textPart(plain, html ? 64 * 1024 : remaining);
+      if (html && remaining > 0) {
+        try { raw.html = await textPart(html); }
+        catch (error) { if (!raw.text.trim()) throw error; raw.htmlTruncated = true; }
+      } else if (html) raw.htmlTruncated = true;
+      if (!raw.text.trim() && raw.html) raw.text = readableMailHtml(raw.html);
+      if (raw.html) {
+        const inlineImages = new Map();
+        for (const id of mailHtmlCidReferences(raw.html)) {
+          const matches = parts.images.filter(item => normalizeMailCid(item.id) === id);
+          if (matches.length !== 1 || remaining < 1) { raw.htmlTruncated = true; continue; }
+          const body = matches[0], maximum = Math.min(remaining, MAIL_HTML_LIMITS.inlineImageBytes);
+          try {
+            const downloaded = await partBytes(body, maximum, false);
+            const source = downloaded && !downloaded.possiblyTruncated ? mailInlineImageData(downloaded.buffer, String(body.type).toLowerCase()) : '';
+            if (source) inlineImages.set(id, source); else raw.htmlTruncated = true;
+          } catch { raw.htmlTruncated = true; }
+        }
+        const formatted = sanitizeMailHtml(raw.html, { inlineImages });
+        raw.html = formatted.html; raw.hasHtml = formatted.hasHtml; raw.htmlTruncated ||= formatted.htmlTruncated;
+      }
       return raw;
     })),
     read: (credentials, ref) => withClient(credentials, client => selected(client, ref, async () => {

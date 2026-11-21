@@ -1,4 +1,4 @@
-/* Membership and plain-text mail belong to Taithai's soft dashboard system. */
+/* Membership and mail belong to Taithai's soft dashboard system. */
 .membership-plan { max-width: 880px; }
 .membership-plan > p + p { margin-top: 16px; }
 .membership-plan form { margin-top: 24px; max-width: 560px; }
@@ -110,3 +110,19 @@
 .mail-receiving-row .membership-address { font-size: 1rem; }
 .mail-receiving-row > .button { justify-self: start; }
 .mail-receiving-source { justify-self: start; padding: 4px 10px; border-radius: 999px; background: var(--surface); color: var(--text-mid); font-size: .8125rem; }
+
+
+/* Email content remains isolated from dashboard layout and controls. */
+.mail-inbox-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.mail-message-list .mail-inbox-heading h2 { margin: 0; }
+.mail-inbox-refresh { flex: 0 0 auto; min-height: 44px; gap: 8px; padding-inline: 14px; }
+.mail-refresh-icon { display: inline-block; font-size: 1.25rem; line-height: 1; }
+.mail-inbox-refresh.is-refreshing .mail-refresh-icon { animation: mail-refresh-turn 900ms linear infinite; }
+.mail-view-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+.mail-view-controls .button { min-height: 40px; padding-inline: 14px; }
+.mail-view-controls [aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb,var(--accent) 25%,transparent); }
+.mail-html-frame { display: block; width: 100%; height: 640px; min-height: 480px; max-height: 1200px; resize: vertical; overflow: auto; margin-block: 16px; border: 1px solid var(--border); border-radius: 16px; background: #fff; color-scheme: light; }
+@keyframes mail-refresh-turn { to { transform: rotate(360deg); } }
+@media(max-width:760px) { .mail-html-frame { height: 560px; min-height: 480px; } }
+@media(prefers-reduced-motion:reduce) { .mail-inbox-refresh.is-refreshing .mail-refresh-icon { animation: none; } }
+html[data-motion="reduce"] .mail-inbox-refresh.is-refreshing .mail-refresh-icon { animation: none; }
