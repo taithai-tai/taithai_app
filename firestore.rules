@@ -114,6 +114,38 @@ service cloud.firestore {
              && siteText(data.publicReply, 0, 6000)
              && data.createdAt is timestamp && data.updatedAt is timestamp;
     }
+    function siteAppMode(data) {
+      return data is map && data.keys().hasAll(['visibility']) && data.keys().hasOnly(['visibility'])
+             && data.visibility in ['public', 'unlisted', 'private'];
+    }
+    function siteAppVisibilityShape(data) {
+      return data.keys().hasAll(['schemaVersion', 'revision', 'apps', 'updatedAt', 'updatedBy'])
+             && data.keys().hasOnly(['schemaVersion', 'revision', 'apps', 'updatedAt', 'updatedBy'])
+             && data.schemaVersion == 1
+             && data.revision is int && data.revision >= 1 && data.revision < 9007199254740991
+             && data.updatedAt == request.time && data.updatedBy == 'owner'
+             && data.apps is map
+             && data.apps.keys().hasAll(['temporary-chat', 'qr-generator', 'qr-reader', 'shortlinks',
+                  'bu-degree-plan', 'movie-memory', 'public-drive', 'chordly', 'ace', 'private-drive'])
+             && data.apps.keys().hasOnly(['temporary-chat', 'qr-generator', 'qr-reader', 'shortlinks',
+                  'bu-degree-plan', 'movie-memory', 'public-drive', 'chordly', 'ace', 'private-drive'])
+             && siteAppMode(data.apps['temporary-chat']) && siteAppMode(data.apps['qr-generator'])
+             && siteAppMode(data.apps['qr-reader']) && siteAppMode(data.apps['shortlinks'])
+             && siteAppMode(data.apps['bu-degree-plan']) && siteAppMode(data.apps['movie-memory'])
+             && siteAppMode(data.apps['public-drive']) && siteAppMode(data.apps['chordly'])
+             && siteAppMode(data.apps['ace']) && siteAppMode(data.apps['private-drive'])
+             && data.apps['private-drive'].visibility == 'private';
+    }
+    match /siteConfig/{configId} {
+      // The visibility policy is public metadata, not an authorization credential.
+      allow get: if configId == 'appVisibility';
+      allow list, delete: if false;
+      allow create: if configId == 'appVisibility' && siteAdmin()
+                    && siteAppVisibilityShape(request.resource.data) && request.resource.data.revision == 1;
+      allow update: if configId == 'appVisibility' && siteAdmin()
+                    && siteAppVisibilityShape(request.resource.data)
+                    && request.resource.data.revision == resource.data.revision + 1;
+    }
     match /sitePrivateConfig/{configId} {
       allow get: if siteAdmin() && configId == 'privateDrive';
       allow list, create, update, delete: if false;

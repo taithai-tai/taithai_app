@@ -1,4 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getOwnerSessionManager } from '/assets/site-owner-session.js';
 import { 
   getAuth, 
   signInWithPopup,
@@ -6,7 +7,8 @@ import {
   browserLocalPersistence,
   setPersistence,
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  onIdTokenChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
 const firebaseConfig = {
@@ -90,6 +92,12 @@ function ensureStorage() {
 const authReady = setPersistence(auth, browserLocalPersistence).catch((error) => {
   console.error("Could not enable persistent Firebase session:", error);
 });
+const ownerAppSession = getOwnerSessionManager(auth);
+export const refreshOwnerAppSession = user => ownerAppSession.refresh(user);
+authReady.then(() => onIdTokenChanged(auth, user => {
+  // A failed background refresh is retried by the restricted app's access page.
+  void ownerAppSession.refresh(user).catch(() => {});
+}));
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({
@@ -141,6 +149,7 @@ export async function loginWithGoogle() {
 
 export async function logout() {
   try {
+    await ownerAppSession.clear();
     await signOut(auth);
   } catch (error) {
     console.error("Logout error:", error);

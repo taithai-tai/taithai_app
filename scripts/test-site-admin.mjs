@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { normalizeAppSettings } from '../assets/site-app-catalog.js';
 import { isSiteOwner, filterUsageEvents, aggregateUsageEvents, activityCsv, validateReportChanges, summarizeUsageActors, initAdminPage } from '../assets/site-admin.js';
 
 const owner = () => ({ uid: 'owner', email: 'taithai5002@gmail.com', emailVerified: true });
@@ -81,8 +82,8 @@ function createDOM() {
 }
 const flush = () => new Promise(resolve => setImmediate(resolve));
 async function setup(user, overrides = {}) {
-  const dom = createDOM(); let notify; let dataLoads = 0; const calls = { events: [], reports: [], writes: [] };
-  const data = { async listEvents(args) { calls.events.push(args); return { items: [], nextCursor: null }; }, async listReports(args) { calls.reports.push(args); return { items: [], nextCursor: null }; }, async updateReport(id, changes) { calls.writes.push({ id, changes }); return { id, ...changes }; }, ...overrides.data };
+  const dom = createDOM(); let notify; let dataLoads = 0; const calls = { events: [], reports: [], writes: [], appReads: [], appWrites: [] };
+  const data = { async getAppVisibilitySettings() { calls.appReads.push(true); return normalizeAppSettings(null); }, async updateAppVisibilitySettings(input) { calls.appWrites.push(input); return { ...normalizeAppSettings(null), exists: true, revision: input.expectedRevision + 1, apps: input.apps }; }, async listEvents(args) { calls.events.push(args); return { items: [], nextCursor: null }; }, async listReports(args) { calls.reports.push(args); return { items: [], nextCursor: null }; }, async updateReport(id, changes) { calls.writes.push({ id, changes }); return { id, ...changes }; }, ...overrides.data };
   const auth = { subscribeAuth(fn) { notify = fn; fn(user); return () => {}; }, async loginWithGoogle() { notify(owner()); return owner(); }, async logout() { notify(null); }, ...overrides.auth };
   const controller = await initAdminPage({ ...dom, loadAuth: async () => auth, loadData: async () => { dataLoads++; return data; }, now: () => new Date('2026-11-21T05:00:00Z') });
   await flush();
@@ -220,4 +221,95 @@ test('overview account-summary actions open activity filtered to the exact accou
   await app.find(item => item.tagName === 'button' && item.textContent === 'View activity').fire('click');
   assert.equal(app.document.getElementById('adminActorFilter').value, 'anon-session'); assert.equal(app.document.getElementById('adminTab-activity').attributes['aria-selected'], 'true');
   assert.match(app.root.textContent, /Showing 1–1 \/ 1 rows/); app.controller.destroy();
+});
+
+async function openApps(app) { await app.document.getElementById('adminTab-apps').fire('click'); await flush(); }
+async function appMode(app, id, visibility) { const input = app.document.getElementById(`adminAppVisibility-${id}`); input.value = visibility; await input.fire('change'); }
+const appSettings = (revision, changes = {}) => ({ ...normalizeAppSettings(null), exists: revision > 0, revision, apps: { ...normalizeAppSettings(null).apps, ...changes } });
+
+test('app settings load only for the owner Apps tab; drafts require an explicit save', async () => {
+  const app = await setup(owner()); assert.equal(app.calls.appReads.length, 0);
+  await openApps(app); assert.equal(app.calls.appReads.length, 1);
+  assert.equal(app.document.getElementById('adminUsageControls').hidden, true);
+  assert.equal(app.document.getElementById('adminAppVisibility-private-drive').disabled, true);
+  assert.equal(app.document.getElementById('adminAppsSave').disabled, true);
+  await appMode(app, 'movie-memory', 'private');
+  assert.equal(app.calls.appWrites.length, 0); assert.equal(app.document.getElementById('adminAppsSave').disabled, false);
+  assert.match(app.root.textContent, /Anyone with a direct link can still open it/);
+  assert.match(app.root.textContent, /Only the signed-in website owner can open it for testing/);
+  assert.equal(app.document.activeElement.id, 'adminAppVisibility-movie-memory');
+  await app.document.getElementById('adminAppsForm').fire('submit');
+  assert.equal(app.calls.appWrites.length, 1); assert.equal(app.calls.appWrites[0].expectedRevision, 0);
+  assert.equal(app.calls.appWrites[0].apps['movie-memory'].visibility, 'private');
+  assert.equal(app.calls.appWrites[0].apps['private-drive'].visibility, 'private');
+  assert.equal(app.document.getElementById('adminAppsMessage').textContent, 'App visibility saved');
+  assert.equal(app.document.getElementById('adminAppsSave').disabled, true);
+  app.controller.destroy();
+});
+
+test('discard restores all app modes without writing and rejects a locked app change', async () => {
+  const app = await setup(owner()); await openApps(app);
+  await appMode(app, 'movie-memory', 'unlisted'); await appMode(app, 'private-drive', 'public');
+  await app.document.getElementById('adminAppsCancel').fire('click');
+  assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'public');
+  assert.equal(app.document.getElementById('adminAppVisibility-private-drive').value, 'private');
+  assert.equal(app.calls.appWrites.length, 0); app.controller.destroy();
+});
+
+test('a save failure preserves the visibility draft and never reports success', async () => {
+  const app = await setup(owner(), { data: { async updateAppVisibilitySettings() { throw new Error('offline'); } } }); await openApps(app);
+  await appMode(app, 'movie-memory', 'unlisted'); await app.document.getElementById('adminAppsForm').fire('submit');
+  assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'unlisted');
+  assert.equal(app.document.getElementById('adminAppsSave').disabled, false);
+  assert.match(app.root.textContent, /Could not save. Your changes are still here/);
+  assert.doesNotMatch(app.root.textContent, /App visibility saved/); app.controller.destroy();
+});
+
+test('concurrent edits block overwrite until an explicit saved-version reload', async () => {
+  let reads = 0;
+  const app = await setup(owner(), { data: { async getAppVisibilitySettings() { return ++reads === 1 ? appSettings(1) : appSettings(2, { 'movie-memory': { visibility: 'unlisted' } }); }, async updateAppVisibilitySettings() { throw Object.assign(new Error('changed'), { code: 'site/conflict' }); } } }); await openApps(app);
+  await appMode(app, 'movie-memory', 'private'); await app.document.getElementById('adminAppsForm').fire('submit');
+  assert.match(app.root.textContent, /changed in another window/); assert.equal(app.document.getElementById('adminAppsSave').disabled, true);
+  assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'private');
+  app.window.confirm = () => false; await app.document.getElementById('adminAppsReload').fire('click'); assert.equal(reads, 1);
+  app.window.confirm = () => true; await app.document.getElementById('adminAppsReload').fire('click');
+  assert.equal(reads, 2); assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'unlisted');
+  assert.doesNotMatch(app.root.textContent, /changed in another window/); app.controller.destroy();
+});
+
+test('uncertain app saves require checking the stored value before retrying', async () => {
+  let reads = 0;
+  const app = await setup(owner(), { data: { async getAppVisibilitySettings() { return ++reads === 1 ? appSettings(0) : appSettings(1, { 'movie-memory': { visibility: 'private' } }); }, async updateAppVisibilitySettings() { throw Object.assign(new Error('unknown'), { code: 'site/timeout-uncertain', deliveryUnknown: true }); } } }); await openApps(app);
+  await appMode(app, 'movie-memory', 'private'); await app.document.getElementById('adminAppsForm').fire('submit');
+  assert.match(app.root.textContent, /has not confirmed this save/);
+  assert.equal(app.document.getElementById('adminAppsSave').disabled, true);
+  await app.document.getElementById('adminAppsVerify').fire('click');
+  assert.equal(app.document.getElementById('adminAppsMessage').textContent, 'App visibility saved');
+  assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'private');
+  assert.equal(app.document.getElementById('adminAppsVerify'), null); app.controller.destroy();
+});
+
+test('late app-setting loads and saves cannot surface after switching away from the owner', async () => {
+  let releaseRead;
+  const app = await setup(owner(), { data: { getAppVisibilitySettings: () => new Promise(resolve => { releaseRead = resolve; }) } });
+  await openApps(app); app.notify(null); releaseRead(appSettings(3, { ace: { visibility: 'private' } })); await flush();
+  assert.equal(app.document.getElementById('adminAppsForm'), null); assert.equal(app.document.getElementById('adminTab-apps'), null);
+  app.controller.destroy();
+  let releaseSave;
+  const next = await setup(owner(), { data: { updateAppVisibilitySettings: input => new Promise(resolve => { releaseSave = () => resolve(appSettings(1, input.apps)); }) } });
+  await openApps(next); await appMode(next, 'movie-memory', 'private');
+  const pending = next.document.getElementById('adminAppsForm').fire('submit'); await flush(); next.notify(null); releaseSave(); await pending;
+  assert.equal(next.document.getElementById('adminAppsForm'), null); assert.doesNotMatch(next.root.textContent, /App visibility saved/);
+  next.notify(owner()); await flush(); assert.ok(next.document.getElementById('adminAppsForm')); assert.equal(next.document.getElementById('adminAppsSave').disabled, true);
+  next.controller.destroy();
+});
+
+test('unsaved app settings trigger the normal leave warning and prevent accidental sign-out', async () => {
+  const app = await setup(owner()); await openApps(app); await appMode(app, 'movie-memory', 'unlisted');
+  const leaving = new Event('beforeunload', { cancelable: true }); app.window.dispatchEvent(leaving); assert.equal(leaving.defaultPrevented, true);
+  app.window.confirm = () => false;
+  await app.find(item => item.tagName === 'button' && item.textContent === 'Sign out').fire('click');
+  assert.ok(app.document.getElementById('adminAppsForm')); assert.equal(app.calls.appWrites.length, 0);
+  app.language('th'); assert.equal(app.document.getElementById('adminTab-apps').textContent, 'จัดการแอป');
+  assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'unlisted'); app.controller.destroy();
 });

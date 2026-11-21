@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createSiteDataClient, isSiteAdmin } from '../assets/site-data.js';
+import { normalizeAppSettings } from '../assets/site-app-catalog.js';
 
 const goodReport = { app: 'site', type: 'bug', subject: 'A useful subject', description: 'A concrete description of what happened.' };
 const user = { uid: 'user-1234567890', email: 'user@example.com', displayName: 'Example User', emailVerified: true };
@@ -10,7 +11,7 @@ const snap = (docId, data, exists = true) => ({ id: docId, data: () => data, exi
 function setup(options = {}) {
   const auth = { currentUser: options.user === undefined ? user : options.user };
   if (options.authStateReady) auth.authStateReady = () => options.authStateReady(auth);
-  const writes = [], batches = [], queries = [], transactionWrites = [];
+  const writes = [], batches = [], queries = [], transactionWrites = [], serverReads = [];
   let sequence = 0, loads = 0;
   const data = new Map();
   const sdk = {
@@ -33,6 +34,7 @@ function setup(options = {}) {
       return { docs: options.rows || [] };
     },
     async getDoc(ref) { return options.snapshot || snap(ref.id, data.get(ref.id), data.has(ref.id)); },
+    async getDocFromServer(ref) { serverReads.push(ref); if (options.serverRead) return options.serverRead(ref); return options.snapshot || snap(ref.id, data.get(ref.id), data.has(ref.id)); },
     async runTransaction(_db, callback) {
       const staged = [];
       const result = await callback({
@@ -57,12 +59,70 @@ function setup(options = {}) {
     getSessionStorage: () => { throw new Error('Storage blocked'); },
     timeoutMs: options.timeoutMs || 100
   });
-  return { client, auth, writes, batches, queries, transactionWrites, get loads() { return loads; }, data };
+  return { client, auth, writes, batches, queries, transactionWrites, serverReads, get loads() { return loads; }, data };
 }
 
 async function rejectsCode(promise, code) {
   await assert.rejects(promise, error => error.code === code);
 }
+
+const visibilityOwner = { uid: 'owner-1234567890', email: 'taithai5002@gmail.com', emailVerified: true };
+const visibilityConfig = (patch = {}) => ({ schemaVersion: 1, revision: 2, apps: normalizeAppSettings(null).apps, updatedAt: timestamp, updatedBy: 'owner', ...patch });
+
+test('public visibility read is a fresh exact-document read and missing configuration retains existing defaults', async () => {
+  const ctx = setup({ user: null });
+  const initial = await ctx.client.getAppVisibilitySettings();
+  assert.equal(initial.exists, false);
+  assert.equal(initial.apps['movie-memory'].visibility, 'public');
+  assert.equal(initial.apps['private-drive'].visibility, 'private');
+  assert.deepEqual(ctx.serverReads, [{ collection: 'siteConfig', id: 'appVisibility' }]);
+  const stored = setup({ snapshot: snap('appVisibility', visibilityConfig()) });
+  assert.equal((await stored.client.getAppVisibilitySettings()).updatedAt, '2026-11-21T01:00:00.000Z');
+  const offline = setup({ serverRead: async () => { throw Object.assign(new Error('Offline'), { code: 'unavailable' }); } });
+  await assert.rejects(offline.client.getAppVisibilitySettings(), error => error.code === 'unavailable');
+});
+
+test('corrupt visibility configuration is not silently treated as a public default', async () => {
+  for (const value of [{}, visibilityConfig({ schemaVersion: 2 }), visibilityConfig({ apps: { ace: { visibility: 'public' } } })]) {
+    const ctx = setup({ snapshot: snap('appVisibility', value) });
+    await rejectsCode(ctx.client.getAppVisibilitySettings(), 'site/invalid-config');
+    ctx.auth.currentUser = visibilityOwner;
+    await rejectsCode(ctx.client.updateAppVisibilitySettings({ apps: normalizeAppSettings(null).apps, expectedRevision: 0 }), 'site/invalid-config');
+    assert.equal(ctx.transactionWrites.length, 0);
+  }
+});
+
+test('only verified owner can update visibility and Private Drive cannot be made public', async () => {
+  for (const currentUser of [null, user, { ...visibilityOwner, emailVerified: false }]) {
+    const ctx = setup({ user: currentUser });
+    await rejectsCode(ctx.client.updateAppVisibilitySettings({ apps: normalizeAppSettings(null).apps, expectedRevision: 0 }), 'site/permission-denied');
+    assert.equal(ctx.transactionWrites.length, 0);
+  }
+  const ctx = setup({ user: visibilityOwner });
+  const apps = normalizeAppSettings(null).apps; apps['private-drive'].visibility = 'public';
+  for (const input of [{ apps, expectedRevision: 0 }, { apps: {}, expectedRevision: 0 }, { apps: normalizeAppSettings(null).apps, expectedRevision: -1 }, { apps: normalizeAppSettings(null).apps, expectedRevision: 1.5 }, { apps: normalizeAppSettings(null).apps, expectedRevision: 0, ownerUid: 'spoof' }]) await rejectsCode(ctx.client.updateAppVisibilitySettings(input), 'site/invalid-input');
+  assert.equal(ctx.loads, 0);
+});
+
+test('owner visibility save creates a complete configuration and compares revisions before writes', async () => {
+  const ctx = setup({ user: visibilityOwner });
+  const apps = normalizeAppSettings(null).apps;
+  apps['movie-memory'].visibility = 'unlisted'; apps.ace.visibility = 'private';
+  const save = ctx.client.updateAppVisibilitySettings({ apps, expectedRevision: 0 });
+  apps.ace.visibility = 'public';
+  const result = await save;
+  assert.equal(result.revision, 1); assert.equal(result.apps.ace.visibility, 'private');
+  const [{ kind, ref, payload }] = ctx.transactionWrites;
+  assert.equal(kind, 'set'); assert.deepEqual(ref, { collection: 'siteConfig', id: 'appVisibility' });
+  assert.equal(payload.schemaVersion, 1); assert.equal(payload.revision, 1);
+  assert.equal(payload.apps['movie-memory'].visibility, 'unlisted'); assert.equal(payload.updatedAt, 'SERVER_TIME'); assert.equal(payload.updatedBy, 'owner');
+  assert.equal(JSON.stringify(payload).includes(visibilityOwner.email), false);
+  const stale = setup({ user: visibilityOwner, snapshot: snap('appVisibility', visibilityConfig()) });
+  await rejectsCode(stale.client.updateAppVisibilitySettings({ apps: normalizeAppSettings(null).apps, expectedRevision: 1 }), 'site/conflict');
+  assert.equal(stale.transactionWrites.length, 0);
+  const updated = await stale.client.updateAppVisibilitySettings({ apps: normalizeAppSettings(null).apps, expectedRevision: 2 });
+  assert.equal(updated.revision, 3);
+});
 
 test('report payload validates and derives ownership from current Firebase auth', async () => {
   const ctx = setup();

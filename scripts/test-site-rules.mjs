@@ -6,6 +6,7 @@ import test, { before, after, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createRequire } from 'node:module';
+import { normalizeAppSettings } from '../assets/site-app-catalog.js';
 
 const require = createRequire('/tmp/taithai-rules-test/package.json');
 const { initializeTestEnvironment, assertSucceeds, assertFails } = require('@firebase/rules-unit-testing');
@@ -64,6 +65,48 @@ before(async () => {
 });
 beforeEach(async () => environment.clearFirestore());
 after(async () => environment?.cleanup());
+
+function visibilityConfig(overrides = {}) {
+  return { schemaVersion: 1, revision: 1, apps: normalizeAppSettings(null).apps, updatedAt: serverTimestamp(), updatedBy: 'owner', ...overrides };
+}
+
+test('only the visibility metadata document is publicly readable, never the rest of the site config collection', async () => {
+  await seed('siteConfig', 'appVisibility', visibilityConfig({ updatedAt: oldTime }));
+  await seed('siteConfig', 'otherConfig', { private: 'not public' });
+  for (const db of [guest, alice, owner]) {
+    await assertSucceeds(getDoc(doc(db, 'siteConfig', 'appVisibility')));
+    await assertFails(getDoc(doc(db, 'siteConfig', 'otherConfig')));
+    await assertFails(getDocs(query(collection(db, 'siteConfig'), limit(1))));
+  }
+});
+
+test('verified owner can create and revise a complete app policy; other identities cannot change availability', async () => {
+  for (const db of [guest, alice, bob, unverified, impostor]) await assertFails(setDoc(doc(db, 'siteConfig', 'appVisibility'), visibilityConfig()));
+  const initial = visibilityConfig();
+  initial.apps['movie-memory'].visibility = 'unlisted'; initial.apps.ace.visibility = 'private';
+  await assertSucceeds(setDoc(doc(owner, 'siteConfig', 'appVisibility'), initial));
+  const second = visibilityConfig({ revision: 2 }); second.apps.chordly.visibility = 'private';
+  await assertSucceeds(setDoc(doc(owner, 'siteConfig', 'appVisibility'), second));
+  assert.equal((await getDoc(doc(guest, 'siteConfig', 'appVisibility'))).data().apps.chordly.visibility, 'private');
+  for (const db of [guest, alice, owner]) await assertFails(deleteDoc(doc(db, 'siteConfig', 'appVisibility')));
+});
+
+test('visibility policy rejects missing apps, unknown fields, public Private Drive and invalid revision/timestamps', async () => {
+  const missing = visibilityConfig(); delete missing.apps.ace;
+  const extra = visibilityConfig(); extra.apps.unknown = { visibility: 'public' };
+  const extraEntry = visibilityConfig(); extraEntry.apps.ace.beta = true;
+  const exposedDrive = visibilityConfig(); exposedDrive.apps['private-drive'].visibility = 'public';
+  const invalidMode = visibilityConfig(); invalidMode.apps.ace.visibility = 'enabled';
+  const bad = [missing, extra, extraEntry, exposedDrive, invalidMode,
+    visibilityConfig({ extra: 'bad' }), visibilityConfig({ revision: 0 }), visibilityConfig({ revision: 2 }),
+    visibilityConfig({ revision: 1.5 }), visibilityConfig({ schemaVersion: 2 }), visibilityConfig({ updatedAt: oldTime }), visibilityConfig({ updatedBy: 'attacker' })];
+  for (const payload of bad) await assertFails(setDoc(doc(owner, 'siteConfig', 'appVisibility'), payload));
+  await assertSucceeds(setDoc(doc(owner, 'siteConfig', 'appVisibility'), visibilityConfig()));
+  await assertFails(setDoc(doc(owner, 'siteConfig', 'appVisibility'), visibilityConfig()));
+  await assertFails(setDoc(doc(owner, 'siteConfig', 'appVisibility'), visibilityConfig({ revision: 3 })));
+  for (const db of [guest, alice, unverified, impostor]) await assertFails(updateDoc(doc(db, 'siteConfig', 'appVisibility'), { revision: 2, updatedAt: serverTimestamp() }));
+  await assertFails(setDoc(doc(owner, 'siteConfig', 'anotherPolicy'), visibilityConfig()));
+});
 
 test('authenticated users can create bounded reports only under their own identity', async () => {
   await assertSucceeds(setDoc(doc(alice, 'siteReports', reportId), report()));

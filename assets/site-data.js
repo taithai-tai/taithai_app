@@ -1,4 +1,5 @@
 /* Firebase-backed support and consent-gated telemetry. The calling UI must obtain consent before telemetry writes. */
+import { APP_VISIBILITY_DOCUMENT, normalizeAppSettings, validAppVisibilityMap } from './site-app-catalog.js';
 const APP_SDK = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
 const FIRESTORE_SDK = 'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js';
 const DATABASE = 'ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb';
@@ -127,6 +128,44 @@ export function createSiteDataClient({ loadDependencies, now = () => new Date(),
   }
 
   return Object.freeze({
+    async getAppVisibilitySettings() {
+      return operation(async () => {
+        const { sdk, db } = await deps();
+        // Visibility changes must not fall back to Firestore's offline document cache.
+        const read = sdk.getDocFromServer || sdk.getDoc;
+        const snapshot = await read(sdk.doc(db, APP_VISIBILITY_DOCUMENT.collection, APP_VISIBILITY_DOCUMENT.id));
+        const settings = normalizeAppSettings(snapshot.exists() ? snapshot.data() : null);
+        if (!settings.valid) throw fail('site/invalid-config', 'App visibility settings are not valid. Access remains closed until the configuration is repaired.');
+        return settings;
+      });
+    },
+
+    async updateAppVisibilitySettings(input) {
+      fields(input, ['apps', 'expectedRevision'], 'app visibility update');
+      if (!Number.isSafeInteger(input.expectedRevision) || input.expectedRevision < 0 || !validAppVisibilityMap(input.apps)) {
+        throw fail('site/invalid-input', 'Provide the full app visibility map and its current revision');
+      }
+      // Copy before awaiting authentication so a caller cannot mutate the validated request while it is pending.
+      const apps = Object.fromEntries(Object.entries(input.apps).map(([appId, entry]) => [appId, { visibility: entry.visibility }]));
+      const expectedRevision = input.expectedRevision;
+      return operation(async () => {
+        const { sdk, db, auth } = await deps();
+        if (!isSiteAdmin(auth.currentUser)) throw fail('site/permission-denied', 'Only the verified site owner can change app visibility');
+        const ownerUid = auth.currentUser.uid;
+        const configRef = sdk.doc(db, APP_VISIBILITY_DOCUMENT.collection, APP_VISIBILITY_DOCUMENT.id);
+        return sdk.runTransaction(db, async transaction => {
+          const snapshot = await transaction.get(configRef);
+          if (!isSiteAdmin(auth.currentUser) || auth.currentUser.uid !== ownerUid) throw fail('site/permission-denied', 'The signed-in owner account changed');
+          const current = normalizeAppSettings(snapshot.exists() ? snapshot.data() : null);
+          if (!current.valid) throw fail('site/invalid-config', 'The current visibility configuration is not valid');
+          if (current.revision !== expectedRevision) throw fail('site/conflict', 'App settings changed in another session. Reload them before saving.');
+          const payload = { schemaVersion: 1, revision: current.revision + 1, apps, updatedAt: sdk.serverTimestamp(), updatedBy: 'owner' };
+          transaction.set(configRef, payload);
+          return { ...normalizeAppSettings({ ...payload, updatedAt: now() }), exists: true };
+        });
+      }, true);
+    },
+
     async getPrivateDriveConfig() {
       return operation(async () => {
         const { sdk, db, auth } = await deps();
@@ -315,3 +354,5 @@ export const trackEvents = (...args) => client().trackEvents(...args);
 export const listEvents = (...args) => client().listEvents(...args);
 
 export const getPrivateDriveConfig = (...args) => client().getPrivateDriveConfig(...args);
+export const getAppVisibilitySettings = (...args) => client().getAppVisibilitySettings(...args);
+export const updateAppVisibilitySettings = (...args) => client().updateAppVisibilitySettings(...args);

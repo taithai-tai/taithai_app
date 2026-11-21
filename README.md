@@ -49,6 +49,7 @@ localhost และถูกตัดออกจาก Git อยู่แล�
 - `/account/`: existing Google sign-in, profile name and account details
 - `/help/`, `/support/`, `/privacy/`, `/about/`: connected help, real private reports and data controls
 - `/admin/`: verified owner-only usage, per-account/session activity and report management
+- `/admin/#apps`: owner controls for public, unlisted and owner-testing apps; settings also links to this view
 
 Run `npm run test:site` for the service-page, consent, account, admin, QR and ACE regression suites.
 See [site operations](docs/site-operations.md) for Firestore deployment, permission tests and known measurement limits.

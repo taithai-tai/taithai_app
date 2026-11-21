@@ -5,7 +5,7 @@
   <script src="/assets/site-preferences.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Taithai Apps</title>
-  <meta name="description" content="Ten everyday tools by Taithai. Chat, make QR codes, share files, save movie memories, and play music." />
+  <meta name="description" content="A growing collection of small browser apps by Taithai. Choose a useful tool for your everyday tasks." />
   <meta name="theme-color" content="#faf9f7" media="(prefers-color-scheme: light)" />
   <meta name="theme-color" content="#151616" media="(prefers-color-scheme: dark)" />
   <style>
@@ -75,6 +75,7 @@
     .welcome-text { min-width: 0; }
     .welcome-title { font-size: 0.875rem; font-weight: 500; overflow-wrap: anywhere; }
     .hero .welcome-text p { font-size: 0.75rem; overflow-wrap: anywhere; }
+    .hero.hero-tools-empty { grid-template-columns: 1fr; }
     .status-online { font-size: 0.75rem; color: var(--text-muted); }
     .stats-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px 24px; border-top: 1px solid var(--border); padding-top: 24px; margin-bottom: 48px; }
     .stat-pill { display: inline-flex; align-items: center; gap: 8px; font-size: 0.875rem; color: var(--text-muted); }
@@ -154,6 +155,7 @@
   <link rel="stylesheet" href="/assets/site-theme.css">
   <script type="module" src="/assets/site-pages.js"></script>
   <script type="module" src="/assets/site-telemetry.js"></script>
+  <script type="module" src="/assets/site-home-apps.js"></script>
 </head>
 <body class="site-home" data-page="home">
   <a class="skip-link" href="#apps" id="skipLink">Skip to apps</a>
@@ -217,7 +219,7 @@
         <p id="heroDesc"></p>
         <div class="hero-actions"><a class="browse-button" href="#apps"><svg class="icon" aria-hidden="true"><use href="#icon-grid"/></svg><span id="browseLabel">Explore the apps</span></a></div>
         </div>
-        <nav class="toolkit" aria-labelledby="toolkitLabel">
+        <nav class="toolkit" aria-labelledby="toolkitLabel" hidden>
           <div class="toolkit-header"><span id="toolkitLabel">A few things you can do</span><span class="toolkit-address">taithai.app</span></div>
           <div class="toolkit-grid">
             <a class="toolkit-item" href="./temporary%20chat/"><svg class="icon" aria-hidden="true"><use href="#icon-chat"/></svg><span id="quickChat">Start a chat</span></a>
@@ -230,7 +232,7 @@
 
       <div class="stats-bar" aria-label="App collection summary">
         <div class="stat-pill">
-          <span class="stat-num">10</span>
+          <span class="stat-num">—</span>
           <span id="totalAppsLabel"></span>
         </div>
         <div class="stat-pill">
@@ -245,7 +247,10 @@
 
       <div class="app-search"><label for="appSearch" data-th="ค้นหาแอป" data-en="Find an app">Find an app</label><div class="app-search-control"><input id="appSearch" type="search" autocomplete="off" aria-controls="appDirectory" /><button type="button" id="clearAppSearch" hidden data-th="ล้างคำค้น" data-en="Clear search">Clear search</button></div><p id="appSearchCount" role="status" aria-live="polite"></p></div>
       <p id="appSearchEmpty" class="app-search-empty" hidden><span data-th="ไม่พบแอปที่ตรงกับคำค้น ลองเปลี่ยนคำค้น หรือดูคู่มือการใช้งาน" data-en="No matching apps. Try another search or browse the guides.">No matching apps. Try another search or browse the guides.</span> <a href="/help/" data-th="เปิดคู่มือ" data-en="Open guides">Open guides</a></p>
-      <div class="apps-grid" id="appDirectory" aria-labelledby="gridLabel">
+      <p id="appCatalogEmpty" class="app-search-empty" hidden data-th="ขณะนี้ยังไม่มีแอปที่เปิดให้คนทั่วไปใช้งาน คุณยังเปิดหน้าช่วยเหลือหรือแจ้งปัญหาได้จากเมนู" data-en="No apps are currently published. Help and support are still available from the menu.">No apps are currently published. Help and support are still available from the menu.</p>
+      <div id="appCatalogError" class="app-search-empty" role="status" hidden><p data-th="โหลดรายการแอปไม่สำเร็จ โปรดตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง" data-en="We could not load the app collection. Check your connection and try again.">We could not load the app collection. Check your connection and try again.</p><button type="button" id="reloadAppCatalog" class="browse-button" data-th="ลองอีกครั้ง" data-en="Try again">Try again</button></div>
+      <noscript><p class="app-search-empty">เปิด JavaScript เพื่อโหลดรายการแอปที่เผยแพร่อยู่ / Enable JavaScript to load the published apps.</p></noscript>
+      <div class="apps-grid" id="appDirectory" aria-labelledby="gridLabel" data-catalog-pending="true" hidden>
         <a class="app-card" href="./temporary%20chat/">
           <div class="app-icon" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#icon-chat"/></svg></div>
           <div>
@@ -355,7 +360,7 @@
         pageTitle: "Taithai Apps",
         heroBadge: "The Taithai collection",
         heroTitle: `Small tools for<br><span class="hi">your everyday</span>`,
-        heroDesc: "Make a QR code. Save a movie. Pick up your guitar. Ten small apps, together in one place.",
+        heroDesc: "Small browser apps for the things you want to get done. Pick a tool and make it yours.",
         totalAppsLabel: "apps",
         updatedTodayLabel: "Last updated",
         gridLabel: "All apps",
@@ -415,7 +420,7 @@
         pageTitle: "Taithai Apps",
         heroBadge: "เครื่องมือเล็ก ๆ ของ Taithai",
         heroTitle: `แชต สร้าง แชร์<br><span class="hi">เก็บเรื่องที่ชอบ</span>`,
-        heroDesc: "สร้างคิวอาร์โค้ด เก็บตั๋วหนัง หรือเปิดคอร์ดเพลง รวม 10 แอปที่หยิบใช้ได้ในทุกวัน ไว้ในที่เดียว",
+        heroDesc: "เลือกเครื่องมือที่เหมาะกับวันนี้ แล้วเริ่มใช้ในเบราว์เซอร์ได้เลย รวมแอปเล็ก ๆ ที่หยิบมาใช้งานได้ในที่เดียว",
         totalAppsLabel: "แอป",
         updatedTodayLabel: "อัปเดตล่าสุด",
         gridLabel: "แอปทั้งหมด",
@@ -497,7 +502,7 @@
       document.getElementById("heroBadge").textContent = t.heroBadge;
       document.getElementById("heroTitle").innerHTML = t.heroTitle;
       document.getElementById("heroDesc").textContent = t.heroDesc;
-      document.querySelector(".stat-num").textContent = document.querySelectorAll(".apps-grid > .app-card").length;
+      document.querySelector(".stat-num").textContent = document.getElementById('appDirectory').dataset.catalogPending === 'true' ? '—' : [...document.querySelectorAll('.apps-grid > .app-card')].filter(card => card.dataset.catalogVisible === 'true').length;
       document.getElementById("totalAppsLabel").textContent = t.totalAppsLabel;
       document.getElementById("updatedTodayLabel").textContent = t.updatedTodayLabel + " · " +
         new Intl.DateTimeFormat(currentLang === 'th' ? 'th-TH' : 'en-GB', {

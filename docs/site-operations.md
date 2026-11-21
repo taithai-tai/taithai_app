@@ -47,6 +47,24 @@ Preferences use only `taithai.preferences.v1` and the legacy language key. Appea
 ## Recovery
 A failed module load offers retry. Offline pages show the connection state. Report success is shown only after server acknowledgement; uncertain timeouts are kept distinct. 404 pages offer home/help/support and an explicit older-shortlink recovery action. Chordly cache cleanup is scoped to its own prefix. QR Reader uses native detection first, then the vendored Apache-2.0 jsQR decoder without sending images to a third party.
 
+## App visibility and owner testing
+
+Open `/admin/#apps` with the verified owner account, or follow the owner-only shortcut in Settings. Each editable app has three modes:
+
+- **Public**: listed in the collection and available to visitors
+- **Unlisted**: removed from discovery; direct links continue to work
+- **Owner testing**: removed from discovery; fresh app page, asset and website API requests require the verified owner
+
+Changes are drafts until **Save visibility** succeeds. Cancel discards the draft. A revision check prevents a second window from silently replacing newer settings. Unconfirmed saves can be checked against the stored version. Private Drive remains locked to its existing owner-only policy. A missing settings document retains the original public apps and owner-only Private Drive; malformed settings or unavailable policy reads close app requests instead of assuming public access.
+
+The single `siteConfig/appVisibility` document contains only app identifiers, visibility, revision and update metadata. It is publicly readable at that exact document path; listing is denied. Firestore permits schema-checked, revision-incrementing writes only by the verified owner. No private connection addresses are included. Deploy the rules before the web client/proxy.
+
+Vercel's framework-independent `proxy.js` runs before its static cache and uses the same catalog as the UI. Private app requests require an HttpOnly, Secure, SameSite cookie derived from the existing Firebase ID token. The server verifies identity with Firebase, checks the exact owner, and limits the cookie to the token's remaining lifetime. The shared auth module refreshes this session and clears pending cookie grants before signing out. `/app-access/` handles sign-in, retry and safe return links. The local server uses an HTTP-only development cookie on localhost, never on remote HTTP origins.
+
+Homepage search, app counts, hero shortcuts, help guides, app-specific settings and support choices follow the saved policy. Explicitly selected support topics remain available for reporting a known app. Refresh or focus the page after a visibility change. No apps are silently switched by installing this feature.
+
+This controls website discovery and new requests. It does not erase source or offline copies already delivered to a visitor, or change access to previously published movie/file data and externally shared storage links. Those retain their separate existing data rules. Updated service workers do not replay cached app navigations when they cannot check current access.
+
 ## Private Drive configuration
 Private Drive access URLs and internal connection addresses are stored in `sitePrivateConfig/privateDrive`, not HTML, JavaScript, attributes or committed build artifacts. Only the verified owner can get that document. All clients, including the owner client, are denied list/write operations. Configuration is maintained with project-administrator access, outside the public source tree. The website loads these values only after owner sign-in and never tracks their runtime links or copy controls.
 

@@ -258,6 +258,15 @@ test('homepage search updates Thai matches and counts after a later preference t
   assert.ok(app.cards.every(card => card.hidden)); assert.equal(app.document.getElementById('appSearchCount').textContent, '0 of 3 apps');
 });
 
+test('homepage search and clearing never rediscover an unpublished app', async () => {
+  const app = homeFixture(); app.cards[1].dataset.catalogVisible = 'false';
+  app.window.dispatchEvent({ type: 'taithai:app-visibility' });
+  assert.equal(app.document.getElementById('appSearchCount').textContent, '2 apps to choose from');
+  app.search.value = 'movie'; await app.search.fire('input'); assert.ok(app.cards.every(card => card.hidden));
+  assert.equal(app.document.getElementById('appSearchCount').textContent, '0 of 2 apps');
+  await app.clear.fire('click'); assert.deepEqual(app.cards.map(card => card.hidden), [false, true, false]);
+});
+
 function notFoundFixture(pathname) {
   const app = fixture('404', { pathname, search: '?private=SECRET_QUERY' });
   app.add('p', 'legacyLink', app.document.body, { hidden: true }); app.add('a', 'legacyLinkAction');

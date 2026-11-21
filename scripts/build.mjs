@@ -10,7 +10,7 @@ const excluded = new Set([
   '.git', '.github', '.agents', '.codex', '.firebase', 'api', '.gitignore', 'node_modules',
   'public', 'scripts', 'chordly', 'package.json', 'package-lock.json', 'server.js',
   'vercel.json', 'README.md', 'docs', 'ace', 'firebase-blueprint.json', 'firebase.json', 'firestore.indexes.json', 'firebase-debug.log',
-  '.firebaserc', 'firestore.rules', 'storage.rules', 'ticket-analyzer.js'
+  '.firebaserc', 'firestore.rules', 'storage.rules', 'ticket-analyzer.js', 'server-lib', 'proxy.js'
 ]);
 
 function run(command, args) {

@@ -6,6 +6,7 @@ import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js
 import shortlinksHandler from './api/shortlinks.js';
 import aceHandler from './ace/api/ace.js';
 import { buildACE } from './ace/scripts/build.mjs';
+import { checkAppAccess, handleAccessSession, nodeWebRequest, sendWebResponse } from './server-lib/site-app-gate.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 try {
@@ -41,10 +42,19 @@ function safePath(urlPath) {
 
 async function resolveFile(requestPath) {
   const pathname = decodeURIComponent(requestPath.split('?')[0]);
+  // Build/server sources are not routes. In particular /public/... must not bypass the app gate.
+  const first = pathname.replaceAll('\\', '/').split('/').filter(Boolean)[0] || '';
+  if (first.startsWith('.') || ['public', 'node_modules', 'server-lib', 'scripts', 'api', 'server.js', 'proxy.js', 'vercel.json', 'package.json', 'package-lock.json', 'firebase.json', 'firestore.rules', 'storage.rules'].includes(first)) return null;
   if (pathname === '/ACE' || pathname.startsWith('/ACE/')) {
     const aceRoot = path.join(root, 'public', 'ACE');
     let target = path.resolve(aceRoot, `.${pathname.slice(4) || '/'}`);
     if (target !== aceRoot && !target.startsWith(`${aceRoot}${path.sep}`)) return null;
+    try { if ((await stat(target)).isDirectory()) target = path.join(target, 'index.html'); await stat(target); return target; } catch { return null; }
+  }
+  if (pathname === '/Chordly' || pathname.startsWith('/Chordly/')) {
+    const chordlyRoot = path.join(root, 'chordly', 'out');
+    let target = path.resolve(chordlyRoot, `.${pathname.slice(8) || '/'}`);
+    if (target !== chordlyRoot && !target.startsWith(`${chordlyRoot}${path.sep}`)) return null;
     try { if ((await stat(target)).isDirectory()) target = path.join(target, 'index.html'); await stat(target); return target; } catch { return null; }
   }
   if (pathname.startsWith('/movie-memory-assets/')) {
@@ -200,6 +210,24 @@ async function serveTicketAnalysis(req, res) {
 const server = http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url || '/', 'http://localhost');
+    const webRequest = nodeWebRequest(req, { local: true });
+    if (/^\/api\/app-access\/?$/.test(requestUrl.pathname)) {
+      await sendWebResponse(await handleAccessSession(webRequest), req, res);
+      return;
+    }
+    const appAccess = await checkAppAccess(webRequest);
+    if (appAccess.response) {
+      await sendWebResponse(appAccess.response, req, res);
+      return;
+    }
+    // Enforce the same response policy even when individual app handlers set caching.
+    if (Object.keys(appAccess.headers).length) {
+      const writeHead = res.writeHead.bind(res);
+      res.writeHead = function (code, message, headers) {
+        if (typeof message !== 'string') return writeHead(code, { ...(message || {}), ...appAccess.headers });
+        return writeHead(code, message, { ...(headers || {}), ...appAccess.headers });
+      };
+    }
     const shortCode = requestUrl.pathname.match(/^\/S\/([^/]+)\/?$/);
     if (requestUrl.pathname.replace(/\/$/, '') === '/api/shortlinks' || shortCode) {
       req.query = Object.fromEntries(requestUrl.searchParams);

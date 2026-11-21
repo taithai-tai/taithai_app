@@ -3,6 +3,9 @@
   "outputDirectory": "public",
   "cleanUrls": true,
   "trailingSlash": true,
+  "proxy": {
+    "entrypoint": "proxy.js"
+  },
   "functions": {
     "api/ace.js": {
       "maxDuration": 150

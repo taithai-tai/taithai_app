@@ -47,15 +47,23 @@ if (page === 'settings') {
 }
 if (page === 'help') {
   const search = document.getElementById('helpSearch');
-  function filter() { const term = search.value.trim().toLocaleLowerCase(); let count = 0; document.querySelectorAll('[data-help-card]').forEach(card => { card.hidden = !card.textContent.toLocaleLowerCase().includes(term); if (!card.hidden) count++; }); document.getElementById('helpNoResults').hidden = count > 0; }
+  function filter() { const term = search.value.trim().toLocaleLowerCase(); let count = 0; const guides = document.getElementById('helpGuides'), pending = guides?.dataset.discoveryPending === 'true', failed = guides?.dataset.discoveryError === 'true'; document.querySelectorAll('[data-help-card]').forEach(card => { card.hidden = pending || Boolean(card.dataset.appDiscovery && card.dataset.discoveryVisible !== 'true') || !card.textContent.toLocaleLowerCase().includes(term); if (!card.hidden) count++; }); document.getElementById('helpNoResults').hidden = pending || failed || count > 0; }
   search.addEventListener('input', filter); window.addEventListener('taithai:preferences', filter);
+  window.addEventListener('taithai:app-discovery', filter);
 }
 if (page === 'support') import('./site-support.js').catch(() => { const status = document.getElementById('reportStatus'); status.hidden = false; status.classList.add('notice-error'); status.textContent = say('โหลดแบบฟอร์มไม่สำเร็จ โปรดรีเฟรชเมื่อเชื่อมต่ออินเทอร์เน็ต', 'The form could not load. Reconnect and refresh the page.'); });
 
 if (page === 'home') {
   const search=document.getElementById('appSearch'), clear=document.getElementById('clearAppSearch');
   const cards=[...document.querySelectorAll('.apps-grid > .app-card')];
-  function filterApps(){const term=search.value.trim().toLocaleLowerCase();let count=0;for(const card of cards){card.hidden=!card.textContent.toLocaleLowerCase().includes(term);if(!card.hidden)count++;}clear.hidden=!term;document.getElementById('appSearchEmpty').hidden=count>0;document.getElementById('appSearchCount').textContent=term?say(`พบ ${count} จาก ${cards.length} แอป`,`${count} of ${cards.length} apps`):say(`${cards.length} แอป พร้อมให้เลือกใช้`,`${cards.length} apps to choose from`);}
+  function filterApps(){
+    const term=search.value.trim().toLocaleLowerCase(), pending=document.getElementById('appDirectory').dataset.catalogPending==='true';
+    const available=cards.filter(card=>card.dataset.catalogVisible!=='false');let count=0;
+    for(const card of cards){card.hidden=pending||card.dataset.catalogVisible==='false'||!card.textContent.toLocaleLowerCase().includes(term);if(!card.hidden)count++;}
+    clear.hidden=!term;search.disabled=pending||available.length===0;document.getElementById('appSearchEmpty').hidden=pending||available.length===0||count>0;
+    document.getElementById('appSearchCount').textContent=pending?say('กำลังโหลดรายการแอป','Loading the app collection'):term?say(`พบ ${count} จาก ${available.length} แอป`,`${count} of ${available.length} apps`):say(`${available.length} แอป พร้อมให้เลือกใช้`,`${available.length} apps to choose from`);
+  }
   search.addEventListener('input',filterApps);clear.addEventListener('click',()=>{search.value='';filterApps();search.focus();});
   window.addEventListener('taithai:preferences',()=>queueMicrotask(filterApps));filterApps();
+  window.addEventListener('taithai:app-visibility',filterApps);
 }
