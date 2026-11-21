@@ -4,6 +4,11 @@ import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { initOwnerUI } from '../assets/site-owner-ui.js';
+import { createRequire } from 'node:module';
+// Vercel routing-utils sourceToRegex uses these strict path-to-regexp options.
+// Next already includes this compiler, so the routing regression adds no dependency.
+const { pathToRegexp } = createRequire(import.meta.url)('next/dist/compiled/path-to-regexp');
+const routePattern = source => pathToRegexp(source,[],{strict:true,sensitive:true,delimiter:'/'});
 
 const owner = { uid: 'owner', email: 'taithai5002@gmail.com', emailVerified: true };
 const flush = () => new Promise(resolve => setImmediate(resolve));
@@ -82,7 +87,29 @@ test('canonical admin links wait for server grants and redirects preserve servic
   const card = html.match(/<section class="panel admin-access-shortcut"[^>]*>.*?<\/section>/s)?.[0];
   assert.ok(card);assert.match(card,/<section[^>]*data-admin-access[^>]*hidden/);assert.match(card,/href="\/mail\/"/);assert.match(html,/src="\/assets\/site-owner-ui\.js"/);assert.match(html,/src="\/assets\/site-access-ui\.js"/);
   const config = JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
-  assert.ok(config.headers.find(item=>item.source==='/account/:path*').headers.some(item=>item.key==='Content-Security-Policy'&&item.value.includes('https://taithai-app.netlify.app')));
-  assert.deepEqual(config.redirects.filter(item => item.source.startsWith('/admin')),[{source:'/admin',destination:'https://taithai-app.netlify.app/admin/',permanent:false},{source:'/admin/:path*',destination:'https://taithai-app.netlify.app/admin/:path*',permanent:false}]);
-  assert.deepEqual(config.redirects.filter(item => item.source.startsWith('/mail')),[{source:'/mail',destination:'https://taithai-app.netlify.app/mail/',permanent:false},{source:'/mail/:path*',destination:'https://taithai-app.netlify.app/mail/:path*',permanent:false}]);
+  assert.ok(config.headers.find(item=>item.source==='/account/').headers.some(item=>item.key==='Content-Security-Policy'&&item.value.includes('https://taithai-app.netlify.app')));
+  for(const service of ['admin','mail']) {
+    assert.ok(config.redirects.some(item=>item.source===`/${service}/`&&item.destination===`https://taithai-app.netlify.app/${service}/`&&item.permanent===false));
+    assert.ok(config.redirects.some(item=>item.source===`/${service}/:path*/`&&item.destination===`https://taithai-app.netlify.app/${service}/:path*/`&&item.permanent===false));
+  }
+});
+
+
+test('strict Vercel route matching redirects canonical service URLs instead of serving main files or 404s',async()=>{
+  const config=JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
+  assert.equal(config.trailingSlash,true);
+  const redirect=path=>{
+    for(const rule of config.redirects){const match=routePattern(rule.source).exec(path);if(match)return {status:rule.permanent?308:307,location:rule.destination.replace(':path*',match[1]||'')};}
+    return null;
+  };
+  for(const service of ['mail','admin']) {
+    for(const suffix of ['', '/', '/inbox/', '/nested/item/', '/encoded%2Fpart/', '/asset.txt']) {
+      const path=`/${service}${suffix}`;
+      assert.deepEqual(redirect(path),{status:307,location:`https://taithai-app.netlify.app/${service}${suffix||'/'}`},path);
+    }
+  }
+  for(const path of ['/mailbox/','/administrator/','/account/'])assert.equal(redirect(path),null,path);
+  const accountHeaders=config.headers.filter(rule=>routePattern(rule.source).test('/account/')).flatMap(rule=>rule.headers);
+  assert.equal(accountHeaders.filter(header=>header.key==='Content-Security-Policy').length,1);
+  assert.match(accountHeaders.find(header=>header.key==='Content-Security-Policy').value,/connect-src [^;]*https:\/\/taithai-app\.netlify\.app(?:;| )/);
 });

@@ -74,7 +74,7 @@
       ]
     },
     {
-      "source": "/account/:path*",
+      "source": "/account/",
       "headers": [
         {
           "key": "Content-Security-Policy",
@@ -85,6 +85,16 @@
   ],
   "redirects": [
     {
+      "source": "/admin/",
+      "destination": "https://taithai-app.netlify.app/admin/",
+      "permanent": false
+    },
+    {
+      "source": "/admin/:path*/",
+      "destination": "https://taithai-app.netlify.app/admin/:path*/",
+      "permanent": false
+    },
+    {
       "source": "/admin",
       "destination": "https://taithai-app.netlify.app/admin/",
       "permanent": false
@@ -92,6 +102,16 @@
     {
       "source": "/admin/:path*",
       "destination": "https://taithai-app.netlify.app/admin/:path*",
+      "permanent": false
+    },
+    {
+      "source": "/mail/",
+      "destination": "https://taithai-app.netlify.app/mail/",
+      "permanent": false
+    },
+    {
+      "source": "/mail/:path*/",
+      "destination": "https://taithai-app.netlify.app/mail/:path*/",
       "permanent": false
     },
     {
