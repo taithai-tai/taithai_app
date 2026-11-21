@@ -81,6 +81,57 @@
           "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://taithai-app.netlify.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
         }
       ]
+    },
+    {
+      "source": "/community/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://taithai-app.netlify.app https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' blob: data: https://taithai-app.netlify.app https://*.googleusercontent.com; media-src 'self' blob: https://taithai-app.netlify.app; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/profile/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://taithai-app.netlify.app https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' blob: data: https://taithai-app.netlify.app https://*.googleusercontent.com; media-src 'self' blob: https://taithai-app.netlify.app; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/messages/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://taithai-app.netlify.app https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' blob: data: https://taithai-app.netlify.app https://*.googleusercontent.com; media-src 'self' blob: https://taithai-app.netlify.app; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests"
+        }
+      ]
     }
   ],
   "redirects": [
