@@ -67,6 +67,127 @@ service cloud.firestore {
                     && request.resource.data.image.matches('data:image/jpeg;base64,/9j/[A-Za-z0-9+/]*={0,2}');
       allow delete: if request.auth != null && resource.data.owner == request.auth.uid;
     }
+
+    // Site-wide support and analytics; existing app rules above remain unchanged.
+    function siteAdmin() {
+      return request.auth != null
+             && request.auth.token.get('email', '') == 'taithai5002@gmail.com'
+             && request.auth.token.get('email_verified', false) == true;
+    }
+    function siteText(value, minimum, maximum) {
+      return value is string
+             && value.size() >= minimum && value.size() <= maximum
+             && value.matches('[^\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]*')
+             && (minimum == 0 || value.matches('(?s).*\\S.*'));
+    }
+    function siteId(value) {
+      return value is string && value.matches('[A-Za-z0-9_-]{12,128}');
+    }
+    function siteStatus(value) {
+      return value in ['open', 'in_progress', 'resolved', 'closed'];
+    }
+    function siteIdentity(uid, email) {
+      return (request.auth == null && uid == '' && email == '')
+             || (request.auth != null
+                 && uid == request.auth.uid
+                 && email == request.auth.token.get('email', ''));
+    }
+    function siteReportOwner() {
+      return request.auth != null && resource.data.ownerUid == request.auth.uid;
+    }
+    function siteReportShape(data) {
+      return data.keys().hasAll(['app', 'type', 'subject', 'description', 'steps', 'expected', 'contact',
+                                'ownerUid', 'ownerEmail', 'ownerName', 'status', 'publicReply', 'createdAt', 'updatedAt'])
+             && data.keys().hasOnly(['app', 'type', 'subject', 'description', 'steps', 'expected', 'contact',
+                                    'ownerUid', 'ownerEmail', 'ownerName', 'status', 'publicReply', 'createdAt', 'updatedAt'])
+             && siteText(data.app, 1, 80)
+             && data.type in ['bug', 'complaint', 'feedback', 'privacy', 'accessibility']
+             && siteText(data.subject, 5, 160)
+             && siteText(data.description, 10, 6000)
+             && siteText(data.steps, 0, 3000)
+             && siteText(data.expected, 0, 3000)
+             && siteText(data.contact, 0, 254)
+             && siteText(data.ownerUid, 0, 128)
+             && siteText(data.ownerEmail, 0, 254)
+             && siteText(data.ownerName, 0, 160)
+             && siteStatus(data.status)
+             && siteText(data.publicReply, 0, 6000)
+             && data.createdAt is timestamp && data.updatedAt is timestamp;
+    }
+    match /sitePrivateConfig/{configId} {
+      allow get: if siteAdmin() && configId == 'privateDrive';
+      allow list, create, update, delete: if false;
+    }
+    match /siteReports/{reportId} {
+      allow create: if siteId(reportId)
+                    && siteReportShape(request.resource.data)
+                    && siteIdentity(request.resource.data.ownerUid, request.resource.data.ownerEmail)
+                    && (request.auth != null || request.resource.data.ownerName == '')
+                    && request.resource.data.status == 'open'
+                    && request.resource.data.publicReply == ''
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.updatedAt == request.time;
+      allow get: if siteAdmin() || siteReportOwner();
+      allow list: if request.query.limit != null && request.query.limit <= 50
+                  && (siteAdmin() || siteReportOwner());
+      allow update: if siteAdmin()
+                    && siteReportShape(request.resource.data)
+                    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'publicReply', 'updatedAt'])
+                    && request.resource.data.updatedAt == request.time;
+      allow delete: if false;
+    }
+    match /siteEvents/{eventId} {
+      allow create: if siteId(eventId)
+                    && request.resource.data.keys().hasAll(['eventId', 'name', 'app', 'path', 'action', 'durationSeconds',
+                       'device', 'clientAt', 'sessionId', 'actorUid', 'actorEmail', 'actorName', 'createdAt', 'consentVersion'])
+                    && request.resource.data.keys().hasOnly(['eventId', 'name', 'app', 'path', 'action', 'durationSeconds',
+                       'device', 'clientAt', 'sessionId', 'actorUid', 'actorEmail', 'actorName', 'createdAt', 'consentVersion'])
+                    && request.resource.data.eventId == eventId
+                    && request.resource.data.name in ['page_view', 'app_open', 'preference_change', 'report_submitted',
+                       'help_view', 'signin', 'signout', 'click', 'heartbeat']
+                    && siteText(request.resource.data.app, 1, 80)
+                    && siteText(request.resource.data.path, 1, 240)
+                    && request.resource.data.path.matches('/[^?#]*')
+                    && !request.resource.data.path.matches('//.*')
+                    && siteText(request.resource.data.action, 0, 80)
+                    && request.resource.data.durationSeconds is int
+                    && request.resource.data.durationSeconds >= 0 && request.resource.data.durationSeconds <= 60
+                    && request.resource.data.device in ['mobile', 'tablet', 'desktop']
+                    && siteText(request.resource.data.clientAt, 20, 40)
+                    && request.resource.data.clientAt.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\\.[0-9]{3}Z')
+                    && siteId(request.resource.data.sessionId) && request.resource.data.sessionId.size() <= 64
+                    && siteIdentity(request.resource.data.actorUid, request.resource.data.actorEmail)
+                    && siteText(request.resource.data.actorUid, 0, 128)
+                    && siteText(request.resource.data.actorEmail, 0, 254)
+                    && siteText(request.resource.data.actorName, 0, 160)
+                    && (request.auth != null || request.resource.data.actorName == '')
+                    && request.resource.data.createdAt == request.time
+                    && request.resource.data.consentVersion == 1;
+      allow get: if siteAdmin();
+      allow list: if siteAdmin() && request.query.limit != null && request.query.limit <= 500;
+      allow update, delete: if false;
+    }
+    match /siteAdminAudit/{auditId} {
+      allow create: if siteAdmin() && siteId(auditId)
+                    && request.resource.data.keys().hasAll(['reportId', 'action', 'actorUid', 'actorEmail',
+                       'fromStatus', 'toStatus', 'publicReply', 'createdAt'])
+                    && request.resource.data.keys().hasOnly(['reportId', 'action', 'actorUid', 'actorEmail',
+                       'fromStatus', 'toStatus', 'publicReply', 'createdAt'])
+                    && siteId(request.resource.data.reportId)
+                    && request.resource.data.action == 'report_update'
+                    && siteIdentity(request.resource.data.actorUid, request.resource.data.actorEmail)
+                    && siteStatus(request.resource.data.fromStatus) && siteStatus(request.resource.data.toStatus)
+                    && siteText(request.resource.data.publicReply, 0, 6000)
+                    && request.resource.data.createdAt == request.time
+                    && exists(/databases/$(database)/documents/siteReports/$(request.resource.data.reportId))
+                    && get(/databases/$(database)/documents/siteReports/$(request.resource.data.reportId)).data.status == request.resource.data.fromStatus
+                    && getAfter(/databases/$(database)/documents/siteReports/$(request.resource.data.reportId)).data.status == request.resource.data.toStatus
+                    && getAfter(/databases/$(database)/documents/siteReports/$(request.resource.data.reportId)).data.publicReply == request.resource.data.publicReply
+                    && getAfter(/databases/$(database)/documents/siteReports/$(request.resource.data.reportId)).data.updatedAt == request.time;
+      allow get: if siteAdmin();
+      allow list: if siteAdmin() && request.query.limit != null && request.query.limit <= 50;
+      allow update, delete: if false;
+    }
     match /{document=**} {
       allow read, write: if false;
     }

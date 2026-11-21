@@ -42,3 +42,13 @@ Development แล้ว Redeploy โปรเจกต์:
 
 อย่าใส่คีย์ลงใน Git หรือ JavaScript ฝั่งหน้าเว็บ ไฟล์ `.env.local` ใช้เฉพาะ
 localhost และถูกตัดออกจาก Git อยู่แล้ว
+
+## Website preferences, support and owner dashboard
+
+- `/settings/`: persistent light/dark/system theme, accents, reading size, reduced motion, language and analytics consent
+- `/account/`: existing Google sign-in, profile name and account details
+- `/help/`, `/support/`, `/privacy/`, `/about/`: connected help, real private reports and data controls
+- `/admin/`: verified owner-only usage, per-account/session activity and report management
+
+Run `npm run test:site` for the service-page, consent, account, admin, QR and ACE regression suites.
+See [site operations](docs/site-operations.md) for Firestore deployment, permission tests and known measurement limits.

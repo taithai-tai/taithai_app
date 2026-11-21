@@ -7,9 +7,9 @@ import { buildACE } from '../ace/scripts/build.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'public');
 const excluded = new Set([
-  '.git', '.github', '.agents', '.codex', 'api', '.gitignore', 'node_modules',
+  '.git', '.github', '.agents', '.codex', '.firebase', 'api', '.gitignore', 'node_modules',
   'public', 'scripts', 'chordly', 'package.json', 'package-lock.json', 'server.js',
-  'vercel.json', 'README.md', 'ace', 'firebase-blueprint.json', 'firebase.json',
+  'vercel.json', 'README.md', 'docs', 'ace', 'firebase-blueprint.json', 'firebase.json', 'firestore.indexes.json', 'firebase-debug.log',
   '.firebaserc', 'firestore.rules', 'storage.rules', 'ticket-analyzer.js'
 ]);
 
@@ -26,7 +26,7 @@ await mkdir(output, { recursive: true });
 
 const entries = await readdir(root, { withFileTypes: true });
 for (const entry of entries) {
-  if (excluded.has(entry.name) || entry.name.startsWith('.env')) continue;
+  if (excluded.has(entry.name) || entry.name.startsWith('.env') || entry.name.endsWith('.log')) continue;
   await cp(path.join(root, entry.name), path.join(output, entry.name), { recursive: true });
 }
 
@@ -59,7 +59,7 @@ for (const [route, source] of [['game', 'game.html'], ['dashboard', 'dashboard.h
 
 await buildACE({ output: path.join(output, 'ACE'), basePath: '/ACE', siteUrl: 'https://taithai.app/ACE' });
 
-await run(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build', 'chordly']);
+await run(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build', 'chordly', ...(process.env.TAITHAI_BUILD_BUNDLER === 'webpack' ? ['--webpack'] : [])]);
 await cp(path.join(root, 'chordly', 'out'), path.join(output, 'Chordly'), { recursive: true });
 
 console.log('Static site, Chordly and ACE prepared in public/');

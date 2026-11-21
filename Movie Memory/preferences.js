@@ -10,6 +10,17 @@
     rememberFilters: true
   });
 
+  let memoryPrefs = { ...DEFAULTS };
+  let storageAvailable = true;
+  function store(key, value) {
+    try { localStorage.setItem(key, value); return true; }
+    catch { storageAvailable = false; return false; }
+  }
+  function remove(key) {
+    try { localStorage.removeItem(key); return true; }
+    catch { storageAvailable = false; return false; }
+  }
+
   const ALLOWED = {
     language: ['th', 'en'],
     font: ['system', 'noto', 'modern'],
@@ -142,6 +153,8 @@
       'settings.preview.title': 'Your Movie Memory',
       'settings.preview.copy': 'ทุกเรื่องที่ดู คือหนึ่งความทรงจำ',
       'settings.saved': 'บันทึกการตั้งค่าแล้ว',
+      'settings.sessionOnly': 'ใช้การตั้งค่านี้แล้ว แต่เบราว์เซอร์ไม่อนุญาตให้บันทึก จะจำไว้ได้เฉพาะหน้านี้',
+      'settings.filtersFailed': 'ยังล้างตัวกรองไม่ได้ เบราว์เซอร์ไม่อนุญาตให้เข้าถึงพื้นที่จัดเก็บ',
       'settings.resetDone': 'คืนค่าการตั้งค่าแล้ว',
       'settings.filtersReset': 'ล้างตัวกรองแล้ว'
     },
@@ -255,6 +268,8 @@
       'settings.preview.title': 'Your Movie Memory',
       'settings.preview.copy': 'Every movie you watch becomes a memory',
       'settings.saved': 'Settings saved',
+      'settings.sessionOnly': 'Applied for this visit. Browser storage is unavailable, so this choice cannot be remembered.',
+      'settings.filtersFailed': 'Filters could not be cleared because browser storage is unavailable.',
       'settings.resetDone': 'Preferences reset',
       'settings.filtersReset': 'Remembered filters cleared'
     }
@@ -270,11 +285,15 @@
   }
 
   function get() {
-    try {
-      return normalize(JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'));
-    } catch {
-      return { ...DEFAULTS };
+    if (!storageAvailable) return { ...memoryPrefs };
+    let raw;
+    try { raw = localStorage.getItem(STORAGE_KEY); }
+    catch { storageAvailable = false; return { ...memoryPrefs }; }
+    if (raw !== null) {
+      try { memoryPrefs = normalize(JSON.parse(raw)); }
+      catch { /* Damaged preferences do not prevent the rest of the app from starting. */ }
     }
+    return { ...memoryPrefs };
   }
 
   function t(key, variables = {}, language = get().language) {
@@ -314,23 +333,25 @@
     root.style.setProperty('--orange', accent.secondary);
     root.style.setProperty('--border-gold', `${accent.main}55`);
     root.style.setProperty('--shadow-gold', `0 12px 32px ${accent.main}26`);
-    localStorage.setItem('mm_view_mode', prefs.defaultView);
-    if (!prefs.rememberFilters) localStorage.removeItem('mm_filter_settings_v1');
+    store('mm_view_mode', prefs.defaultView);
+    if (!prefs.rememberFilters) remove('mm_filter_settings_v1');
     if (document.readyState !== 'loading') translateDOM(document);
     return prefs;
   }
 
   function update(changes) {
     const next = normalize({ ...get(), ...changes });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    memoryPrefs = { ...next };
+    store(STORAGE_KEY, JSON.stringify(next));
     apply(next);
     window.dispatchEvent(new CustomEvent('movie-memory:preferences', { detail: next }));
     return next;
   }
 
   function reset() {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.setItem('mm_view_mode', DEFAULTS.defaultView);
+    memoryPrefs = { ...DEFAULTS };
+    remove(STORAGE_KEY);
+    store('mm_view_mode', DEFAULTS.defaultView);
     apply(DEFAULTS);
     window.dispatchEvent(new CustomEvent('movie-memory:preferences', { detail: { ...DEFAULTS } }));
     return { ...DEFAULTS };
@@ -338,6 +359,7 @@
 
   window.MovieMemoryPreferences = {
     defaults: DEFAULTS,
+    canPersist: () => storageAvailable,
     get,
     update,
     reset,
@@ -349,6 +371,9 @@
   apply();
   document.addEventListener('DOMContentLoaded', () => translateDOM(document), { once: true });
   window.addEventListener('storage', event => {
-    if (event.key === STORAGE_KEY) apply();
+    if (event.key === STORAGE_KEY) {
+      if (event.newValue === null) memoryPrefs = { ...DEFAULTS };
+      apply();
+    }
   });
 })();

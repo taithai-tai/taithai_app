@@ -2,6 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8" />
+  <script src="/assets/site-preferences.js"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>QR Code Reader</title>
   <style>
@@ -155,6 +156,9 @@
     }
   </style>
   <link rel="stylesheet" href="../assets/apple-design-system.v2.css?v=20260827-2">
+  <link rel="stylesheet" href="/assets/site-theme.css">
+  <script src="/assets/site-utility.js" defer></script>
+  <script type="module" src="/assets/site-telemetry.js"></script>
 </head>
 <body class="taithai-design taithai-tool tt-qr">
   <main class="card">
@@ -209,7 +213,7 @@
           <button id="openBtn" disabled>🔗 เปิดลิงก์</button>
         </div>
         <p style="margin:12px 0 0; font-size:0.85rem; color:var(--muted);">
-          หมายเหตุ: หากเบราว์เซอร์ไม่รองรับการอ่าน QR โดยตรง แนะนำใช้ Chrome/Edge เวอร์ชันใหม่
+          อ่าน QR ได้จากกล้องหรือรูปภาพ ภาพจะประมวลผลบนอุปกรณ์ของคุณ หากเปิดกล้องไม่ได้ ให้เลือกสแกนจากรูป
         </p>
       </aside>
     </section>
@@ -217,6 +221,8 @@
     <canvas id="canvas" class="hidden-canvas"></canvas>
   </main>
 
+  <script src="./vendor/jsQR.js"></script>
+  <script src="./qr-decoder.js"></script>
   <script>
     const video = document.getElementById('video');
     const imagePreview = document.getElementById('imagePreview');
@@ -230,13 +236,11 @@
     const openBtn = document.getElementById('openBtn');
     const scannerLine = document.getElementById('scannerLine');
 
-    const detector = ('BarcodeDetector' in window)
-      ? new BarcodeDetector({ formats: ['qr_code'] })
-      : null;
-
     let stream = null;
     let scanTimer = null;
     let latestValue = '';
+    let scanGeneration = 0;
+    let previewUrl = null;
 
     function setStatus(text, tone = '') {
       statusEl.textContent = text;
@@ -250,109 +254,116 @@
       openBtn.disabled = !/^https?:\/\//i.test(latestValue);
     }
 
-    async function detectFromSource(source) {
-      if (!detector) {
-        setStatus('เบราว์เซอร์นี้ยังไม่รองรับ BarcodeDetector', 'err');
-        return;
-      }
-
+    async function detectFromSource(source, generation = scanGeneration) {
       try {
-        const codes = await detector.detect(source);
-        if (codes.length > 0 && codes[0].rawValue) {
-          const text = codes[0].rawValue.trim();
+        if (!window.TaithaiQrDecoder) throw new Error('DECODER_UNAVAILABLE');
+        const text = await window.TaithaiQrDecoder.decode(source);
+        if (generation !== scanGeneration) return null;
+        if (text) {
           setResult(text);
-          setStatus('อ่าน QR สำเร็จแล้ว ✅', 'ok');
-          return text;
+          setStatus('อ่าน QR สำเร็จแล้ว', 'ok');
         }
+        return text;
       } catch (error) {
-        setStatus(`อ่าน QR ไม่สำเร็จ: ${error.message}`, 'err');
+        if (generation !== scanGeneration) return null;
+        setStatus(error.code === 'DECODER_UNAVAILABLE' || error.message === 'DECODER_UNAVAILABLE'
+          ? 'โหลดตัวอ่าน QR ไม่สำเร็จ กรุณารีเฟรชหน้านี้แล้วลองใหม่'
+          : 'อ่านรูปภาพไม่สำเร็จ ลองใช้ภาพอื่นที่คิวอาร์โค้ดชัดเจน', 'err');
+        return null;
       }
-      return '';
     }
 
     async function startCamera() {
-      if (!detector) {
-        setStatus('เบราว์เซอร์นี้ไม่รองรับการอ่าน QR โดยตรง', 'err');
+      stopCamera(false);
+      const generation = scanGeneration;
+      if (!window.TaithaiQrDecoder) {
+        setStatus('โหลดตัวอ่าน QR ไม่สำเร็จ กรุณารีเฟรชหน้านี้แล้วลองใหม่','err');
         return;
       }
-
+      if (!navigator.mediaDevices?.getUserMedia) {
+        setStatus('เบราว์เซอร์นี้เปิดกล้องไม่ได้ กรุณาเลือกสแกนจากรูปแทน', 'err');
+        return;
+      }
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      setStatus('กำลังขอเปิดกล้อง อนุญาตสิทธิ์กล้องในเบราว์เซอร์เพื่อเริ่มสแกน');
       try {
-        stopCamera();
-        stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } },
-          audio: false
-        });
-
+        const acquired = await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false});
+        if (generation !== scanGeneration || document.hidden) {
+          acquired.getTracks().forEach(track => track.stop());
+          if (generation === scanGeneration) { stopCamera(false); setStatus('กดเริ่มสแกนกล้องเมื่อกลับมาที่หน้านี้'); }
+          return;
+        }
+        stream = acquired;
         video.srcObject = stream;
         imagePreview.hidden = true;
         video.hidden = false;
+        await video.play();
+        if (generation !== scanGeneration) return;
         scannerLine.classList.add('active');
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
-
-        setStatus('กำลังสแกนจากกล้อง...');
-
+        setStatus('กำลังสแกนจากกล้อง วาง QR ให้อยู่ในภาพ');
+        let busy = false;
         scanTimer = setInterval(async () => {
-          if (video.readyState < 2) return;
-          const found = await detectFromSource(video);
-          if (found) {
-            stopCamera(false);
-          }
-        }, 450);
+          if (busy || video.readyState < 2 || generation !== scanGeneration) return;
+          busy = true;
+          try {
+            const found = await detectFromSource(video,generation);
+            if ((found || found === null) && generation === scanGeneration) stopCamera(false);
+          } finally { busy = false; }
+        },450);
       } catch (error) {
-        setStatus(`ไม่สามารถเปิดกล้องได้: ${error.message}`, 'err');
+        if (generation !== scanGeneration) return;
+        stopCamera(false);
+        const message = ['NotAllowedError','PermissionDeniedError'].includes(error.name)
+          ? 'ยังไม่ได้อนุญาตกล้อง เปิดสิทธิ์กล้องในเบราว์เซอร์ หรือเลือกสแกนจากรูปได้'
+          : ['NotFoundError','DevicesNotFoundError'].includes(error.name)
+            ? 'ไม่พบกล้องในอุปกรณ์นี้ กรุณาเลือกสแกนจากรูป'
+            : 'เปิดกล้องไม่สำเร็จ ลองปิดแอปอื่นที่ใช้กล้อง หรือเลือกสแกนจากรูป';
+        setStatus(message,'err');
       }
     }
 
     function stopCamera(updateText = true) {
-      if (scanTimer) {
-        clearInterval(scanTimer);
-        scanTimer = null;
-      }
-
-      if (stream) {
-        stream.getTracks().forEach((track) => track.stop());
-        stream = null;
-      }
-
+      scanGeneration++;
+      if (scanTimer) { clearInterval(scanTimer); scanTimer = null; }
+      if (stream) { stream.getTracks().forEach(track => track.stop()); stream = null; }
       video.srcObject = null;
       scannerLine.classList.remove('active');
       startBtn.disabled = false;
       stopBtn.disabled = true;
-
-      if (updateText) {
-        setStatus('หยุดการสแกนกล้องแล้ว');
-      }
+      if (updateText) setStatus('หยุดการสแกนกล้องแล้ว');
     }
 
     async function scanFromFile(file) {
       if (!file) return;
       stopCamera(false);
-
+      const generation = scanGeneration;
+      fileInput.value = '';
+      setResult('');
+      if (file.type && !file.type.startsWith('image/')) {
+        setStatus('กรุณาเลือกไฟล์รูปภาพที่มีคิวอาร์โค้ด','err');
+        return;
+      }
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      const objectUrl = URL.createObjectURL(file);
+      previewUrl = objectUrl;
       const image = new Image();
       image.onload = async () => {
-        const ctx = canvas.getContext('2d');
-        canvas.width = image.width;
-        canvas.height = image.height;
-        ctx.drawImage(image, 0, 0);
-
-        imagePreview.src = image.src;
+        if (generation !== scanGeneration) return;
+        imagePreview.src = objectUrl;
         imagePreview.hidden = false;
         video.hidden = true;
-
-        setStatus('กำลังสแกนรูปภาพ...');
-        const found = await detectFromSource(canvas);
-        if (!found) {
-          setStatus('ไม่พบ QR ในรูปภาพนี้', 'err');
-          setResult('');
-        }
+        setStatus('กำลังสแกนรูปภาพ');
+        const found = await detectFromSource(image,generation);
+        if (generation === scanGeneration && found === '') setStatus('ไม่พบ QR ในรูปภาพนี้ ลองใช้ภาพที่คมชัดและเห็นโค้ดครบทั้งสี่มุม','err');
       };
-
       image.onerror = () => {
-        setStatus('ไฟล์รูปภาพไม่ถูกต้อง', 'err');
+        if (generation !== scanGeneration) return;
+        setStatus('เปิดรูปภาพนี้ไม่ได้ ลองใช้ไฟล์ PNG หรือ JPEG','err');
+        URL.revokeObjectURL(objectUrl);
+        if (previewUrl === objectUrl) previewUrl = null;
       };
-
-      image.src = URL.createObjectURL(file);
+      image.src = objectUrl;
     }
 
     startBtn.addEventListener('click', startCamera);
@@ -375,7 +386,16 @@
       }
     });
 
-    window.addEventListener('beforeunload', () => stopCamera(false));
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden && stream) {
+        stopCamera(false);
+        setStatus('หยุดกล้องเมื่อออกจากหน้านี้ กดเริ่มสแกนกล้องเพื่อใช้อีกครั้ง');
+      }
+    });
+    window.addEventListener('beforeunload', () => {
+      stopCamera(false);
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    });
   </script>
 
   <script src="../local-auth-bridge.js"></script>

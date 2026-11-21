@@ -1,0 +1,138 @@
+/* Taithai preference adapters. Theme changes UI surfaces, never artwork or QR pixels. */
+html[data-theme="light"] {
+  color-scheme: light;
+  --tt-bg:#faf9f7; --tt-surface:#fff; --tt-raised:#efefec; --tt-text:#242522;
+  --tt-muted:#62665d; --tt-border:#d8dbd3; --tt-accent:#a74128; --tt-accent-soft:#f7e9e2;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --tt-bg:#151616; --tt-surface:#1c1e1c; --tt-raised:#272a27; --tt-text:#edf0e9;
+  --tt-muted:#b0b7a9; --tt-border:#42483e; --tt-accent:#f2a188; --tt-accent-soft:#3c2921;
+}
+html[data-theme="light"][data-accent="blue"] { --tt-accent:#245bb0; --tt-accent-soft:#e7eefb; }
+html[data-theme="dark"][data-accent="blue"] { --tt-accent:#99bfff; --tt-accent-soft:#20314a; }
+html[data-theme="light"][data-accent="green"] { --tt-accent:#256842; --tt-accent-soft:#e4f1e8; }
+html[data-theme="dark"][data-accent="green"] { --tt-accent:#95d6ad; --tt-accent-soft:#1f3829; }
+html[data-theme] {
+  --bg:var(--tt-bg); --bg-1:var(--tt-bg); --bg-2:var(--tt-bg); --bg-3:var(--tt-bg);
+  --surface:var(--tt-surface); --surface-solid:var(--tt-surface); --solid:var(--tt-surface);
+  --surface2:var(--tt-raised); --surface-2:var(--tt-raised); --surface-strong:var(--tt-raised);
+  --raised:var(--tt-raised); --card:var(--tt-surface); --card-strong:var(--tt-raised);
+  --surface-card:var(--tt-surface); --surface-hover:var(--tt-raised);
+  --text:var(--tt-text); --ink:var(--tt-text); --text-mid:var(--tt-muted); --text-muted:var(--tt-muted);
+  --text-faint:var(--tt-muted); --muted:var(--tt-muted); --muted-2:var(--tt-muted); --faint:var(--tt-muted);
+  --border:var(--tt-border); --border-soft:var(--tt-border); --line:var(--tt-border);
+  --accent:var(--tt-accent); --accent-dark:var(--tt-accent); --accent-soft:var(--tt-accent-soft);
+  --accent-light:var(--tt-accent-soft); --blue:var(--tt-accent); --blue-soft:var(--tt-accent-soft);
+  --focus:var(--tt-accent); --white-soft:var(--tt-surface); --shadow:0 4px 20px #00000010;
+}
+html[data-theme] body { background-color:var(--tt-bg); color:var(--tt-text); }
+html[data-theme] :is(body.site-home,body.tt-qr,body.tt-shortlink,body.tt-public,body.tt-private,body.taithai-movie,body.tt-planner,body.tt-ace) { background:var(--tt-bg); }
+html[data-theme] body.site-home .toolkit-item:first-child { background:var(--tt-accent); color:var(--tt-bg); }
+html[data-theme] body.site-home .toolkit-item:first-child:hover { background:var(--tt-text); color:var(--tt-bg); }
+html[data-theme] body.site-home .browse-button:hover { background:var(--tt-accent); color:var(--tt-bg); }
+html[data-theme] :is(.tt-qr,.tt-shortlink) :is(.card,.panel,.google-login-btn,.user-profile-bar,#result) { background:var(--tt-surface); border-color:var(--tt-border); color:var(--tt-text); }
+html[data-theme] :is(.tt-qr,.tt-shortlink) :is(input:not([type="color"]),select,textarea) { background:var(--tt-bg); border-color:var(--tt-border); color:var(--tt-text); }
+html[data-theme] :is(.tt-qr,.tt-shortlink) :is(button.secondary,.file-label) { background:var(--tt-raised); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] :is(.tt-qr,.tt-shortlink) .result-box { background:var(--tt-raised); color:var(--tt-text); }
+/* QR and image/video previews retain their own rendering colors. */
+html[data-theme] .tt-public :is(header,.table-wrap,.upload-options,.password-box,.modal-head) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-public :is(th,.modal-head button) { background:var(--tt-raised); color:var(--tt-text); }
+html[data-theme] .tt-public :is(td,th) { border-color:var(--tt-border); }
+html[data-theme] .tt-public tbody tr:hover { background:var(--tt-raised); }
+html[data-theme] .tt-public :is(input,.search) { background:var(--tt-bg); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-public :is(.dropzone,.toolbar) { color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-public .brand-mark { background:var(--tt-accent); color:var(--tt-bg); }
+html[data-theme] .tt-private :is(.nav,.drive-preview,.device,.step,.notice,.back,.drive-window,.file-row) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-private :is(.eyebrow,.url-box,.file-icon) { background:var(--tt-raised); color:var(--tt-text); border-color:var(--tt-border); }
+/* Chat's --cream is a background, while Movie Memory uses --cream as foreground. */
+html[data-theme] .tt-chat { --cream:var(--tt-bg); --white:var(--tt-surface); --dark:var(--tt-text); --brown:var(--tt-muted); --gray:var(--tt-muted); --peach:var(--tt-raised); --peach2:var(--tt-border); --rose:var(--tt-accent-soft); --rose2:var(--tt-accent); }
+html[data-theme] .tt-chat .app { background:var(--tt-bg); }
+html[data-theme] .taithai-movie { --cream:var(--tt-text); --muted-dark:var(--tt-muted); }
+html[data-theme] .taithai-movie :is(header,.page-header,.toolbar,.settings-panel,.settings-preview,.dashboard-stat,.dashboard-panel,.guide-card,.tutorial-card,.page-logo,.page-button,.control,.settings-choice-mark,.modal,.catalog-header-title,.catalog-search-bar,.watch-history-heading,.social-profile-head) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); box-shadow:none; }
+html[data-theme] .taithai-movie :is(.settings-choice,.settings-switch,.dashboard-empty,.breakdown-track) { background:var(--tt-raised); color:var(--tt-text); }
+html[data-theme] .taithai-movie .settings-choice[aria-pressed="true"] { background:color-mix(in srgb,var(--gold) 12%,var(--tt-surface)); }
+html[data-theme] .taithai-movie :is(.grain,.glow-spot) { display:none; }
+html[data-theme="light"] .taithai-movie .settings-choice[aria-pressed="true"] .settings-choice-mark { color:#111; background:var(--gold); }
+/* Preserve Movie Memory's own font, accent, density and collection preferences. */
+html[data-theme="light"] .taithai-movie :is(.settings-danger,.danger-btn) { color:#a32920; }
+html[data-theme="light"] .taithai-movie .page-button.primary { color:#111; background:var(--gold); }
+html[data-theme] .tt-planner :is(.selector-box,.progress-box,.search-box,.extra-box,.upload-box,.confirm-card,.semester-card,.subject-card,.summary-box,.share-box,.modal-content,.detail-box) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-planner :is(.search-item,.extra-item,.confirm-chip,select,input,.subject-top,.detail-card) { background:var(--tt-raised); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-planner :is(label,.extra-empty,.section-title p,.subject-name,.modal-content p,.summary-table) { color:var(--tt-text); }
+html[data-theme] .tt-planner :is(th,td) { border-color:var(--tt-border); }
+/* Chordly's streaming homepage historically forced dark; explicit theme now wins. */
+html[data-theme] .tt-chordly:has(.netflixHome),html[data-theme] .tt-chordly .netflixHome { --bg:var(--tt-bg); --surface:var(--tt-surface); --surface2:var(--tt-raised); --text:var(--tt-text); --muted:var(--tt-muted); --line:var(--tt-border); background:var(--tt-bg); color:var(--tt-text); }
+html[data-theme] .tt-chordly .siteHeader,html[data-theme] .tt-chordly footer { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-chordly :is(.logo,.streamNav a,.backToTai,.streamTile,.streamRailHead,.streamEmptyHistory h2) { color:var(--tt-text); }
+html[data-theme] .tt-chordly :is(.streamHeroContent>p,.streamTile>span,.streamEmptyHistory p,.streamEmptyHistory small,.streamRailHead>div>span) { color:var(--tt-muted); }
+html[data-theme] .tt-chordly :is(.streamEmptyHistory,.streamInlineError,.streamHeroSearch .searchBox,.headerSearch .searchBox,.streamTileSkeleton) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .tt-chordly :is(.streamHeroSearch input,.headerSearch input) { color:var(--tt-text); }
+html[data-theme] .tt-chordly .streamHero { background:var(--tt-bg); }
+html[data-theme] .tt-chordly .streamHeroShade { background:linear-gradient(90deg,var(--tt-bg) 0%,color-mix(in srgb,var(--tt-bg) 90%,transparent) 28%,transparent 80%),linear-gradient(0deg,var(--tt-bg),transparent 70%); }
+html[data-theme] .tt-chordly .streamHeroContent h1 { text-shadow:none; }
+html[data-theme] .tt-chordly .streamSecondary { background:var(--tt-raised); color:var(--tt-text)!important; }
+html[data-theme] .tt-chordly .streamPrimary { background:var(--tt-text); color:var(--tt-bg)!important; }
+html[data-theme] .tt-ace { --glass:var(--tt-surface); --black:var(--tt-text); }
+html[data-theme="dark"] .tt-ace { --ice:#243b48; --lilac:#352d45; --mint:#203d2c; --blue-soft:#203248; --blue-edge:#445d79; --blue-ink:#a8caff; --mint-soft:#203a2d; --mint-edge:#456550; --mint-ink:#abdbba; --lilac-soft:#342b43; --lilac-edge:#645477; --lilac-ink:#d7b9fa; --danger:#ffb3a9; --danger-soft:#472724; --success:#a1d7b8; --success-soft:#213a2d; --warning:#e4c58f; --warning-soft:#3c3423; }
+html[data-theme="dark"] .tt-ace :is(.card,.glass-card,.demo-card,.contact-form,.site-header,.site-footer,.mobile-nav,.field input,.field select,.field textarea) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-font-size="large"] { font-size:112.5%; }
+html[data-font-size="large"] :is(.tt-qr,.tt-shortlink,.tt-public,.tt-private,.tt-planner,.taithai-movie,.tt-chordly) :is(p,label,input,select,textarea,.app-desc,.page-intro,.settings-panel-head p,.settings-choice-copy strong) { font-size:max(1rem,1em); }
+html[data-motion="reduce"] { scroll-behavior:auto!important; }
+html[data-motion="reduce"] *,html[data-motion="reduce"] *::before,html[data-motion="reduce"] *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+/* Global utility navigation is in flow: it never covers a file action or chat composer. */
+.site-utility { box-sizing:border-box; display:block; width:100%; flex:0 0 auto; clear:both; margin:24px 0 0; padding:12px 20px max(12px,env(safe-area-inset-bottom)); border-top:1px solid var(--tt-border,#d8dbd3); background:var(--tt-surface,#fff); color:var(--tt-muted,#62665d); font:400 14px/1.5 system-ui,"Noto Sans Thai",sans-serif; text-align:center; }
+.site-utility__links { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:4px 16px; max-width:1200px; margin:auto; }
+.site-utility a { display:inline-flex; align-items:center; min-height:44px; color:inherit; text-decoration:none; padding:4px 0; }
+.site-utility a:hover { color:var(--tt-accent,#a74128); text-decoration:underline; text-underline-offset:4px; }
+.site-utility a:focus-visible { outline:3px solid var(--tt-accent,#a74128); outline-offset:4px; border-radius:4px; }
+.site-utility a[aria-current="page"] { color:var(--tt-text,#242522); font-weight:600; }
+.site-utility__offline { margin:8px auto 0; max-width:780px; padding:8px 12px; border:1px solid var(--tt-border,#d8dbd3); border-radius:8px; text-align:start; color:var(--tt-text,#242522); background:var(--tt-raised,#efefec); }
+.site-utility__offline[hidden] { display:none!important; }
+body.tt-qr,body.tt-shortlink { flex-direction:column; }
+body.tt-qr>.site-utility,body.tt-shortlink>.site-utility { max-width:960px; border-radius:12px; border:1px solid var(--tt-border,#d8dbd3); }
+body.tt-chat>.site-utility { position:relative; margin:0; padding:0 8px; min-height:44px; max-height:88px; overflow:auto; border-top:0; border-bottom:1px solid var(--tt-border,#d8dbd3); }
+body.tt-chat .site-utility__links { gap:0 12px; flex-wrap:wrap; justify-content:center; width:100%; }
+body.tt-chat>.app { height:calc(100dvh - var(--tt-utility-height,44px)); }
+body.tt-chat .site-utility__offline { margin:0; }
+@media(max-width:680px) { .site-utility { padding-inline:16px; } .site-utility__links { gap:0 16px; } html[data-theme] .tt-chordly .streamHeroShade { background:linear-gradient(0deg,var(--tt-bg),color-mix(in srgb,var(--tt-bg) 92%,transparent) 35%,transparent 80%); } }
+/* Additional Movie Memory surfaces that previously assumed a black canvas. */
+html[data-theme] .taithai-movie :is(.feature-shortcut-card,.quote-box,.empty-state,.people-results,.brand-logo,.google-login-btn,.user-profile-bar,.btn-ghost,.mobile-filter-toggle,.view-toggle,.view-btn.active,.ticket-stub-card,.ticket-stub-top,.social-movie,.watch-history-card,.watch-availability-section,.inspect-meta-grid,.inspect-quote,.modal-header,.modal-footer,.wizard-steps,.choice-card-btn,.catalog-item-card,.upload-box-card,.chip,.poster-option,.rewatch-ticket-upload,.close-modal-btn,.recommendation-card,.account-badge,.restart-header,.secondary-btn,.settings-choice-mark) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); box-shadow:none; }
+html[data-theme] .taithai-movie dialog { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+html[data-theme] .taithai-movie .quote-box { color:var(--tt-muted); }
+html[data-theme] .taithai-movie :is(.watch-region-badge,.watch-all-link,.watch-provider-type,.watch-provider-name) { color:var(--tt-text); }
+html[data-theme] .taithai-movie .ambient { display:none; }
+html[data-theme] .taithai-movie .collection-grid.list-view .movie-card { background:var(--tt-surface); color:var(--tt-text); }
+/* Movie posters and exported stories are content. Their dark overlay always needs light ink. */
+html[data-theme] .taithai-movie .collection-grid:not(.list-view) .movie-card,
+html[data-theme] .taithai-movie :is(.choice-copy,.winner-copy) { --cream:#f5f5f7; --muted:#c5c7c1; color:#f5f5f7; }
+html[data-theme] .taithai-movie .badge-format { color:#f5f5f7; }
+html[data-theme="light"] .taithai-movie .hero h1 em { background:none; -webkit-text-fill-color:currentColor; color:#9a5100; }
+html[data-theme="light"][data-mm-accent="rose"] .taithai-movie .hero h1 em { color:#b92045; }
+html[data-theme="light"][data-mm-accent="blue"] .taithai-movie .hero h1 em { color:#175cb0; }
+html[data-theme="light"] .taithai-movie :is(.settings-panel-icon,.page-kicker,.settings-preview small,.intro-count,.kicker,.add-movie-link,.breakdown-count,.recommendation-reason,.taste-genre,.page-title em) { color:#9a5100; }
+html[data-theme="light"][data-mm-accent="rose"] .taithai-movie :is(.settings-panel-icon,.page-kicker,.settings-preview small,.intro-count,.kicker,.add-movie-link,.breakdown-count,.recommendation-reason,.taste-genre,.page-title em) { color:#b92045; }
+html[data-theme="light"][data-mm-accent="blue"] .taithai-movie :is(.settings-panel-icon,.page-kicker,.settings-preview small,.intro-count,.kicker,.add-movie-link,.breakdown-count,.recommendation-reason,.taste-genre,.page-title em) { color:#175cb0; }
+html[data-font-size="large"] .site-utility { font-size:1rem; }
+/* Keep primary-action contrast correct when a dark theme uses a pale accent. */
+html[data-theme] .tt-qr :is(label,.mini-label,.hint) { color:var(--tt-muted); }
+html[data-theme] .tt-qr :is(.primary,#startBtn,#openBtn),
+html[data-theme] .tt-shortlink button:not(.google-login-btn):not(.logout-btn),
+html[data-theme] .tt-private .primary,
+html[data-theme] .tt-chat .btn-primary,
+html[data-theme] .tt-chat .msg-group.me :is(.bubble,.file-bubble) { background:var(--tt-accent); color:var(--tt-bg); }
+html[data-theme] .tt-chat .msg-group.me .bubble a { color:inherit; }
+html[data-theme] .tt-ace :is(.button-primary,.skip-link) { background:var(--tt-text); color:var(--tt-bg); border-color:var(--tt-text); }
+html[data-theme] .tt-ace .button-primary:hover { background:var(--tt-accent); color:var(--tt-bg); border-color:var(--tt-accent); }
+html[data-theme="dark"] .tt-ace :is(.section-surface,.icon-button,.human-controls .button,.notice,.request-preview) { background:var(--tt-surface); color:var(--tt-text); border-color:var(--tt-border); }
+/* Consent is an isolated, dismissible region. App-specific button rules cannot
+   turn its choices into full-width actions or hide the decline option. */
+.site-consent { box-sizing:border-box!important; position:fixed!important; z-index:1500!important; inset:auto 20px 20px auto!important; display:block!important; width:420px!important; max-width:calc(100vw - 40px)!important; max-height:calc(100dvh - 40px)!important; overflow:auto!important; margin:0!important; padding:20px!important; border:1px solid var(--tt-border,#d8dbd3)!important; border-radius:12px!important; background:var(--tt-surface,#fff)!important; color:var(--tt-text,#242522)!important; box-shadow:0 8px 32px #00000024!important; font:400 14px/1.6 system-ui,"Noto Sans Thai",sans-serif!important; text-align:start!important; letter-spacing:0!important; }
+.site-consent strong { display:block!important; font:600 16px/1.5 system-ui,"Noto Sans Thai",sans-serif!important; margin:0 0 8px!important; color:var(--tt-text,#242522)!important; }
+.site-consent p { margin:0 0 16px!important; color:var(--tt-muted,#62665d)!important; font:400 14px/1.6 system-ui,"Noto Sans Thai",sans-serif!important; }
+.site-consent .button-row { display:flex!important; flex-wrap:wrap!important; gap:12px!important; margin:0 0 12px!important; padding:0!important; }
+.site-consent .button { box-sizing:border-box!important; display:inline-flex!important; align-items:center!important; justify-content:center!important; min-height:44px!important; width:auto!important; max-width:100%!important; flex:1 1 auto!important; margin:0!important; padding:8px 16px!important; border:1px solid var(--tt-border,#d8dbd3)!important; border-radius:8px!important; background:var(--tt-raised,#efefec)!important; color:var(--tt-text,#242522)!important; box-shadow:none!important; font:500 14px/1.5 system-ui,"Noto Sans Thai",sans-serif!important; cursor:pointer!important; opacity:1!important; transform:none!important; }
+.site-consent .button:hover { border-color:var(--tt-text,#242522)!important; }
+.site-consent .button:focus-visible,.site-consent a:focus-visible { outline:3px solid var(--tt-accent,#a74128)!important; outline-offset:3px!important; }
+.site-consent a { display:inline-block!important; min-height:24px!important; padding:0!important; margin:0!important; color:var(--tt-accent,#a74128)!important; font:400 14px/1.5 system-ui,"Noto Sans Thai",sans-serif!important; text-decoration:underline!important; text-underline-offset:3px!important; }
+@media(max-width:680px) { .site-consent { inset:auto 12px 12px!important; width:auto!important; max-width:calc(100vw - 24px)!important; max-height:calc(80dvh - 24px)!important; padding:16px!important; } }

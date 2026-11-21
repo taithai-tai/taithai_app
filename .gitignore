@@ -3,3 +3,9 @@ public/
 .env
 .env.*
 !.env.example
+
+# Local builds and Firebase CLI state
+chordly/.next/
+chordly/out/
+.firebase/
+firebase-debug.log

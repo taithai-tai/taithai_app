@@ -24,6 +24,15 @@ export async function buildACE({ output = path.join(root, 'public'), basePath = 
         });
         const oldOrigin = 'https://ace-everyday-taithai.taithai5002.chatgpt.site';
         content = content.replaceAll(oldOrigin, siteUrl || basePath || '/');
+        // Global Taithai utilities live outside ACE. Add after route prefixing so
+        // /settings and /assets remain on the parent site, not under /ACE.
+        if (entry.name.endsWith('.html') && basePath === '/ACE') {
+          content = content.replace(/(<meta\s+charset=[^>]+>)/i,
+            '$1\n<script src="/assets/site-preferences.js"></script>');
+          content = content.replace('</head>', '<link rel="stylesheet" href="/assets/site-theme.css"><script src="/assets/site-utility.js" defer></script><script type="module" src="/assets/site-telemetry.js"></script></head>');
+          content = content.replace(/<body([^>]*)>/i, (tag, attrs) =>
+            /class=/.test(attrs) ? tag.replace(/class=(["'])/, 'class=$1tt-ace ') : `<body class="tt-ace"${attrs}>`);
+        }
         if (entry.name === 'site.js' && basePath) {
           content = content.replace('<strong>สำรวจเว็บไซต์</strong>', '<strong>สำรวจเว็บไซต์</strong><a href="/">กลับ Taithai Apps</a>');
         }

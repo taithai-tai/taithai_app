@@ -2,9 +2,10 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
+  <script src="/assets/site-preferences.js"></script>
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <title>ไพรเวทแอป · Taithai Drive</title>
-  <meta name="description" content="Taithai Private Drive — เปิด ดู อัปโหลด และดาวน์โหลดไฟล์จากทุกอุปกรณ์" />
+  <meta name="description" content="Taithai Private Drive — ทางเข้าไดรฟ์ส่วนตัวสำหรับบัญชีเจ้าของที่ยืนยันแล้ว" />
   <meta name="theme-color" content="#f5f7ff" />
   <link rel="manifest" href="./manifest.webmanifest" />
   <link rel="icon" href="../assets/home-icons/public-drive.webp" />
@@ -65,9 +66,13 @@
     @media(max-width:560px){.nav-inner,main{padding-left:16px;padding-right:16px}.brand span:last-child{display:none}.hero{padding-top:50px}.actions{align-items:stretch}.primary,.secondary{width:100%}.connection{grid-template-columns:1fr}.copy{width:100%}h1{font-size:clamp(42px,14vw,62px)}}
     @media(prefers-color-scheme:dark){:root{--bg:#111319;--surface:rgba(28,31,42,.88);--solid:#202430;--text:#f2f4fb;--muted:#adb5ca;--faint:#8992aa;--line:rgba(255,255,255,.11);--blue-soft:rgba(90,119,224,.17)}body{background:radial-gradient(circle at 92% 5%,rgba(83,111,215,.18),transparent 31rem),var(--bg)}.nav{background:rgba(17,19,25,.78)}.drive-preview{background:linear-gradient(145deg,rgba(35,39,52,.96),rgba(28,35,60,.90))}.file-icon{background:#252a37}.eyebrow,.url-box{color:#b9c8ff}}
     @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
+    [hidden]{display:none!important}.url-box{display:block;width:100%;min-width:0;font:inherit;user-select:text}.connection>div{min-width:0;flex:1}.actions button{font:inherit;cursor:pointer}.primary[aria-disabled="true"]{pointer-events:none}
   </style>
+  <link rel="stylesheet" href="/assets/site-theme.css">
+  <script src="/assets/site-utility.js" defer></script>
+  <script type="module" src="/assets/site-telemetry.js"></script>
 </head>
-<body>
+<body class="tt-private">
   <nav class="nav">
     <div class="nav-inner">
       <a class="brand" href="../"><span class="brand-mark">🔐</span><span>Taithai Drive</span></a>
@@ -76,82 +81,72 @@
   </nav>
 
   <main>
-    <section class="hero">
+    <section class="hero" aria-labelledby="driveTitle">
       <div>
-        <span class="eyebrow"><span class="status-dot" id="statusDot"></span><span id="statusText">ไพรเวทแอป · กำลังตรวจสอบระบบ</span></span>
-        <h1>ไฟล์ของคุณ<br />อยู่ใกล้แค่คลิกเดียว</h1>
-        <p class="lead">เปิด ดู อัปโหลด และดาวน์โหลดไฟล์จากโทรศัพท์ แท็บเล็ต หรือคอมพิวเตอร์ได้ทุกที่ หน้าไดรฟ์จะขอรหัสก่อนเข้าใช้งาน</p>
+        <span class="eyebrow" id="statusText" role="status" aria-live="polite">กำลังตรวจสอบบัญชี</span>
+        <h1 id="driveTitle">ไดรฟ์ส่วนตัว<br />สำหรับเจ้าของบัญชี</h1>
+        <p class="lead">เข้าสู่ระบบด้วยบัญชีเจ้าของเพื่อดูทางเข้าไดรฟ์และข้อมูลเชื่อมต่อ ข้อมูลเหล่านี้จะไม่แสดงต่อผู้ใช้ทั่วไป</p>
         <div class="actions">
-          <a class="primary" id="openDrive" href="https://taithai-agent.taila769e0.ts.net:8443/web/client/pubshares/37FWvkryKUPYX3hEwE4MEb/browse">เปิดไพรเวทแอป <span aria-hidden="true">↗</span></a>
-          <a class="secondary" href="#devices">วิธีเชื่อมต่อทุกอุปกรณ์</a>
+          <button class="primary" id="privateDriveSignIn" type="button" hidden>เข้าสู่ระบบด้วย Google</button>
+          <button class="secondary" id="privateDriveSignOut" type="button" hidden>ออกจากบัญชี</button>
+          <button class="secondary" id="privateDriveRetry" type="button" hidden>ลองตรวจสอบอีกครั้ง</button>
+          <a class="secondary" href="#devices">วิธีเชื่อมต่ออุปกรณ์</a>
+        </div>
+        <div id="privateDriveAccess" data-private hidden>
+          <p id="privateDriveAccount" class="lead" style="font-size:14px;margin-top:20px"></p>
+          <a class="primary" id="openDrive" aria-disabled="true" target="_blank" rel="noopener noreferrer">เปิดไดรฟ์ส่วนตัว</a>
+          <p class="lead" style="font-size:14px;margin-top:12px">ลิงก์นี้เปิดหน้าไดรฟ์ภายนอก ซึ่งอาจขอรหัสเข้าไดรฟ์แยกจากบัญชี Google การโหลดข้อมูลเชื่อมต่อสำเร็จไม่ได้ยืนยันว่าเครื่องไดรฟ์ออนไลน์อยู่</p>
         </div>
       </div>
-      <div class="drive-preview" aria-label="ตัวอย่างหน้าจอไดรฟ์">
-        <div class="preview-top"><div><div class="preview-title">Taithai Drive</div><div class="file-meta">พื้นที่ไฟล์ส่วนตัว</div></div><div class="lock">🔐</div></div>
-        <div class="file-row"><div class="file-icon">📁</div><div><div class="file-name">เอกสาร</div><div class="file-meta">โฟลเดอร์</div></div><span class="dots">•••</span></div>
-        <div class="file-row"><div class="file-icon">🖼️</div><div><div class="file-name">รูปภาพ</div><div class="file-meta">แก้ไขล่าสุดวันนี้</div></div><span class="dots">•••</span></div>
-        <div class="file-row"><div class="file-icon">🎬</div><div><div class="file-name">วิดีโอ</div><div class="file-meta">พร้อมดูจากทุกอุปกรณ์</div></div><span class="dots">•••</span></div>
-        <div class="file-row"><div class="file-icon">📄</div><div><div class="file-name">ไฟล์ของฉัน</div><div class="file-meta">เก็บบนฮาร์ดดิสก์ที่บ้าน</div></div><span class="dots">•••</span></div>
+      <div class="drive-preview" aria-label="ตัวอย่างการจัดโฟลเดอร์ ไม่ใช่รายการไฟล์จริง">
+        <div class="preview-top"><div><div class="preview-title">Taithai Drive</div><div class="file-meta">ตัวอย่างการจัดโฟลเดอร์</div></div></div>
+        <div class="file-row"><div class="file-icon" aria-hidden="true">D</div><div><div class="file-name">เอกสาร</div><div class="file-meta">ตัวอย่างโฟลเดอร์</div></div></div>
+        <div class="file-row"><div class="file-icon" aria-hidden="true">P</div><div><div class="file-name">รูปภาพ</div><div class="file-meta">ตัวอย่างโฟลเดอร์</div></div></div>
+        <div class="file-row"><div class="file-icon" aria-hidden="true">V</div><div><div class="file-name">วิดีโอ</div><div class="file-meta">ตัวอย่างโฟลเดอร์</div></div></div>
+        <div class="file-row"><div class="file-icon" aria-hidden="true">F</div><div><div class="file-name">ไฟล์ของฉัน</div><div class="file-meta">รายการจริงแสดงในหน้าไดรฟ์</div></div></div>
       </div>
     </section>
+    <noscript><p class="notice">หน้านี้ต้องใช้ JavaScript เพื่อตรวจสอบสิทธิ์บัญชี <a href="/help/">เปิดศูนย์ช่วยเหลือ</a> หรือกลับหน้าแอปทั้งหมดได้</p></noscript>
 
     <section class="section">
-      <div class="section-head"><div class="kicker">เริ่มใช้งาน</div><h2>ง่ายในสามขั้นตอน</h2><p>ไม่ต้องสมัครบัญชีใหม่ และไม่ต้องติดตั้งแอปหากใช้งานผ่านเบราว์เซอร์</p></div>
+      <div class="section-head"><div class="kicker">เริ่มใช้งาน</div><h2>เข้าใช้งานอย่างเป็นขั้นตอน</h2><p>ไม่ต้องสร้างบัญชีใหม่ ใช้บัญชี Google ของเจ้าของที่ยืนยันอีเมลแล้ว</p></div>
       <div class="steps">
-        <article class="step"><div class="step-num">1</div><h3>เปิดไพรเวทแอป</h3><p>กดปุ่มด้านบนจากอุปกรณ์ใดก็ได้ที่เชื่อมต่ออินเทอร์เน็ต</p></article>
-        <article class="step"><div class="step-num">2</div><h3>ใส่รหัสเข้าใช้งาน</h3><p>กรอกรหัสที่ได้รับ หน้าไดรฟ์จะไม่แสดงไฟล์ก่อนยืนยันรหัส</p></article>
-        <article class="step"><div class="step-num">3</div><h3>จัดการไฟล์</h3><p>ดู ดาวน์โหลด อัปโหลด และสร้างโฟลเดอร์ได้จากหน้าเดียว</p></article>
+        <article class="step"><div class="step-num">1</div><h3>ยืนยันบัญชีเจ้าของ</h3><p>เข้าสู่ระบบด้วย Google ระบบจะตรวจสิทธิ์ก่อนขอข้อมูลเชื่อมต่อ</p></article>
+        <article class="step"><div class="step-num">2</div><h3>เปิดหน้าไดรฟ์</h3><p>เมื่อข้อมูลพร้อมใช้ ปุ่มเปิดไดรฟ์จะแสดงขึ้น หน้าไดรฟ์ภายนอกอาจขอรหัสอีกครั้ง</p></article>
+        <article class="step"><div class="step-num">3</div><h3>จัดการไฟล์ในไดรฟ์</h3><p>หากเปิดหน้าไดรฟ์ไม่ได้ ให้ตรวจอินเทอร์เน็ตและเครื่องที่เก็บไฟล์ก่อนลองใหม่</p></article>
       </div>
     </section>
 
     <section class="section" id="devices">
-      <div class="section-head"><div class="kicker">เชื่อมต่อ</div><h2>ใช้ได้กับทุกอุปกรณ์</h2><p>วิธีผ่านเว็บเหมาะสำหรับทุกคน ส่วนเจ้าของไดรฟ์สามารถเพิ่มเป็นตำแหน่งใน Files, Finder และ File Explorer ได้โดยตรงผ่าน Tailscale</p></div>
+      <div class="section-head"><div class="kicker">เชื่อมต่อ</div><h2>ใช้งานจากอุปกรณ์ของคุณ</h2><p>ข้อมูลเชื่อมต่อจะแสดงหลังยืนยันบัญชีเจ้าของเท่านั้น การเชื่อมต่อ Files, Finder หรือ File Explorer ใช้บัญชีไดรฟ์แยกจาก Google และอาจต้องเข้าเครือข่าย Tailscale ของเจ้าของ</p></div>
       <div class="device-grid">
-        <article class="device"><div class="device-head"><div class="device-icon">🪟</div><div><h3>Windows / Notebook</h3><div class="device-sub">เว็บหรือ File Explorer ผ่าน SMB</div></div></div><ol><li>เปิด Tailscale แล้วเข้าเครือข่ายเดียวกับเซิร์ฟเวอร์</li><li>วาง <strong>\\taithai-agent.taila769e0.ts.net\TaithaiDrive</strong> ในแถบที่อยู่ File Explorer</li><li>เลือก More choices แล้วใส่บัญชีเจ้าของไดรฟ์</li></ol></article>
-        <article class="device"><div class="device-head"><div class="device-icon"></div><div><h3>MacBook / macOS</h3><div class="device-sub">Safari, Finder หรือ SMB</div></div></div><ol><li>เปิด Tailscale แล้วเปิด Finder</li><li>เลือก Go → Connect to Server หรือกด Command + K</li><li>วาง <strong>smb://taithai-agent.taila769e0.ts.net/TaithaiDrive</strong> แล้วใส่บัญชีเจ้าของ</li></ol></article>
-        <article class="device"><div class="device-head"><div class="device-icon">📱</div><div><h3>iPhone / iPad</h3><div class="device-sub">เพิ่มเข้าแอป Files โดยตรง</div></div></div><ol><li>ติดตั้งและเปิด Tailscale ด้วยบัญชีเครือข่ายของเจ้าของ</li><li>Files → Browse → เมนู ••• → Connect to Server</li><li>วางที่อยู่ SMB ด้านล่าง เลือก Registered User แล้วเลือก <strong>TaithaiDrive</strong></li></ol></article>
-        <article class="device"><div class="device-head"><div class="device-icon">🤖</div><div><h3>Android / โทรศัพท์</h3><div class="device-sub">Chrome, Home Screen หรือ WebDAV</div></div></div><ol><li>เปิดด้วย Chrome แล้วใส่รหัสเพื่อเข้าไดรฟ์</li><li>เมนู ⋮ → Add to Home screen เพื่อติดตั้งทางลัด</li><li>เจ้าของไดรฟ์สามารถใช้แอปจัดการไฟล์ที่รองรับ WebDAV</li></ol></article>
+        <article class="device"><div class="device-head"><div><h3>Windows / Notebook</h3><div class="device-sub">เว็บหรือ File Explorer</div></div></div><ol><li>ยืนยันบัญชีเจ้าของด้านบน</li><li>เปิด Tailscale หากใช้การเชื่อมต่อในเครือข่ายส่วนตัว</li><li>ใช้ข้อมูล SMB ที่แสดงด้านล่างในแอปจัดการไฟล์</li></ol></article>
+        <article class="device"><div class="device-head"><div><h3>MacBook / macOS</h3><div class="device-sub">เว็บหรือ Finder</div></div></div><ol><li>ยืนยันบัญชีเจ้าของ แล้วเปิด Tailscale หากจำเป็น</li><li>ใน Finder เลือก Go แล้วเลือก Connect to Server</li><li>ใช้ข้อมูล SMB ที่แสดงด้านล่าง แล้วใส่บัญชีไดรฟ์</li></ol></article>
+        <article class="device"><div class="device-head"><div><h3>iPhone / iPad</h3><div class="device-sub">เว็บหรือแอป Files</div></div></div><ol><li>ยืนยันบัญชีเจ้าของและเปิดเครือข่ายที่ใช้กับไดรฟ์</li><li>ใน Files เลือก Browse แล้วเลือก Connect to Server</li><li>ใช้ข้อมูล SMB ด้านล่างกับบัญชีไดรฟ์</li></ol></article>
+        <article class="device"><div class="device-head"><div><h3>Android / โทรศัพท์</h3><div class="device-sub">เว็บหรือแอปจัดการไฟล์</div></div></div><ol><li>ยืนยันบัญชีเจ้าของ แล้วเปิดหน้าไดรฟ์จากปุ่มด้านบน</li><li>หากหน้าไดรฟ์ขอรหัส ให้ใช้รหัสของไดรฟ์</li><li>แอปจัดการไฟล์ที่รองรับ WebDAV ใช้ข้อมูลที่แสดงหลังยืนยันบัญชีได้</li></ol></article>
       </div>
     </section>
 
-    <section class="section">
-      <div class="connection">
-        <div><div class="kicker">iPhone และ iPad</div><h3>เพิ่มเข้าแอป Files โดยตรง</h3><p>เปิด Tailscale ก่อน แล้วใน Files เลือก Browse → ••• → Connect to Server จากนั้นวางที่อยู่นี้ เลือก Registered User และใช้บัญชีเจ้าของไดรฟ์ รหัสหน้าเว็บใช้แทนบัญชีนี้ไม่ได้</p><div class="url-box" id="smbUrl">smb://taithai-agent.taila769e0.ts.net</div></div>
-        <button class="copy" type="button" data-copy="smb://taithai-agent.taila769e0.ts.net">คัดลอกที่อยู่ SMB</button>
+    <section class="section" id="privateDriveConnections" data-private hidden>
+      <div class="section-head"><div class="kicker">เฉพาะเจ้าของ</div><h2>ข้อมูลเชื่อมต่อของคุณ</h2><p>อย่าส่งข้อมูลเชื่อมต่อหรือรหัสของไดรฟ์ผ่านแบบฟอร์มแจ้งปัญหา</p></div>
+      <div class="connection" data-config-section="smbUrl" hidden>
+        <div><h3>SMB — เชื่อมต่อเซิร์ฟเวอร์</h3><p>ใช้ใน Files หรือ Finder เมื่ออยู่ในเครือข่ายของไดรฟ์</p><label class="file-meta" for="smbUrl">ที่อยู่ SMB</label><input class="url-box" id="smbUrl" type="text" readonly autocomplete="off" spellcheck="false" value=""></div>
+        <button class="copy" type="button" data-copy-field="smbUrl">คัดลอกที่อยู่ SMB</button>
       </div>
-      <div class="notice"><span aria-hidden="true">🔒</span><div><strong>SMB เปิดเฉพาะในเครือข่าย Tailscale</strong><br />พอร์ตแชร์ไฟล์ไม่ได้เปิดสู่อินเทอร์เน็ต ผู้ใช้หน้าเว็บไม่สามารถใช้บัญชี Files ของเจ้าของได้</div></div>
-    </section>
-
-    <section class="section">
-      <div class="connection">
-        <div><div class="kicker">สำหรับเจ้าของไดรฟ์</div><h3>เชื่อมต่อแบบ WebDAV</h3><p>ใช้ URL นี้เมื่อต้องการผูกไดรฟ์เป็นโฟลเดอร์ใน Finder หรือแอปที่รองรับ WebDAV บัญชี WebDAV แยกจากรหัสเข้าไพรเวทแอป</p><div class="url-box" id="webdavUrl">https://taithai-agent.taila769e0.ts.net:10000/</div></div>
-        <button class="copy" type="button" data-copy="https://taithai-agent.taila769e0.ts.net:10000/">คัดลอก URL</button>
+      <div class="connection" data-config-section="smbShareUrl" hidden>
+        <div><h3>SMB — โฟลเดอร์แชร์</h3><p>ใช้ตำแหน่งโฟลเดอร์ที่เชื่อมกับไดรฟ์โดยตรง</p><label class="file-meta" for="smbShareUrl">ที่อยู่โฟลเดอร์</label><input class="url-box" id="smbShareUrl" type="text" readonly autocomplete="off" spellcheck="false" value=""></div>
+        <button class="copy" type="button" data-copy-field="smbShareUrl">คัดลอกตำแหน่งโฟลเดอร์</button>
       </div>
-      <div class="notice"><span aria-hidden="true">💡</span><div><strong>เครื่องเซิร์ฟเวอร์ต้องเปิดอยู่</strong><br />ไฟล์เก็บบนฮาร์ดดิสก์ที่บ้าน หากเครื่องปิด หลับ หรืออินเทอร์เน็ตขัดข้อง ไดรฟ์จะเข้าไม่ได้ชั่วคราว</div></div>
-      <div class="notice"><span aria-hidden="true">🛡️</span><div><strong>ข้อมูลยังถูกป้องกันด้วยรหัส</strong><br />ทุกคนเปิดหน้าทางเข้าได้ แต่จะไม่เห็นไฟล์จนกว่าจะใส่รหัสที่ถูกต้อง อย่าใส่รหัสนี้ในเว็บไซต์อื่น</div></div>
+      <div class="connection" data-config-section="webdavUrl" hidden>
+        <div><h3>WebDAV</h3><p>ใช้กับแอปที่รองรับ WebDAV บัญชีไดรฟ์แยกจากบัญชี Google</p><label class="file-meta" for="webdavUrl">ที่อยู่ WebDAV</label><input class="url-box" id="webdavUrl" type="text" readonly autocomplete="off" spellcheck="false" value=""></div>
+        <button class="copy" type="button" data-copy-field="webdavUrl">คัดลอกที่อยู่ WebDAV</button>
+      </div>
+      <p id="privateDriveNoConnections" class="notice" hidden>มีทางเข้าเว็บไดรฟ์แล้ว แต่ยังไม่มีข้อมูลเชื่อมต่อแอปจัดการไฟล์เพิ่มเติม</p>
+      <div class="notice"><div><strong>เครื่องที่เก็บไฟล์ต้องพร้อมใช้งาน</strong><br>หากเครื่องปิดหรืออินเทอร์เน็ตขัดข้อง อาจเปิดไดรฟ์ไม่ได้ หน้านี้ตรวจเฉพาะบัญชีและข้อมูลเชื่อมต่อ ไม่ได้ตรวจสถานะเครื่องปลายทาง</div></div>
     </section>
   </main>
-
-  <footer>Taithai Drive · Private App บน taithai.app</footer>
-  <div class="toast" id="toast" role="status">คัดลอกแล้ว</div>
-  <script>
-    const shareUrl = 'https://taithai-agent.taila769e0.ts.net:8443/web/client/pubshares/37FWvkryKUPYX3hEwE4MEb/browse';
-    const statusText = document.getElementById('statusText');
-    const statusDot = document.getElementById('statusDot');
-    document.getElementById('openDrive').href = shareUrl;
-    fetch(shareUrl, { mode: 'no-cors', cache: 'no-store' }).then(() => {
-      statusText.textContent = 'ไพรเวทแอป · พร้อมใช้งาน';
-    }).catch(() => {
-      statusText.textContent = 'ไพรเวทแอป · เซิร์ฟเวอร์ออฟไลน์ชั่วคราว';
-      statusDot.style.background = '#d9822b';
-    });
-    document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => {
-      await navigator.clipboard.writeText(button.dataset.copy);
-      const toast = document.getElementById('toast');
-      toast.classList.add('show');
-      setTimeout(() => toast.classList.remove('show'), 1800);
-    }));
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js');
-  </script>
+  <footer>Taithai Drive · ทางเข้าเฉพาะบัญชีเจ้าของ</footer>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="/assets/site-private-drive.js"></script>
 </body>
 </html>

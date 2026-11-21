@@ -4,6 +4,7 @@ import './soft-shapes.css';
 import { Logo } from '@/components/logo';
 import { SearchBox } from '@/components/search-box';
 import { ServiceWorker } from '@/components/service-worker';
+import Script from 'next/script';
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://taithai.app/Chordly'),
@@ -18,5 +19,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { width:'device-width', initialScale:1, viewportFit:'cover', themeColor:'#09090b' };
 
 export default function RootLayout({children}:{children:React.ReactNode}) {
-  return <html lang="th"><body><ServiceWorker/><header className="siteHeader"><div className="headerInner"><Logo/><nav className="streamNav" aria-label="เมนูหลัก"><a href="/Chordly/">หน้าแรก</a><a href="/Chordly/#trending">เพลงฮิต</a><a href="/Chordly/#ready">คอร์ดพร้อมเล่น</a></nav><div className="headerSearch"><SearchBox compact/></div><a className="backToTai" href="/">TaiThai Apps</a></div></header>{children}<footer><Logo/><p>คอร์ดที่อ่านง่าย สำหรับช่วงเวลาที่อยากเล่นเพลง</p><span>คอร์ดอัตโนมัติอาจต้องตรวจสอบกับเสียงต้นฉบับ</span></footer></body></html>;
+  return <html lang="th" suppressHydrationWarning><head><Script src="/assets/site-preferences.js" strategy="beforeInteractive"/><link rel="stylesheet" href="/assets/site-theme.css"/></head><body className="tt-chordly"><ServiceWorker/><header className="siteHeader"><div className="headerInner"><Logo/><nav className="streamNav" aria-label="เมนูหลัก"><a href="/Chordly/">หน้าแรก</a><a href="/Chordly/#trending">เพลงฮิต</a><a href="/Chordly/#ready">คอร์ดพร้อมเล่น</a></nav><div className="headerSearch"><SearchBox compact/></div><a className="backToTai" href="/">TaiThai Apps</a></div></header>{children}<footer><Logo/><p>คอร์ดที่อ่านง่าย สำหรับช่วงเวลาที่อยากเล่นเพลง</p><span>คอร์ดอัตโนมัติอาจต้องตรวจสอบกับเสียงต้นฉบับ</span></footer><Script src="/assets/site-utility.js" strategy="afterInteractive"/><Script type="module" src="/assets/site-telemetry.js" strategy="afterInteractive"/></body></html>;
 }

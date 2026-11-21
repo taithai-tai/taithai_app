@@ -7,7 +7,7 @@
 
   function showToast(key) {
     clearTimeout(toastTimer);
-    toast.textContent = api.t(key);
+    toast.textContent = api.t(api.canPersist?.() === false && ['settings.saved', 'settings.resetDone'].includes(key) ? 'settings.sessionOnly' : key);
     toast.classList.add('show');
     toastTimer = setTimeout(() => toast.classList.remove('show'), 1800);
   }
@@ -37,8 +37,10 @@
   });
 
   document.getElementById('resetFiltersBtn').addEventListener('click', () => {
-    localStorage.removeItem('mm_filter_settings_v1');
-    showToast('settings.filtersReset');
+    try {
+      localStorage.removeItem('mm_filter_settings_v1');
+      showToast('settings.filtersReset');
+    } catch { showToast('settings.filtersFailed'); }
   });
 
   document.getElementById('resetPreferencesBtn').addEventListener('click', () => {
