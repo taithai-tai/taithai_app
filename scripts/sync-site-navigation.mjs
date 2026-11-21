@@ -21,7 +21,8 @@ export function renderSiteNavigation({current='home',home=current==='home',langu
   const lang=language==='en'?'en':'th',copy=SITE_NAVIGATION_COPY[lang],prefix='site-nav',scroller=prefix+'-items';
   const control=(direction,shape)=>`<button type="button" class="site-nav-scroll-control site-nav-${direction==='previous'?'prev':'next'}" data-nav-${direction} aria-controls="${scroller}" aria-label="${escape(copy[direction])}" hidden>${icons(shape)}<span class="site-nav-control-label" data-th="${escape(SITE_NAVIGATION_COPY.th[direction])}" data-en="${escape(SITE_NAVIGATION_COPY.en[direction])}">${escape(copy[direction])}</span></button>`;
   const links=SITE_NAVIGATION_ITEMS.map(item=>`<a href="${SITE_NAVIGATION_ORIGIN+item.path}" data-navigation-item="${item.id}" aria-labelledby="${prefix}-${item.id}-label"${item.access?` data-${item.access}-access hidden`:''}${current===item.id?' aria-current="page"':''}>${icons(item.icon)}<span id="${prefix}-${item.id}-label" class="site-nav-label soft-nav-label" data-th="${escape(item.th)}" data-en="${escape(item.en)}">${escape(item[lang])}</span></a>`).join('');
-  return `${OPEN}<nav class="${home?'home-rail':'page-nav'} site-navigation" data-site-navigation aria-label="Taithai">${control('previous','<path d="m6 15 6-6 6 6"/>')}<div class="site-nav-scroll" data-nav-scroller id="${scroller}" tabindex="0" aria-label="${escape(copy.menu)}">${links}</div>${control('next','<path d="m6 9 6 6 6-6"/>')}</nav>${CLOSE}`;
+  const toggle=`<button type="button" class="site-nav-toggle" data-nav-toggle aria-controls="${scroller}" aria-expanded="false" aria-label="${escape(copy.expand)}">${icons('<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 3v18m4-13 4 4-4 4"/>').replace('class="nav-icon"','class="nav-icon site-nav-toggle-icon"')}<span class="site-nav-toggle-label" data-th="${escape(SITE_NAVIGATION_COPY.th.expand)}" data-en="${escape(SITE_NAVIGATION_COPY.en.expand)}">${escape(copy.expand)}</span></button>`;
+  return `${OPEN}<nav class="${home?'home-rail':'page-nav'} site-navigation" data-site-navigation aria-label="Taithai">${toggle}${control('previous','<path d="m6 15 6-6 6 6"/>')}<div class="site-nav-scroll" data-nav-scroller id="${scroller}" tabindex="0" aria-label="${escape(copy.menu)}">${links}</div>${control('next','<path d="m6 9 6 6 6-6"/>')}</nav>${CLOSE}`;
 }
 function includeScript(html,source){
   const present=[...html.matchAll(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/g)].some(match=>match[1].split('?')[0]===source);
@@ -32,6 +33,10 @@ export function renderNavigationDocument(html,{current='home',home=current==='ho
   const matcher=GENERATED.test(html)?GENERATED:LEGACY;
   if(!matcher.test(html))throw Error('PRIMARY_NAVIGATION_NOT_FOUND:'+current);
   let next=html.replace(matcher,rendered);
+  next=next.replace(/(<html\b[^>]*)(>)/i,(_,attributes,end)=>attributes.replace(/\sdata-navigation-expanded=["'][^"']*["']/i,'')+' data-navigation-expanded="false"'+end);
+  next=next.replace(/<script\b[^>]*src=["']\/assets\/site-navigation-state\.js["'][^>]*><\/script>/g,'');
+  const early='<script src="/assets/site-navigation-state.js"></script>';
+  next=/<meta\b[^>]*charset[^>]*>/i.test(next)?next.replace(/<meta\b[^>]*charset[^>]*>/i,match=>match+early):next.replace(/<head\b[^>]*>/i,match=>match+early);
   if(home){
     next=next.replace(/<details\b[^>]*class=["'][^"']*\bportal-menu\b[^"']*["'][^>]*>[\s\S]*?<\/details>/,'');
     next=next.split('\n').filter(line=>!(line.includes("document.addEventListener('keydown'")&&line.includes("document.querySelector('.portal-menu')"))&&!(line.includes("document.addEventListener('click'")&&line.includes("document.querySelector('.portal-menu')"))).join('\n').replace(/^[\t ]+$/gm,'');
