@@ -43,6 +43,20 @@ test('Netlify edge gate preserves public/unlisted access and no-store headers be
   const unlisted=await gate(request('/QR%20Code%20Reader/'),next.context);
   assert.equal(unlisted.status,200);assert.match(unlisted.headers.get('x-robots-tag'),/noindex/);assert.equal(next.count(),2);
 });
+test('Edge-generated mail responses retain the HTML image policy instead of overriding it with the admin policy',async()=>{
+  const netlify=await readFile(new URL('../netlify.toml',import.meta.url),'utf8');
+  const expected=netlify.split('for = "/mail/*"')[1].split('[[headers]]')[0].match(/Content-Security-Policy = "([^"]+)"/)[1];
+  const gate=createNetlifyAppGate({checkAccess:policy()});
+  for(const path of ['/mail/','/mail']){
+    const response=await gate(request(path),downstream().context);
+    assert.equal(response.headers.get('Content-Security-Policy'),expected);
+    assert.match(response.headers.get('Cache-Control'),/private.*no-store/);
+  }
+  for(const path of ['/admin/','/membership/']){
+    const response=await gate(request(path),downstream().context),csp=response.headers.get('Content-Security-Policy');
+    assert.doesNotMatch(csp,/img-src 'self' data: https:;/);assert.doesNotMatch(csp,/frame-src 'self'/);
+  }
+});
 test('nonowners cannot receive private documents, assets, API aliases or encoded app paths',async()=>{
   const checkAccess=policy({'ace':'private','movie-memory':'private'}),gate=createNetlifyAppGate({checkAccess}),next=downstream();
   for(const path of ['/ACE/','/%41CE/','/ACE/assets/site.js','/movie-memory-assets/app.js','/api/ace','/api/%61ce','/Private%20Drive/index.html']){

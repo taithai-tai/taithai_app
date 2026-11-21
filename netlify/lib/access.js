@@ -3,6 +3,8 @@ import { checkAppAccess } from '../../server-lib/site-app-gate.js';
 const PRIVATE_HEADERS = { 'Cache-Control':'private, no-store, max-age=0', 'CDN-Cache-Control':'no-store',
   'Netlify-CDN-Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff', 'X-Robots-Tag':'noindex, nofollow, noarchive' };
 const CSP="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://*.stripe.com; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.stripe.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.stripe.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'self'; upgrade-insecure-requests";
+const MAIL_CSP=CSP.replace('frame-src https://accounts',"frame-src 'self' https://accounts")
+  .replace("img-src 'self' data: https://*.googleusercontent.com", "img-src 'self' data: https:");
 export const SOCIAL_CSP="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://taithai-app.netlify.app https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' blob: data: https://taithai-app.netlify.app https://*.googleusercontent.com; media-src 'self' blob: https://taithai-app.netlify.app; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests";
 // Edge must not wait on these Node responses: its response-header limit is40s,
 // while Node functions have60s. Each wrapper independently applies the gate and
@@ -27,7 +29,7 @@ export function applyAccessHeaders(response,accessHeaders={},pathname='') {
   // Custom static headers aren't guaranteed on an Edge-generated response.
   if (/^\/(?:membership|mail|admin)(?:\/|$)/i.test(pathname)) {
     headers.set('Cache-Control','private, no-store, max-age=0');headers.set('Netlify-CDN-Cache-Control','no-store');
-    headers.set('Referrer-Policy','no-referrer');headers.set('X-Content-Type-Options','nosniff');headers.set('Content-Security-Policy',CSP);
+    headers.set('Referrer-Policy','no-referrer');headers.set('X-Content-Type-Options','nosniff');headers.set('Content-Security-Policy',/^\/mail(?:\/|$)/i.test(pathname)?MAIL_CSP:CSP);
   }
   if (/^\/(?:community|profile|messages)(?:\/|$)/i.test(pathname)) {
     headers.set('Cache-Control','private, no-store, max-age=0');headers.set('Netlify-CDN-Cache-Control','no-store');
