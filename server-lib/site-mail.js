@@ -37,6 +37,13 @@ const bounded = (value, max) => String(value ?? '').replace(/[\u0000-\u0008\u000
 // Metadata is inert plain text; U+2039/203A preserve recognizable punctuation
 // without ever returning markup. Body text is rendered with textContent only.
 const metadata = (value, max = 200) => bounded(value, max).replace(/[\r\n]+/g, ' ').replaceAll('<', '‹').replaceAll('>', '›');
+function safeSmtpFailure(error) {
+  const allowed = new Set(['EAUTH','ECONNECTION','ETIMEDOUT','ESOCKET','ETLS','ECONNRESET','ECONNREFUSED','ENOTFOUND','EDNS','EAI_AGAIN','EHOSTUNREACH','EPROTOCOL','EENVELOPE','EMESSAGE','MODULE_NOT_FOUND','ERR_TLS_CERT_ALTNAME_INVALID','MAIL_UNAVAILABLE','OPERATION_TIMEOUT']);
+  const command = typeof error?.command === 'string' ? error.command : '';
+  return { code: allowed.has(error?.code) ? error.code : 'UNKNOWN',
+    ...(Number.isInteger(error?.responseCode) && error.responseCode >= 400 && error.responseCode <= 599 ? { responseCode: error.responseCode } : {}),
+    stage: /^AUTH(?:\s|$)/.test(command) ? 'authentication' : command === 'CONN' ? 'connect' : command === 'STARTTLS' ? 'tls' : ['EHLO','HELO'].includes(command) ? 'greeting' : ['MAIL FROM','RCPT TO','DATA'].includes(command) ? 'submit' : 'unknown' };
+}
 function uid(value) { if (typeof value !== 'string' || !uidPattern.test(value)) fail('AUTH_REQUIRED', 401); return value; }
 function identity(user) {
   if (typeof user?.uid!=='string' || !uidPattern.test(user.uid) || user?.email_verified!==true || typeof user?.email!=='string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) fail('MAIL_ACCESS_REQUIRED',403);
@@ -570,8 +577,8 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
       result = await smtp.send(credentials, { from: record.address, to: recipients, subject: input.subject, text: input.text,
         messageId: job.messageId, ...(inReplyTo ? { inReplyTo, references: [inReplyTo] } : {}) });
       if (!result || !Array.isArray(result.accepted) || result.accepted.length === 0) throw new Error('No accepted recipient');
-    } catch {
-      await store.set(jobPath, { ...job, status: 'uncertain', updatedAt: iso(now()) }).catch(() => {}); return { status: 'uncertain' };
+    } catch (error) {
+      await store.set(jobPath, { ...job, status: 'uncertain', failure: safeSmtpFailure(error), updatedAt: iso(now()) }).catch(() => {}); return { status: 'uncertain' };
     }
     let sentCopySaved = false;
     if (result.raw && imap.appendSent) {
@@ -585,6 +592,14 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
   async function syncMembership(user) {
     const userId=identity(user);const member=await requireMailAccess(userId,user);configured();const {records}=await accounts(userId);
     return {preserved:true,ownerAccess:member.ownerAccess,adminAccess:member.adminAccess,mailAccess:member.mailAccess,adminOnly:true,paid:false,sendingEnabled:records.some(record=>record.status==='active' && allocated(records,record,member))};
+  }
+  async function checkConnection(user, input = {}) {
+    const { record, credentials } = await owned(user, input);
+    if (typeof smtp.verifyCredentials !== 'function') fail('MAIL_ACTION_UNAVAILABLE', 503);
+    const result = await external(() => smtp.verifyCredentials(credentials));
+    const fresh = await owned(user, { mailbox: record.id });
+    if (fresh.record.address !== record.address) fail('MAILBOX_CHANGED', 409);
+    return { mailboxId: record.id, mailboxAddress: record.address, smtp: result };
   }
   if (provider?.id === 'hostinger' && ['aliasInventory', 'createAlias', 'deleteAlias'].every(key => typeof provider[key] === 'function')) {
     aliasService = createMailboxAliasService({ store, provider, owned, fail, now,
@@ -617,7 +632,7 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
     const result = await receivingNameService[method](user, input);
     return { ...await aliasService.list(user, input), ...result };
   };
-  return { status, create, folders, list, message, read, trash, send, syncMembership,
+  return { status, create, folders, list, message, read, trash, send, syncMembership, checkConnection,
     listAliases: aliases('list'), createAlias: aliases('create'), deleteAlias: aliases('remove'),
     saveReceivingName: receivingName('save'), hideReceivingName: receivingName('hide') };
 }
@@ -996,7 +1011,25 @@ export function createMailProtocolAdapters({ ImapFlow, createTransport, simplePa
       if (!await client.append(sent, raw, ['\\Seen'])) fail('SENT_COPY_UNAVAILABLE', 503);
     }, 10000)
   };
-  const smtp = { async send(credentials, message) {
+  const smtp = { async verifyCredentials(credentials) {
+    const signal = combineMembershipOperationSignal(credentials.signal), routing = route(credentials);
+    const transport = createTransport({ host: routing.smtpHost, port: 465, secure: true,
+      auth: { user: credentials.address, pass: credentials.password }, logger: false, debug: false,
+      connectionTimeout: 8000, greetingTimeout: 8000, socketTimeout: 10000,
+      tls: { rejectUnauthorized: true, minVersion: 'TLSv1.2' } });
+    let timer, abort;
+    try {
+      signal?.throwIfAborted();
+      const deadline = new Promise((_, reject) => {
+        abort = () => { transport.close?.(); reject(Object.assign(Error('MAIL_UNAVAILABLE'), { code: 'MAIL_UNAVAILABLE' })); };
+        timer = setTimeout(abort, 12000); signal?.addEventListener('abort', abort, { once: true });
+      });
+      await Promise.race([transport.verify(), deadline]);
+      return { connected: true };
+    } catch (error) {
+      return { connected: false, ...safeSmtpFailure(error) };
+    } finally { clearTimeout(timer); signal?.removeEventListener('abort', abort); transport.close?.(); }
+  }, async send(credentials, message) {
     if (message.from !== credentials.address) fail('INVALID_SENDER', 403);
     const signal = combineMembershipOperationSignal(credentials.signal);
     signal?.throwIfAborted();

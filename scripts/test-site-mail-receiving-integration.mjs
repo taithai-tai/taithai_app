@@ -13,7 +13,7 @@ function fixture(){
  const mailbox={id:'AC_fixture',address:record.address};
  const provider={id:'hostinger',async receivingInventory(){if(control.providerDown)throw Error('fixture provider unavailable');return {mailbox,aliases:[],catchallEnabled:true,unavailableAddresses:['foreign@taithai.app']};},async aliasInventory(){return {mailbox,aliases:[],limit:5,available:5,mailboxUsed:0,domainUsed:0};},async createAlias(){throw Error('Provider aliases must not be created');},async deleteAlias(){throw Error('Provider aliases must not be deleted');}};
  const raw={uid:12,envelope:{to:[{address:'fresh@taithai.app'}]},headers:Buffer.from('Delivered-To: fresh@taithai.app\r\n\r\n'),internalDate:new Date('2026-11-22T01:00:00Z'),flags:new Set(),text:'fixture'};
- const mail=createSiteMail({store,provider,env,now:()=>Date.parse('2026-11-22T02:00:00Z'),getMembership:async()=>({active:control.active,adminAccess:control.active,mailAccess:control.active}),smtp:{},imap:{async list(){return {uidValidity:'1',messages:[raw],nextCursor:null};},async message(){return raw;}}});
+ const mail=createSiteMail({store,provider,env,now:()=>Date.parse('2026-11-22T02:00:00Z'),getMembership:async()=>({active:control.active,adminAccess:control.active,mailAccess:control.active}),smtp:{async verifyCredentials(){control.verifyChecks=(control.verifyChecks||0)+1;return {connected:true};}},imap:{async list(){return {uidValidity:'1',messages:[raw],nextCursor:null};},async message(){return raw;}}});
  return {mail,raw,docs,control};
 }
 
@@ -51,4 +51,9 @@ test('foreign names and revoked mailbox access do not become saved receiving nam
  const f=fixture();f.raw.envelope.to=[{address:'foreign@taithai.app'}];f.raw.headers=Buffer.from('');assert.equal((await f.mail.list(user,{folder:'INBOX'})).receivingNamesState.receivingNameCount,0);
  await assert.rejects(f.mail.saveReceivingName(user,{mailbox:user.uid,localPart:'foreign'}),error=>error.code==='ADDRESS_UNAVAILABLE');
  f.control.active=false;await assert.rejects(f.mail.saveReceivingName(user,{mailbox:user.uid,localPart:'later'}),error=>error.code==='MAIL_ACCESS_REQUIRED');
+});
+
+
+test('connection checks authenticate only the owned mailbox without sending or creating a send job',async()=>{
+ const f=fixture(),response=await f.mail.checkConnection(user,{mailbox:user.uid});assert.equal(response.smtp.connected,true);assert.equal(f.control.verifyChecks,1);assert.ok([...f.docs.keys()].every(key=>!key.startsWith('siteMailSendJobs/')));f.control.active=false;await assert.rejects(f.mail.checkConnection(user,{mailbox:user.uid}),error=>error.code==='MAIL_ACCESS_REQUIRED');assert.equal(f.control.verifyChecks,1);
 });

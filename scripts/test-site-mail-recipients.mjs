@@ -138,3 +138,11 @@ test('real IMAP adapter requests only selected PEEK headers for both list/detail
   assert.equal((await imap.message(credentials, { folder: 'INBOX', uid: 42, uidValidity: '123' })).text, '');
   for (const query of queries) { assert.deepEqual(query.headers, [...MAIL_RECIPIENT_HEADERS]); assert.equal('source' in query, false); assert.equal('markSeen' in query, false); }
 });
+
+
+test('SMTP connection diagnostic never sends and exposes only bounded error classification',async()=>{
+ let sent=0,closed=0,fail=true;
+ const protocols=createMailProtocolAdapters({ImapFlow:class{},simpleParser(){},createTransport:options=>({async verify(){assert.equal(options.host,'smtp.hostinger.com');if(fail)throw Object.assign(Error('private-password'),{code:'EAUTH',responseCode:535,command:'AUTH PLAIN',response:'private-provider-response'});return true;},async sendMail(){sent++;throw Error('Do not send');},close(){closed++;}}),env});
+ const credential={address:primary,password:'private-password',provider:'hostinger'};
+ assert.deepEqual(await protocols.smtp.verifyCredentials(credential),{connected:false,code:'EAUTH',responseCode:535,stage:'authentication'});fail=false;assert.deepEqual(await protocols.smtp.verifyCredentials(credential),{connected:true});assert.equal(sent,0);assert.equal(closed,2);
+});

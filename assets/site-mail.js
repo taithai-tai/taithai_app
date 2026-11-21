@@ -30,6 +30,11 @@ const RECEIVING_COPY = {
   th:{receivingCount:'ชื่อรับอีเมลที่มีในรายการ',receivingTitle:'เพิ่มชื่อรับอีเมล',receivingIntro:'ทุกชื่อที่ยังไม่มีอยู่ในโดเมนนี้จะรับเข้ากล่องหลักได้ ชื่อใหม่ที่พบในอีเมลกล่องขาเข้าที่โหลด จะเพิ่มในรายการอัตโนมัติเมื่อหน้านี้ตรวจเมลใหม่หรือคุณรีเฟรช',receivingInactive:'ยังไม่เปิดรับทุกชื่ออัตโนมัติ ใช้นามแฝงที่ตั้งไว้ได้ตามปกติ',receivingSave:'เพิ่มชื่อในรายการ',receivingSaveConfirm:'เพิ่มชื่อนี้ไว้รับเข้ากล่องหลักใช่ไหม',receivingSaved:'เพิ่มชื่อรับอีเมลแล้ว',receivingHidden:'ซ่อนชื่อจากรายการแล้ว',receivingHide:'ซ่อนจากรายการ',receivingHideConfirm:'ซ่อนชื่อนี้จากรายการใช่ไหม',receivingHideNote:'การซ่อนเปลี่ยนเฉพาะรายการนี้ อีเมลที่ส่งถึงชื่อนี้ยังเข้ากล่องหลักได้ และข้อความเก่ายังอยู่',receivingSources:{'provider-alias':'นามแฝง','saved':'เพิ่มไว้','observed':'พบในอีเมล'},receivingSeen:'พบล่าสุด',receivingEmpty:'ยังไม่มีชื่อรับอีเมลเพิ่มเติม',receivingMetadata:'ชื่อที่พบอัตโนมัติอ่านจากข้อมูลผู้รับในอีเมล หากข้อความไม่มีข้อมูลนี้ ระบบจะไม่เดาชื่อผู้รับ',receivingBound:'รายการแสดงได้สูงสุด 500 ชื่อ ขีดจำกัดนี้ไม่ปิดการรับอีเมลชื่ออื่น',receivingDeleteNote:'โหมดรับทุกชื่อยังเปิดอยู่ หลังลบนามแฝง ชื่อนี้ยังรับเข้ากล่องหลักผ่านโหมดรับทุกชื่อได้ ข้อความเก่ายังอยู่',receivingRetry:'ตรวจสอบรายการชื่อรับอีเมลเดิม',receivingPending:'ยังยืนยันผลไม่ได้ กรุณาตรวจสอบชื่อเดิมก่อนเปลี่ยนรายการ',receivingUnavailable:'ยังโหลดรายการชื่อรับอีเมลไม่ได้ อีเมลเดิมยังเปิดอ่านได้'},
   en:{receivingCount:'Receiving names in your list',receivingTitle:'Add a receiving name',receivingIntro:'Names not already assigned in this domain can deliver to this primary inbox. New names found in loaded Inbox messages are added automatically when this page checks incoming mail or you refresh.',receivingInactive:'Receiving unassigned names automatically is not enabled. Existing aliases still work.',receivingSave:'Add name to list',receivingSaveConfirm:'Save this receiving name for the primary mailbox?',receivingSaved:'Receiving name added',receivingHidden:'Name hidden from list',receivingHide:'Hide from list',receivingHideConfirm:'Hide this receiving name from the list?',receivingHideNote:'Hiding changes this list only. Email sent to this name can still reach the primary inbox, and existing messages remain.',receivingSources:{'provider-alias':'alias','saved':'saved','observed':'found in mail'},receivingSeen:'Last found',receivingEmpty:'No additional receiving names yet',receivingMetadata:'Automatically found names come from recipient metadata in email. A name is not inferred when that metadata is missing.',receivingBound:'This list holds up to 500 names. This does not stop mail sent to other names.',receivingDeleteNote:'Receiving unassigned names is still enabled. After deleting this alias, mail to the same name can still reach the primary inbox through that mode. Existing messages remain.',receivingRetry:'Check original receiving-name request',receivingPending:'The result is not confirmed. Check the original receiving name before changing this request.',receivingUnavailable:'Receiving names could not be loaded. You can still read existing mail.'}
 };
+const CONNECTION_COPY={
+  th:{connectionCheck:'ตรวจการเชื่อมต่อ',connectionChecking:'กำลังตรวจการเชื่อมต่อ…',connectionReady:'เชื่อมต่อเซิร์ฟเวอร์ส่งเมลสำเร็จ',connectionFailed:'เชื่อมต่อเซิร์ฟเวอร์ส่งเมลไม่สำเร็จ',connectionUnavailable:'ยังตรวจการเชื่อมต่อไม่ได้ กรุณาลองใหม่ภายหลัง',connectionNote:'การตรวจนี้ไม่ส่งอีเมล และไม่ได้ยืนยันหรือยกเลิกรายการส่งเดิม',connectionStages:{connect:'การเชื่อมต่อ',authentication:'การเข้าสู่ระบบ',tls:'การเชื่อมต่อที่เข้ารหัส',greeting:'การตอบรับจากเซิร์ฟเวอร์',submit:'การส่งข้อมูลอีเมล',unknown:'ไม่ทราบขั้นตอน'}},
+  en:{connectionCheck:'Check connection',connectionChecking:'Checking connection…',connectionReady:'Connected to the sending server',connectionFailed:'Could not connect to the sending server',connectionUnavailable:'The connection could not be checked. Try again later.',connectionNote:'This check does not send email, or confirm or cancel the original sending request.',connectionStages:{connect:'connection',authentication:'authentication',tls:'encrypted connection',greeting:'server greeting',submit:'message submission',unknown:'unknown stage'}}
+};
+const CONNECTION_CODES=new Set(['EAUTH','ECONNECTION','ETIMEDOUT','ESOCKET','EDNS','ETLS','EPROTOCOL','ECONNREFUSED','ECONNRESET','ENOTFOUND','EHOSTUNREACH','ENETUNREACH','EUNKNOWN','AUTH_FAILED','CONNECTION_TIMEOUT','CONNECTION_FAILED','TLS_FAILED','SMTP_UNAVAILABLE','SMTP_AUTH_FAILED','SMTP_CONNECTION_FAILED','SMTP_CONNECTION_TIMEOUT','SMTP_TLS_FAILED','SMTP_GREETING_FAILED','EAI_AGAIN','MODULE_NOT_FOUND','ERR_TLS_CERT_ALTNAME_INVALID','MAIL_UNAVAILABLE','OPERATION_TIMEOUT','EENVELOPE','EMESSAGE','UNKNOWN']);
 export function recipientMatches(message){
   if(message?.recipientMatchStatus!=='matched'||!Array.isArray(message.recipientMatches))return [];
   const sources=new Set(['to','cc','delivered-to','x-original-to','envelope-to']),seen=new Set();
@@ -70,9 +75,10 @@ export function normalizeMailDraft(value) {
 export function safeReplyAddress(value) { const address = String(value || '').trim();return address.length <= 254 && /^[A-Za-z0-9!#$%&'*+\/?=^_`{|}~.-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,63}$/.test(address) ? address : ''; }
 export function initMailPage({ window: win = globalThis.window, document: doc = win?.document, loadAuth = () => import('/firebase-auth.js?v=20260725-2'), request } = {}) {
   const root = doc?.getElementById('mailPanel'); if (!root || root.dataset.mailInitialized) return null; root.dataset.mailInitialized = 'true';
-  const ui = createMemberUi(doc), locale = () => membershipLanguage(win,doc), t = () => ({...COPY[locale()],...LIMIT_COPY[locale()],...ACCESS_COPY[locale()],...MULTI_COPY[locale()],...OWNER_COPY[locale()],...ALIAS_COPY[locale()],...RECEIVING_COPY[locale()]}), common = () => membershipText(locale());
+  const ui = createMemberUi(doc), locale = () => membershipLanguage(win,doc), t = () => ({...COPY[locale()],...LIMIT_COPY[locale()],...ACCESS_COPY[locale()],...MULTI_COPY[locale()],...OWNER_COPY[locale()],...ALIAS_COPY[locale()],...RECEIVING_COPY[locale()],...CONNECTION_COPY[locale()]}), common = () => membershipText(locale());
   let auth, user = null, checked = false, authFailed = false, authTimer, pollTimer, state = null, loading = false, incomingLoading = false, busy = '', epoch = 0, authGeneration = 0, mailboxRequest = 0, messageRequest = 0, disposed = false, unsubscribe = () => {}, status = null;
   let folders = [], folder = '', messages = [], cursor = null, selected = null, composing = false, draft = {to:'',subject:'',text:''}, pending = null, localPart = '', createAttempt = null, creationAttempts = new Map(), storageBlocked = false, incomingDirty = false, expandedMessages = false, selectedMailboxId = '', preferredMailboxId = '', creatingVisible = false, search = '';
+  let connectionReport=null,connectionChecking=false,connectionSequence=0;
   let receivingState=null,receivingLocal='',receivingRevision=0;
   let aliasesState=null,aliasesLoading=false,aliasesUnavailable=false,aliasBusy='',aliasError='',aliasNotice='',aliasLocal='',aliasPending=null,aliasContext='',aliasSequence=0,aliasesOpen=false,aliasDeletingId='',aliasConfirm='';
   const api = createMembershipApi({getUser:() => user,window:win,request});
@@ -87,7 +93,7 @@ export function initMailPage({ window: win = globalThis.window, document: doc = 
   const mailbox = () => boxes().find(box => box.id === selectedMailboxId) || boxes()[0];
   const pendingBoxes = () => !mailAccess() ? [] : Array.isArray(state?.pendingMailboxes) ? state.pendingMailboxes : state?.mailbox?.status === 'provisioning' ? [{...state.mailbox,canRetryProvisioning:state.canRetryProvisioning}] : [];
   function resetAliases(){receivingState=null;receivingLocal='';receivingRevision++;aliasesState=null;aliasesLoading=false;aliasesUnavailable=false;aliasBusy='';aliasError='';aliasNotice='';aliasLocal='';aliasPending=null;aliasContext='';aliasDeletingId='';aliasConfirm='';aliasSequence++;}
-  function resetMailboxView() {search = '';folders = [];folder = '';messages = [];cursor = null;selected = null;expandedMessages = false;incomingDirty = false;mailboxRequest++;messageRequest++;resetAliases();}
+  function resetMailboxView() {connectionReport=null;connectionChecking=false;connectionSequence++;search = '';folders = [];folder = '';messages = [];cursor = null;selected = null;expandedMessages = false;incomingDirty = false;mailboxRequest++;messageRequest++;resetAliases();}
   function reconcileMailbox() {
     const preferred = preferredMailboxId || selectedMailboxId || pending?.payload?.mailbox;
     const next = boxes().find(box => box.id === preferred)?.id || boxes()[0]?.id || '';
@@ -306,11 +312,11 @@ export function initMailPage({ window: win = globalThis.window, document: doc = 
     form.id = 'mailComposeForm';
     const from = pending ? pending.mailboxAddress || boxes().find(box => box.id === pending.payload.mailbox)?.address || pending.payload.mailbox : mailbox()?.address;
     panel.append(ui.el('p',text.sendingFrom + ' · ' + (from || ''),'membership-address'));
-    if (pending) panel.append(ui.el('p',text.sendPendingText,'notice'),ui.link(common().help,'/support/?app=Taithai%20Mail'));
+    if (pending) {panel.append(ui.el('p',text.sendPendingText,'notice'),ui.link(common().help,'/support/?app=Taithai%20Mail'));const target=pending.payload.mailbox||mailbox()?.id;panel.append(ui.button(connectionChecking?text.connectionChecking:text.connectionCheck,checkConnection,{disabled:connectionChecking||Boolean(busy)||!boxes().some(box=>box.id===target)}),ui.el('p',text.connectionNote,'small'));if(connectionReport?.requestId===pending.requestId&&connectionReport.mailboxId===target){const report=ui.el('p',connectionReport.text,connectionReport.failed?'notice notice-error':'notice');report.setAttribute('role','status');panel.append(report);}}
     if (storageBlocked && pending) panel.append(ui.el('p',text.storage,'notice notice-error'));
     const locked = Boolean(pending) || Boolean(busy);
     form.append(field('mailTo',text.to,'email',draft.to,value => {draft.to = value;},{required:true,disabled:locked}),field('mailSubject',text.subject,'text',draft.subject,value => {draft.subject = value;},{disabled:locked}),field('mailBody',text.body,'textarea',draft.text,value => {draft.text = value;},{required:true,hint:text.draftHint,disabled:locked}));
-    const actions = ui.el('div',undefined,'button-row'), sendButton = ui.el('button',busy === 'send' ? text.sending : pending ? text.retrySend : text.send,'button button-primary'); sendButton.type = 'submit'; sendButton.disabled = Boolean(busy) || !pending && !writable(); actions.append(sendButton,ui.button(pending ? text.pendingDiscard : text.discard,discard,{disabled:Boolean(busy)})); form.append(actions); form.addEventListener('submit',event => {event.preventDefault();void send();}); panel.append(form); return panel;
+    const actions = ui.el('div',undefined,'button-row'), sendButton = ui.el('button',busy === 'send' ? text.sending : pending ? text.retrySend : text.send,'button button-primary'); sendButton.type = 'submit'; sendButton.disabled = Boolean(busy) || connectionChecking || !pending && !writable(); actions.append(sendButton,ui.button(pending ? text.pendingDiscard : text.discard,discard,{disabled:Boolean(busy)||connectionChecking})); form.append(actions); form.addEventListener('submit',event => {event.preventDefault();void send();}); panel.append(form); return panel;
   }
   async function refresh() {
     if (!verifiedAccount(user) || loading || busy || disposed) return; const current = epoch; loading = true; status = null; render();
@@ -380,14 +386,31 @@ export function initMailPage({ window: win = globalThis.window, document: doc = 
     finally { if (current === epoch && !disposed) { busy = ''; render(); void refresh(); } }
   }
   function reply() { const recipient = safeReplyAddress(selected?.replyToAddress);if (!selected || !recipient || pending || !writable()) return; if ((draft.text || draft.to || draft.subject) && !win.confirm(t().discardConfirm)) return; draft = {to:recipient,subject:/^re:/i.test(selected.subject || '') ? selected.subject : `Re: ${selected.subject || ''}`,text:'',inReplyTo:selected.id}; composing = true; render(); doc.getElementById('mailBody')?.focus(); }
-  function discard() { if (busy || (pending || draft.text || draft.to || draft.subject) && !win.confirm(pending ? t().pendingDiscardConfirm : t().discardConfirm)) return; pending = null; savePending(); draft = {to:'',subject:'',text:''}; composing = false; render(); }
+  function discard() { if (busy || connectionChecking || (pending || draft.text || draft.to || draft.subject) && !win.confirm(pending ? t().pendingDiscardConfirm : t().discardConfirm)) return; pending = null; savePending(); connectionReport=null;connectionSequence++;draft = {to:'',subject:'',text:''}; composing = false; render(); }
+  async function checkConnection(){
+    if(!pending||!mailAccess()||connectionChecking||busy||disposed)return;
+    const target=pending.payload.mailbox||mailbox()?.id,box=boxes().find(item=>item.id===target);if(!box)return;
+    const current=epoch,requestId=pending.requestId,sequence=++connectionSequence;connectionChecking=true;connectionReport=null;render();
+    try{
+      const result=await api.call('mail-connection-check',{method:'POST',data:{mailbox:target}});
+      if(disposed||current!==epoch||sequence!==connectionSequence||pending?.requestId!==requestId)return;
+      if(result?.mailboxId!==target||result.mailboxAddress!==box.address||typeof result.smtp?.connected!=='boolean')throw Error('INVALID_CONNECTION_REPORT');
+      const smtp=result.smtp,code=CONNECTION_CODES.has(smtp.code)?smtp.code:'',responseCode=Number.isInteger(smtp.responseCode)&&smtp.responseCode>=100&&smtp.responseCode<=599?smtp.responseCode:null,stage=Object.hasOwn(t().connectionStages,smtp.stage)?t().connectionStages[smtp.stage]:'';
+      const details=[stage,code,responseCode].filter(value=>value!==''&&value!==null).join(' · ');connectionReport={requestId,mailboxId:target,failed:!smtp.connected,text:box.address+' · '+(smtp.connected?t().connectionReady:t().connectionFailed)+(details?' · '+details:'')};
+    }catch(error){
+      if(!disposed&&current===epoch&&sequence===connectionSequence&&pending?.requestId===requestId){
+        if([401,403].includes(error?.status)){mailError(error);return;}
+        connectionReport={requestId,mailboxId:target,failed:true,text:t().connectionUnavailable};
+      }
+    }finally{if(!disposed&&current===epoch&&sequence===connectionSequence){connectionChecking=false;render();}}
+  }
   async function send() {
-    if (!mailAccess() || busy || !pending && (!writable() || !mailbox())) return;
+    if (!mailAccess() || busy || connectionChecking || !pending && (!writable() || !mailbox())) return;
     const retrying = Boolean(pending);
     let payload; try { payload = pending?.payload || {...normalizeMailDraft(draft),mailbox:mailbox().id}; } catch {notice(t().invalid,true);render();return;}
     const fromAddress = pending?.mailboxAddress || boxes().find(box => box.id === payload.mailbox)?.address || payload.mailbox || '';
     if (!win.confirm(t().sendConfirm + '\n' + t().from + ': ' + fromAddress + '\n' + t().to + ': ' + payload.to)) return;
-    if (!pending) pending = {requestId:win.crypto.randomUUID(),payload,mailboxAddress:mailbox()?.address || ''}; savePending();
+    if (!pending) pending = {requestId:win.crypto.randomUUID(),payload,mailboxAddress:mailbox()?.address || ''}; savePending();connectionReport=null;connectionSequence++;
     const current = epoch; busy = 'send'; status = null; render();
     try {
       const result = await api.call('send',{method:'POST',data:{...pending.payload,requestId:pending.requestId}});
@@ -421,7 +444,7 @@ export function initMailPage({ window: win = globalThis.window, document: doc = 
       unsubscribe = auth.subscribeAuth(value => {
         if (disposed || current !== authGeneration) return;
         win.clearTimeout(authTimer);win.clearTimeout(pollTimer);authFailed = false;api.abort();epoch++;user = value;checked = true;state = null;loading = false;incomingLoading = false;busy = '';
-        folders = [];messages = [];selected = null;cursor = null;expandedMessages = false;folder = '';pending = null;composing = false;draft = {to:'',subject:'',text:''};status = null;createAttempt = null;creationAttempts = new Map();selectedMailboxId = '';preferredMailboxId = '';creatingVisible = false;localPart = '';resetAliases();aliasesOpen=false;
+        folders = [];messages = [];selected = null;cursor = null;expandedMessages = false;folder = '';pending = null;composing = false;draft = {to:'',subject:'',text:''};status = null;createAttempt = null;creationAttempts = new Map();selectedMailboxId = '';preferredMailboxId = '';creatingVisible = false;localPart = '';resetAliases();aliasesOpen=false;connectionReport=null;connectionChecking=false;connectionSequence++;
         if (verifiedAccount(user)) {
           restorePending();
           try {
@@ -434,7 +457,7 @@ export function initMailPage({ window: win = globalThis.window, document: doc = 
     }
     catch (error) { if (!disposed && current === authGeneration) {win.clearTimeout(authTimer);checked = true;authFailed = true;notice(mailError(error),true);render();} }
   }
-  function suspend() {authGeneration++;epoch++;win.clearTimeout(authTimer);win.clearTimeout(pollTimer);api.abort();unsubscribe();unsubscribe = () => {};user = null;state = null;messages = [];selected = null;folders = [];draft = {to:'',subject:'',text:''};pending = null;composing = false;selectedMailboxId = '';preferredMailboxId = '';creatingVisible = false;creationAttempts = new Map();checked = false;loading = false;incomingLoading = false;busy = '';resetAliases();aliasesOpen=false;render();}
+  function suspend() {authGeneration++;epoch++;win.clearTimeout(authTimer);win.clearTimeout(pollTimer);api.abort();unsubscribe();unsubscribe = () => {};user = null;state = null;messages = [];selected = null;folders = [];draft = {to:'',subject:'',text:''};pending = null;composing = false;selectedMailboxId = '';preferredMailboxId = '';creatingVisible = false;creationAttempts = new Map();checked = false;loading = false;incomingLoading = false;busy = '';resetAliases();aliasesOpen=false;connectionReport=null;connectionChecking=false;connectionSequence++;render();}
   function beforeUnload(event) { if (composing && (draft.text || draft.to || draft.subject) && !pending) {event.preventDefault();event.returnValue = '';} }
   const preferences = () => render(), restore = event => {if (event.persisted) void start();};
   win.addEventListener('taithai:preferences',preferences);win.addEventListener('pagehide',suspend);win.addEventListener('pageshow',restore);win.addEventListener('beforeunload',beforeUnload);win.addEventListener('focus',wakeIncoming);win.addEventListener('online',wakeIncoming);doc.addEventListener('visibilitychange',wakeIncoming);void start();

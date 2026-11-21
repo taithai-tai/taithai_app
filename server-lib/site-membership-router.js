@@ -4,7 +4,7 @@ import { verifyOwnerToken } from './site-app-gate.js';
 import { withMembershipOperationBudget, assertMembershipOperationActive, MEMBERSHIP_OPERATION_TIMEOUT_MS } from './site-operation-budget.js';
 
 const GET_ACTIONS=new Set(['status','mailboxes','folders','messages','message','aliases','admin-status']);
-const POST_ACTIONS=new Set(['mailbox-create','send','message-flags','alias-create','alias-delete','receiving-name-save','receiving-name-hide']);
+const POST_ACTIONS=new Set(['mailbox-create','send','message-flags','alias-create','alias-delete','receiving-name-save','receiving-name-hide','mail-connection-check']);
 const BILLING_ACTIONS=new Set(['checkout','quantity-update','portal','admin-discounts','admin-discount-create','admin-discount-disable']);
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:PRIVATE_API_HEADERS});
 function failure(error) {
@@ -106,7 +106,8 @@ export function createMembershipHandler({env=process.env,getRuntime=getMembershi
         return json(await runtime.mail[{folders:'folders',messages:'list',message:'message',aliases:'listAliases'}[action]](user,input));
       }
       const input=await readMembershipRequest(request);
-      await rate(runtime.store,user,action,{limit:action==='send'?30:30});assertMembershipOperationActive();
+      await rate(runtime.store,user,action,{limit:action==='mail-connection-check'?3:30});assertMembershipOperationActive();
+      if(action==='mail-connection-check')return json(await runtime.mail.checkConnection(user,input));
       if(action==='mailbox-create')return json(await runtime.mail.create(user,input));
       if(action==='alias-create')return json(await runtime.mail.createAlias(user,input));
       if(action==='alias-delete')return json(await runtime.mail.deleteAlias(user,input));
