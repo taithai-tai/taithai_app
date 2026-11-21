@@ -1,6 +1,7 @@
 /* One navigation catalog for the public portal, account tools and community.
    Permission markers are consumed by site-access-ui; this catalog grants none. */
 export const SITE_NAVIGATION_ORIGIN='https://taithai.app';
+export const SITE_NAVIGATION_STORAGE_KEY='taithai.navigation.expanded.v1';
 export const SITE_NAVIGATION_ITEMS=Object.freeze([
   {id:'home',path:'/',th:'หน้าแรก',en:'Home',icon:'<path d="m3 10 9-7 9 7v10h-6v-7H9v7H3z"/>'},
   {id:'mail',path:'/mail/',th:'อีเมล',en:'Mail',access:'mail',icon:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="m3 6 9 7 9-7"/>'},
@@ -16,6 +17,6 @@ export const SITE_NAVIGATION_ITEMS=Object.freeze([
   {id:'about',path:'/about/',th:'เกี่ยวกับ',en:'About',icon:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7h.01"/>'}
 ].map(item=>Object.freeze(item)));
 export const SITE_NAVIGATION_COPY=Object.freeze({
-  th:Object.freeze({menu:'เมนูหลัก',previous:'เลื่อนเมนูก่อนหน้า',next:'เลื่อนเมนูถัดไป'}),
-  en:Object.freeze({menu:'Main navigation',previous:'Previous navigation items',next:'Next navigation items'})
+  th:Object.freeze({menu:'เมนูหลัก',previous:'เลื่อนเมนูก่อนหน้า',next:'เลื่อนเมนูถัดไป',expand:'ขยายเมนู',collapse:'ย่อเมนู'}),
+  en:Object.freeze({menu:'Main navigation',previous:'Previous navigation items',next:'Next navigation items',expand:'Expand menu',collapse:'Collapse menu'})
 });

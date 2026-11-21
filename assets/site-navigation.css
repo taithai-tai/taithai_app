@@ -1,10 +1,14 @@
-/* One navigation rail for Taithai's portal and service pages.
-   Labels stay beside their controls in the scroll area, never in a flyout.
+/* One compact / expanded navigation rail for Taithai's portal and service pages.
+   Hover descriptions live in the body portal, outside the clipped scroll area.
    Craft informed by Unslop, Damir Sokolovsky / @heydamir (CC BY 4.0).
    https://heydamir.design/unslop */
 :root {
-  --site-nav-rail-width: max(120px, 7.5rem);
+  --site-nav-rail-width: 76px;
   --site-nav-sticky-top: 24px;
+}
+
+html[data-navigation-expanded="true"] {
+  --site-nav-rail-width: max(240px, 15rem);
 }
 
 html body.site-home .home-frame {
@@ -92,7 +96,7 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-n
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: 20px auto;
+  grid-template-rows: 20px;
   align-content: center;
   justify-content: stretch;
   justify-items: center;
@@ -101,10 +105,10 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-n
   width: 100%;
   min-width: 0;
   max-width: 100%;
-  min-height: 72px;
+  min-height: 48px;
   height: auto;
   margin: 0;
-  padding: 12px 4px;
+  padding: 10px 8px;
   overflow: visible;
   border: 1px solid transparent;
   border-radius: 18px;
@@ -118,7 +122,8 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-n
   transition: color var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out),
     background-color var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out),
     border-color var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out),
-    box-shadow var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out);
+    box-shadow var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out),
+    transform var(--soft-duration-fast, 160ms) var(--soft-ease, ease-out);
 }
 
 html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a:hover {
@@ -134,9 +139,22 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-n
   box-shadow: none;
 }
 
+html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 50%;
+  width: 3px;
+  height: 16px;
+  border-radius: 999px;
+  background: currentColor;
+  transform: translateY(-50%);
+  animation: site-nav-current-in 240ms var(--soft-ease, ease-out) both;
+}
+
 html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a:active {
   background: var(--raised, #f1f0ed);
-  transform: none;
+  transform: scale(.94);
 }
 
 html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .nav-icon {
@@ -151,20 +169,23 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .nav-ic
   stroke-width: 1.5;
   stroke-linecap: round;
   stroke-linejoin: round;
+  transition: transform 220ms var(--soft-ease, ease-out),
+    rotate 240ms var(--soft-ease, ease-out);
 }
 
 html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-label {
-  position: static;
+  position: absolute;
   inset: auto;
   z-index: auto;
   display: block;
-  width: auto;
+  width: 1px;
   min-width: 0;
-  max-width: 100%;
-  height: auto;
-  margin: 0;
+  max-width: none;
+  height: 1px;
+  margin: -1px;
   padding: 0;
-  overflow: visible;
+  overflow: hidden;
+  clip-path: inset(50%);
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -173,15 +194,151 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-n
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: 0;
-  text-align: center;
-  white-space: normal;
+  text-align: start;
+  white-space: nowrap;
   overflow-wrap: anywhere;
-  opacity: 1;
+  opacity: 0;
   visibility: visible;
   transform: none;
-  pointer-events: auto;
+  pointer-events: none;
   box-shadow: none;
   transition: none;
+}
+
+html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a {
+  grid-template-columns: 20px minmax(0, 1fr);
+  grid-template-rows: auto;
+  align-items: center;
+  justify-items: start;
+  gap: 12px;
+  padding: 10px 12px;
+  text-align: start;
+}
+
+html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-label {
+  position: static;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  opacity: 1;
+  white-space: normal;
+}
+
+/* Only icons move on hover, so text stays sharp while controls answer intent. */
+@media (hover: hover) and (pointer: fine) {
+  html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a:hover > .nav-icon {
+    transform: translateY(-2px) rotate(3deg);
+  }
+}
+
+html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a:active > .nav-icon {
+  transform: translateY(1px) scale(.94);
+}
+
+html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  flex: 0 0 auto;
+  gap: 12px;
+  width: 44px;
+  min-width: 44px;
+  max-width: 100%;
+  min-height: 44px;
+  margin: 0 0 4px;
+  padding: 10px;
+  border: 1px solid var(--border, #dedfd9);
+  border-radius: 16px;
+  background: var(--raised, #f1f0ed);
+  color: var(--text-mid, #595b55);
+  cursor: pointer;
+  transition: background-color 160ms var(--soft-ease, ease-out),
+    color 160ms var(--soft-ease, ease-out),
+    border-color 160ms var(--soft-ease, ease-out),
+    transform 160ms var(--soft-ease, ease-out);
+}
+
+html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle:hover {
+  background: var(--accent-soft, #f7e9e2);
+  color: var(--accent, #a74128);
+}
+
+html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle:active {
+  transform: scale(.94);
+}
+
+.site-navigation .site-nav-toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  font-size: .875rem;
+  line-height: 1.45;
+  text-align: start;
+}
+
+html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle {
+  justify-content: flex-start;
+  width: 100%;
+  padding-inline: 16px;
+}
+
+html[data-navigation-expanded="true"] .site-navigation .site-nav-toggle-label {
+  position: static;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip-path: none;
+  white-space: normal;
+  animation: site-nav-label-in 220ms var(--soft-ease, ease-out) both;
+}
+
+html[data-navigation-expanded="true"] .site-navigation .site-nav-toggle-icon {
+  rotate: 180deg;
+}
+
+
+.site-nav-tooltip {
+  position: fixed;
+  z-index: 1200;
+  display: block;
+  width: max-content;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px 14px;
+  border: 1px solid color-mix(in srgb, var(--bg, #faf9f7) 14%, transparent);
+  border-radius: 14px;
+  background: var(--text, #242522);
+  color: var(--bg, #faf9f7);
+  font: 400 .875rem/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", sans-serif;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  box-shadow: 0 8px 24px #00000020;
+}
+
+.site-nav-tooltip[hidden] {
+  display: none !important;
+}
+
+@keyframes site-nav-label-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes site-nav-current-in {
+  from { opacity: .3; scale: 1 .5; }
+  to { opacity: 1; scale: 1 1; }
 }
 
 /* An older icon-rail tooltip selector targets all immediate spans. Keep the
@@ -257,6 +414,25 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, 
    even on the portal where the service shell stylesheet is not loaded. */
 .site-navigation [hidden] {
   display: none !important;
+}
+
+@media (min-width: 901px) and (max-width: 1280px) {
+  html[data-navigation-expanded="true"] body.site-home .header-inner:has(.site-search) {
+    flex-wrap: wrap;
+    min-width: 0;
+  }
+
+  html[data-navigation-expanded="true"] body.site-home .header-inner:has(.site-search) > .site-search {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  html[data-navigation-expanded="true"] body.site-home .header-inner:has(.site-search) > .header-actions {
+    margin-inline-start: auto;
+  }
 }
 
 @media (max-width: 900px) {
@@ -344,11 +520,52 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, 
   }
 
   html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a {
-    width: max(104px, 6.5rem);
-    min-width: max(104px, 6.5rem);
-    max-width: none;
-    min-height: 64px;
-    padding: 8px 4px;
+    width: 48px;
+    min-width: 48px;
+    max-width: 48px;
+    min-height: 48px;
+    padding: 10px 8px;
+  }
+
+  html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle {
+    align-self: center;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    margin: 0;
+  }
+
+  html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-toggle {
+    justify-content: center;
+    width: 44px;
+    min-width: 44px;
+    max-width: 44px;
+    padding: 10px;
+  }
+
+  html[data-navigation-expanded="true"] .site-navigation .site-nav-toggle-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    animation: none;
+  }
+
+  html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll > a {
+    width: max-content;
+    min-width: min(144px, 100%);
+    max-width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+  }
+
+  /* With labels expanded, the pinned toggle and a native scrollbar retain
+     space for a complete menu name on narrow screens. */
+  html[data-navigation-expanded="true"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll-control {
+    display: none !important;
   }
 
   html body:is(.site-home, .site-page) nav.site-navigation.site-navigation .site-nav-scroll-control .nav-icon {
@@ -418,8 +635,20 @@ html body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, 
   }
 
   html body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, button) {
-    transition: none;
-    transform: none;
+    transition: none !important;
+    transform: none !important;
+  }
+
+  html body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, button) > .nav-icon {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .site-navigation .site-nav-label,
+  .site-navigation .site-nav-toggle-label,
+  .site-navigation a::before,
+  .site-nav-tooltip {
+    animation: none !important;
   }
 }
 
@@ -428,6 +657,18 @@ html[data-motion="reduce"] .site-navigation .site-nav-scroll {
 }
 
 html[data-motion="reduce"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, button) {
-  transition: none;
-  transform: none;
+  transition: none !important;
+  transform: none !important;
+}
+
+html[data-motion="reduce"] body:is(.site-home, .site-page) nav.site-navigation.site-navigation :is(a, button) > .nav-icon {
+  transition: none !important;
+  transform: none !important;
+}
+
+html[data-motion="reduce"] .site-navigation .site-nav-label,
+html[data-motion="reduce"] .site-navigation .site-nav-toggle-label,
+html[data-motion="reduce"] .site-navigation a::before,
+html[data-motion="reduce"] .site-nav-tooltip {
+  animation: none !important;
 }
