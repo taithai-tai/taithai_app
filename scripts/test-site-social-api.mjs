@@ -43,3 +43,12 @@ test('bounded JSON, unique query keys and unsupported methods fail before servic
 test('the operation budget bounds an unresponsive runtime with no late service calls',async()=>{
   const handler=createSocialHandler({operationTimeoutMs:10,getRuntime:()=>new Promise(()=>{})});const r=await handler(new Request(ORIGIN+'/api/social/?action=posts'));assert.equal(r.status,503);assert.equal((await r.json()).error.code,'OPERATION_TIMEOUT');
 });
+
+test('own-account media availability uses a read-only probe and preserves profile access when unavailable',async()=>{
+  for(const ready of [true,false]){
+    let probes=0;
+    const handler=createSocialHandler({getRuntime:async()=>({store:{},social:{getMe:async()=>({profile:null,defaults:{displayName:'Alice'}})},media:{health:async user=>{assert.equal(user.uid,'alice');probes++;if(!ready)throw Error('PRIVATE_PROVIDER_DETAIL');return {ready:true,provider:'netlify'};}}}),verifyUser:async()=>({uid:'alice',email_verified:true}),rate:async()=>{}});
+    const r=await handler(new Request(ORIGIN+'/api/social/?action=me',{headers:{Authorization:'Bearer '+TOKEN}}));assert.equal(r.status,200);
+    const body=await r.json();assert.equal(body.media.ready,ready);assert.equal(body.defaults.displayName,'Alice');assert.equal(probes,1);assert.ok(!JSON.stringify(body).includes('PRIVATE_PROVIDER_DETAIL'));
+  }
+});

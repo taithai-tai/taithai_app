@@ -76,6 +76,12 @@ export function createSocialHandler({getRuntime=getSocialRuntime,verifyUser=veri
       }
       assertMembershipOperationActive();
       const result=await runtime.social[METHODS[action]](user,input);
+      if(action==='me'&&typeof runtime.media?.health==='function'){
+        // Storage availability must not prevent profile setup or text/chat use.
+        // The probe reads one reserved missing key and creates no public data.
+        try{result.media=await runtime.media.health(user);}
+        catch{result.media={ready:false};}
+      }
       return json(result,200,origin);
     },{timeoutMs:operationTimeoutMs,signal:request.signal});}catch(error){return failure(error,origin);}
   };
