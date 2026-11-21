@@ -1,3 +1,5 @@
+@import url("./site-soft-tools.css");
+
 /* Taithai preference adapters. Theme changes UI surfaces, never artwork or QR pixels. */
 html[data-theme="light"] {
   color-scheme: light;

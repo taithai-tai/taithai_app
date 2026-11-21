@@ -1,0 +1,642 @@
+/* Taithai's soft dashboard service shell.
+   Craft informed by Unslop, Damir Sokolovsky / @heydamir (CC BY 4.0).
+   https://heydamir.design/unslop */
+
+html body.site-page {
+  padding: 24px;
+  background: color-mix(in srgb, var(--bg) 64%, var(--raised));
+}
+
+.site-page .soft-shell-frame {
+  display: flex;
+  flex-direction: column;
+  max-width: 1440px;
+  min-height: calc(100dvh - 48px);
+  margin-inline: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--soft-radius-frame, 32px);
+  background: var(--bg);
+  box-shadow: 0 8px 32px #00000005;
+}
+
+.site-page .site-header {
+  border-radius: var(--soft-radius-frame, 32px) var(--soft-radius-frame, 32px) 0 0;
+  border-bottom-color: color-mix(in srgb, var(--border) 72%, transparent);
+}
+
+.site-page .site-header-inner {
+  max-width: none;
+  min-height: 88px;
+  padding: 20px 32px;
+}
+
+.site-page .site-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--surface);
+}
+
+.site-page .header-account {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-inline: 16px;
+  border-radius: var(--soft-radius-control, 999px);
+  text-decoration: none;
+}
+
+.site-page .header-account:hover {
+  background: var(--raised);
+}
+
+.site-page .language-controls {
+  gap: 4px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: var(--soft-radius-control, 999px);
+}
+
+.site-page .language-controls button {
+  min-width: 44px;
+  min-height: 40px;
+  border-radius: var(--soft-radius-control, 999px);
+}
+
+.site-page .language-controls button[aria-pressed="true"] {
+  box-shadow: 0 2px 8px #00000008;
+}
+
+.site-page .workspace {
+  width: 100%;
+  flex: 1;
+  max-width: none;
+  grid-template-columns: 76px minmax(0, 1fr);
+  gap: 32px;
+  padding: 32px 32px 48px;
+}
+
+.site-page .page-nav {
+  z-index: 3;
+  width: 76px;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--soft-radius-control, 999px);
+  background: var(--surface);
+  box-shadow: 0 4px 16px #00000004;
+}
+
+.site-page .page-nav a {
+  position: relative;
+  justify-content: center;
+  width: 48px;
+  min-height: 48px;
+  padding: 12px;
+  border-radius: 18px;
+  gap: 0;
+}
+
+.site-page .page-nav .nav-icon {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.site-page .page-nav a[aria-current="page"] {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+/* The existing translated text remains the accessible name. It is also the
+   visible label on touch screens and a tooltip for mouse / keyboard users. */
+.site-page .soft-nav-label {
+  position: absolute;
+  inset-inline-start: calc(100% + 12px);
+  top: 50%;
+  z-index: 4;
+  width: max-content;
+  max-width: 280px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  white-space: normal;
+  opacity: 0;
+  transform: translate(4px, -50%);
+  pointer-events: none;
+  box-shadow: 0 4px 16px #00000010;
+  transition: opacity var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    transform var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease));
+}
+
+.site-page .page-nav a:is(:hover, :focus-visible) .soft-nav-label {
+  opacity: 1;
+  transform: translate(0, -50%);
+}
+
+.site-page .nav-rule {
+  width: 24px;
+  margin: 4px 0;
+}
+
+.site-page .page-intro {
+  margin-bottom: 32px;
+}
+
+.site-page .breadcrumb {
+  margin-bottom: 12px;
+}
+
+.site-page .page-intro > p:last-child {
+  margin-top: 12px;
+}
+
+.site-page :is(.panel, .help-card) {
+  border-radius: var(--soft-radius-card, 24px);
+  box-shadow: 0 2px 8px #00000003;
+  transition: border-color var(--soft-duration-base, 240ms) var(--soft-ease, var(--ease)),
+    box-shadow var(--soft-duration-base, 240ms) var(--soft-ease, var(--ease));
+}
+
+.site-page .panel {
+  padding: 28px;
+}
+
+.site-page .help-card:hover {
+  border-color: color-mix(in srgb, var(--text-muted) 56%, var(--border));
+  box-shadow: 0 4px 16px #00000006;
+}
+
+.site-page :is(.preview-card, .empty-state, .notice) {
+  border-radius: 16px;
+}
+
+.site-page .preview-mark {
+  border-radius: 16px;
+}
+
+.site-page .panel :is(img, video) {
+  border-radius: 16px;
+}
+
+.site-page .choice-group {
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 28px;
+  background: var(--raised);
+}
+
+.site-page .choice {
+  min-height: 44px;
+  padding: 8px 12px;
+  border-color: transparent;
+  border-radius: var(--soft-radius-control, 999px);
+  background: transparent;
+}
+
+.site-page .choice[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--accent) 24%, var(--border));
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: 0 2px 8px #00000007;
+}
+
+.site-page .choice:hover {
+  border-color: color-mix(in srgb, var(--text-muted) 40%, transparent);
+}
+
+.site-page .button {
+  min-height: 44px;
+  padding: 10px 20px;
+  border-radius: var(--soft-radius-control, 999px);
+}
+
+.site-page .button-link {
+  padding-inline: 12px;
+}
+
+.site-page :is(.button, .choice, .header-account, .language-controls button, .page-nav a) {
+  transition: color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    background-color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    border-color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    box-shadow var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    transform var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease));
+}
+
+.site-page :is(.field input, .field select, input.input, select.input) {
+  border-radius: var(--soft-radius-control, 999px);
+  padding-inline: 16px;
+}
+
+.site-page .field textarea {
+  border-radius: 20px;
+  padding: 16px;
+}
+
+.site-page :is(.field input, .field select, .field textarea, input.input, select.input) {
+  transition: background-color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    border-color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease)),
+    box-shadow var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease));
+}
+
+.site-page :is(.field input, .field select, .field textarea):focus {
+  background-color: var(--surface);
+  border-color: var(--accent);
+}
+
+.site-page .field input[type="search"] {
+  padding-inline-start: 44px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237c8178' stroke-width='1.5' stroke-linecap='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m16 16 4.5 4.5'/%3E%3C/svg%3E");
+  background-position: 16px center;
+  background-size: 20px;
+  background-repeat: no-repeat;
+}
+
+.site-page .field-pair {
+  gap: 24px;
+}
+
+.site-page .data-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.site-page .data-table tbody tr:hover {
+  background: var(--raised);
+}
+
+.site-page .status-label {
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.site-page .faq summary {
+  min-height: 44px;
+}
+
+.site-page .faq p {
+  margin-top: 8px;
+}
+
+.site-page .site-footer {
+  max-width: none;
+  padding: 24px 32px;
+  margin-inline: 32px;
+}
+
+.site-page .site-footer nav {
+  gap: 8px 20px;
+}
+
+.site-page .site-footer a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.site-page .site-consent,
+.site-page .dialog,
+.site-page #adminPanel dialog {
+  border-radius: var(--soft-radius-card, 24px);
+}
+
+.site-page .access-page,
+.site-page .soft-recovery {
+  width: 100%;
+  flex: 1;
+  max-width: 840px;
+  min-height: 60vh;
+  margin: 48px auto;
+  padding-inline: 32px;
+}
+
+.site-page .soft-recovery {
+  padding-block: 16px;
+}
+
+/* More specific than the dashboard's late, functional style block. */
+.site-page #adminPanel .admin-tabs {
+  width: fit-content;
+  max-width: 100%;
+  flex-wrap: nowrap;
+  gap: 4px;
+  padding: 4px;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--raised);
+}
+
+.site-page #adminPanel .admin-tabs .button {
+  flex-shrink: 0;
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-mid);
+  white-space: nowrap;
+}
+
+.site-page #adminPanel .admin-tabs [aria-selected="true"] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 2px 8px #00000008;
+}
+
+.site-page #adminPanel .admin-controls .field {
+  margin-top: 0;
+}
+
+.site-page #adminPanel .admin-stats .panel {
+  padding: 24px;
+  border-radius: 20px;
+}
+
+.site-page #adminPanel .admin-stat-value {
+  margin-top: 8px;
+  font-size: 2.25rem;
+  line-height: 1.25;
+}
+
+.site-page #adminPanel .admin-table-wrap {
+  border: 1px solid var(--border);
+  border-radius: 20px;
+}
+
+.site-page #adminPanel th {
+  background: var(--raised);
+}
+
+.site-page #adminPanel :is(th, td) {
+  padding: 12px 16px;
+}
+
+.site-page #adminPanel tbody tr {
+  transition: background-color var(--soft-duration-fast, 160ms) var(--soft-ease, var(--ease));
+}
+
+.site-page #adminPanel tbody tr:hover {
+  background: var(--raised);
+}
+
+.site-page #adminPanel .admin-app-list {
+  border-radius: 20px;
+}
+
+.site-page #adminPanel .admin-app-savebar {
+  border-radius: 20px;
+  box-shadow: 0 4px 16px #00000008;
+}
+
+.site-page #adminPanel .admin-app-control select {
+  padding-inline: 16px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-page :is(.button, .choice, .language-controls button):hover:not(:disabled),
+  .site-page .page-nav a:hover {
+    transform: translateY(-1px);
+  }
+}
+
+.site-page :is(.button, .choice, .language-controls button):active:not(:disabled),
+.site-page .page-nav a:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+html[data-theme="dark"] .site-page {
+  --danger: #ffb3a9;
+}
+
+@media (max-width: 1100px) {
+  .site-page #adminPanel .admin-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  html body.site-page {
+    padding: 16px;
+  }
+
+  .site-page .soft-shell-frame {
+    min-height: calc(100dvh - 32px);
+  }
+
+  .site-page .workspace {
+    gap: 24px;
+    padding: 24px 24px 40px;
+  }
+
+  .site-page .site-header-inner {
+    padding-inline: 24px;
+  }
+
+  .site-page .panel {
+    padding: 24px;
+  }
+
+  .site-page .site-footer {
+    margin-inline: 24px;
+    padding-inline: 0;
+  }
+}
+
+@media (max-width: 760px) {
+  html body.site-page {
+    padding: 8px;
+  }
+
+  .site-page .soft-shell-frame {
+    min-height: calc(100dvh - 16px);
+    border-radius: 24px;
+  }
+
+  .site-page .site-header {
+    border-radius: 24px 24px 0 0;
+  }
+
+  .site-page .site-header-inner {
+    min-height: 80px;
+    padding: 16px 20px;
+    gap: 12px;
+  }
+
+  .site-page .header-tools {
+    gap: 8px;
+  }
+
+  .site-page .header-account {
+    display: none;
+  }
+
+  .site-page .site-brand {
+    gap: 8px;
+  }
+
+  .site-page .site-brand span:last-child {
+    font-size: 1rem;
+  }
+
+  .site-page .workspace {
+    display: block;
+    padding: 20px 20px 32px;
+  }
+
+  .site-page .page-nav {
+    position: relative;
+    top: auto;
+    width: 100%;
+    flex-direction: row;
+    align-items: stretch;
+    gap: 4px;
+    margin: 0 0 28px;
+    padding: 8px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scrollbar-width: thin;
+    border-radius: 28px;
+  }
+
+  .site-page .page-nav a {
+    width: max-content;
+    min-width: 72px;
+    max-width: 144px;
+    min-height: 64px;
+    flex-direction: column;
+    flex-shrink: 0;
+    gap: 4px;
+    padding: 8px 12px;
+    border-radius: 20px;
+    white-space: normal;
+  }
+
+  .site-page .soft-nav-label,
+  .site-page .page-nav a:is(:hover, :focus-visible) .soft-nav-label {
+    position: static;
+    width: auto;
+    max-width: 120px;
+    padding: 0;
+    border-radius: 0;
+    background: transparent;
+    color: inherit;
+    font-size: 0.75rem;
+    line-height: 1.45;
+    text-align: center;
+    opacity: 1;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .site-page .page-intro {
+    margin-bottom: 24px;
+  }
+
+  .site-page .page-intro h1 {
+    font-size: clamp(1.75rem, 7vw, 2rem);
+  }
+
+  .site-page .page-intro > p:last-child {
+    font-size: 1rem;
+  }
+
+  .site-page :is(.page-stack, .account-grid) {
+    gap: 20px;
+  }
+
+  .site-page :is(.panel, .help-card) {
+    padding: 20px;
+    border-radius: 20px;
+  }
+
+  .site-page .setting-row {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding-block: 20px;
+  }
+
+  .site-page .choice {
+    min-width: 72px;
+  }
+
+  .site-page .field-pair {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .site-page .site-footer {
+    align-items: flex-start;
+    gap: 12px;
+    margin-inline: 20px;
+    padding-block: 20px;
+  }
+
+  .site-page .access-page,
+  .site-page .soft-recovery {
+    margin-block: 32px;
+    padding-inline: 20px;
+  }
+
+  .site-page #adminPanel .admin-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .site-page #adminPanel .admin-stats .panel {
+    padding: 20px;
+  }
+
+  .site-page #adminPanel .admin-app-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 20px;
+  }
+
+  .site-page #adminPanel .admin-app-state {
+    grid-column: auto;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 460px) {
+  .site-page .site-brand span:last-child {
+    font-size: 0.875rem;
+  }
+
+  .site-page .site-header-inner {
+    padding-inline: 16px;
+  }
+
+  .site-page .site-mark {
+    width: 36px;
+    height: 36px;
+  }
+
+  .site-page #adminPanel :is(.admin-controls, .admin-report-meta) {
+    grid-template-columns: 1fr;
+  }
+
+  .site-page #adminPanel .admin-stat-value {
+    font-size: 1.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-page *,
+  .site-page *::before,
+  .site-page *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  .site-page :is(.button, .choice, .language-controls button, .page-nav a):is(:hover, :active) {
+    transform: none;
+  }
+}
+
+html[data-motion="reduce"] .site-page :is(.button, .choice, .language-controls button, .page-nav a):is(:hover, :active) {
+  transform: none;
+}

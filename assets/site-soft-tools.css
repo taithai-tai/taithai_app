@@ -1,0 +1,286 @@
+/* Modern Soft Dashboard: shared tool chrome, never generated content or artwork.
+   Design craft adapted from unslop by Damir Sokolovsky (@heydamir), CC BY 4.0.
+   These selectors intentionally name app controls: hidden states and app layouts
+   continue to belong to their original styles and scripts. */
+
+/* Tool windows and the panels inside them use the same family of curves. */
+body:is(.tt-qr,.tt-shortlink,.tt-downloader) .card {
+  border-radius:var(--soft-radius-frame,32px);
+  box-shadow:0 8px 32px #00000008;
+  backdrop-filter:none;
+}
+body.tt-qr main.card { padding:32px; }
+body.tt-qr :is(.left,.right) { padding:32px; }
+body.tt-shortlink main.card { padding:32px; }
+body.tt-downloader main.card { padding:32px; background:var(--tt-surface,#fff); border-color:var(--tt-border,#d8dbd3); }
+body.tt-qr :is(.panel,.logo-upload,.tests) {
+  border-radius:var(--soft-radius-card,24px);
+  padding:20px;
+  border-color:var(--tt-border,#d8dbd3);
+  background:var(--tt-surface,#fff);
+}
+body.tt-qr :is(.color-wrap,.result-box) { border-radius:16px; padding:12px 16px; }
+body.tt-shortlink #result { border-radius:20px; padding:20px; }
+
+body.tt-public :is(.dropzone,.table-wrap,.upload-options,dialog) {
+  border-radius:var(--soft-radius-card,24px);
+  border-color:var(--tt-border,#d8dbd3);
+}
+body.tt-public .dropzone { background:var(--tt-surface,#fff); border-width:1px; padding:40px 24px; }
+body.tt-public :is(.table-wrap,.upload-options) { box-shadow:0 4px 20px #00000005; }
+body.tt-public :is(.upload-row,.password-box) { background:var(--tt-surface,#fff); color:var(--tt-text,#242522); }
+body.tt-public .upload-row { padding:16px; border-radius:20px; border-color:var(--tt-border,#d8dbd3); }
+body.tt-public .upload-options { padding:20px; gap:16px; }
+body.tt-public :is(th,td) { padding:16px; }
+body.tt-public .toolbar { gap:16px; }
+
+body.tt-private :is(.step,.device,.connection,.notice) {
+  border-radius:var(--soft-radius-card,24px);
+  border-color:var(--tt-border,#d8dbd3);
+  background:var(--tt-surface,#fff);
+  box-shadow:0 4px 20px #00000005;
+}
+body.tt-private :is(.step,.device,.connection) { padding:24px; }
+body.tt-private .notice { padding:20px; gap:12px; }
+body.tt-private .drive-preview {
+  border-radius:var(--soft-radius-frame,32px);
+  padding:24px;
+  box-shadow:0 8px 32px #00000008;
+  transform:none;
+}
+body.tt-private :is(.steps,.device-grid) { gap:20px; }
+
+body.tt-chat :is(.waiting-card,.attach-menu) {
+  border-radius:var(--soft-radius-card,24px);
+  border-width:1px;
+}
+body.tt-chat .sheet { border-radius:24px 24px 0 0; padding:24px 24px 40px; animation-timing-function:var(--soft-ease,cubic-bezier(.2,.8,.2,1)); animation-duration:var(--soft-duration-base,240ms); }
+body.tt-chat .waiting-card { padding:32px; }
+body.tt-chat :is(.chat-header,.chat-input-bar) { border-width:1px; }
+body.tt-chat :is(.user-profile-chat,.google-login-btn-chat,.lang-global) { box-shadow:none; border-width:1px; }
+
+body.tt-planner :is(.selector-box,.progress-box,.search-box,.extra-box,.upload-box,.semester-card,.summary-box,.share-box,.legend-box,.confirm-card,.modal-content) {
+  border-radius:var(--soft-radius-card,24px);
+  box-shadow:0 4px 24px #00000006;
+  border:1px solid var(--tt-border,#d8dbd3);
+}
+body.tt-planner :is(.selector-box,.progress-box,.search-box,.extra-box,.upload-box,.semester-card,.share-box,.summary-box) { padding:24px; }
+body.tt-planner :is(.selector-box,.progress-box,.search-box,.extra-box) { margin-bottom:24px; }
+body.tt-planner :is(.search-item,.extra-item,.subject,.detail-card,.prereq) { border-radius:20px; }
+body.tt-planner .legend-box { background:var(--tt-surface,#fff); padding:24px; gap:16px; }
+body.tt-planner .hero { padding-block:48px; background:var(--tt-surface,#fff); color:var(--tt-text,#242522); border-bottom:1px solid var(--tt-border,#d8dbd3); }
+
+/* Movie Memory keeps its collection density, font and chosen accent. Only its
+   interface panels get this curve system; posters, tickets and exports do not. */
+body.taithai-movie :is(.toolbar,.settings-panel,.settings-preview,.dashboard-stat,.dashboard-panel,.guide-card,.tutorial-card,.dashboard-empty,.choice-card-btn) {
+  border-radius:var(--soft-radius-card,24px);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+body.taithai-movie .settings-layout { gap:20px; }
+body.taithai-movie :is(.settings-options,.settings-actions) { gap:12px; }
+body.taithai-movie :is(.settings-panel-head,.panel-head) { gap:16px; margin-bottom:24px; }
+body.taithai-movie .settings-field + .settings-field { margin-top:24px; padding-top:24px; }
+body.taithai-movie .settings-choice { border-radius:20px; padding:16px; gap:12px; }
+body.taithai-movie .settings-switch::before { content:""; position:absolute; inset:-7px -2px; }
+body.taithai-movie :is(.dashboard-panels,.dashboard-stats) { gap:16px; }
+body.taithai-movie .dashboard-stat strong { font-variant-numeric:tabular-nums; }
+html:not([data-mm-density="compact"]) body.taithai-movie :is(.dashboard-panel,.guide-card,.tutorial-card) { padding:24px; }
+
+body.tt-chordly :is(.artistCard,.diagramCard,.asideCard,.suggestions,.streamEmptyHistory,.autoChordStatus,.chartUnavailable) {
+  border-radius:var(--soft-radius-card,24px);
+}
+body.tt-chordly :is(.sheetColumn,.generatedDraft) { border-radius:var(--soft-radius-frame,32px); box-shadow:0 8px 32px #00000008; }
+body.tt-chordly :is(.streamEmptyHistory,.diagramCard,.asideCard) { padding:24px; }
+body.tt-chordly :is(.searchBox,.streamHeroSearch .searchBox) { border-radius:var(--soft-radius-control,999px); box-shadow:0 4px 20px #00000008; }
+body.tt-chordly .searchBox.compact { min-height:44px; }
+
+body.tt-ace :is(.card,.glass-card,.demo-card,.form-panel,.result-panel,.contact-form,.request-preview) {
+  border-radius:var(--soft-radius-card,24px);
+}
+body.tt-ace :is(.nav-shell,.demo-tabs) { box-shadow:0 4px 20px #00000005; }
+
+/* Named actions share a touch target and a quiet capsule silhouette. No display
+   declarations here: disabled, hidden and mobile-only actions keep their states. */
+body.tt-qr :is(.primary,.secondary,.google-login-btn,.logout-btn,.remove-logo,.file-label,#startBtn,#openBtn),
+body.tt-shortlink #createBtn,
+body.tt-downloader :is(#downloadBtn,#openDownhubBtn,.google-login-btn,.logout-btn),
+body.tt-public :is(.choose,.download,.action,.password-box button),
+body.tt-private :is(.primary,.secondary,.back,.copy),
+body.tt-chat :is(.btn-main,.lang-global,.lang-mini,.leave-btn,.google-login-btn-chat,.logout-btn-chat),
+body.tt-planner :is(.reset-btn,.search-btn,.share-btn,.upload-row button,.google-login-btn,.logout-btn),
+body.taithai-movie :is(.btn,.page-button,.mobile-filter-toggle,.clear-filter-btn,.secondary-btn,.danger-btn,.watch-all-link,.change-poster-btn,.google-login-btn,.logout-btn),
+body.tt-chordly :is(.softButton,.streamHeroActions a,.asideCard>button,.missingChord button,.allResultsButton),
+body.tt-ace :is(.button,.demo-tab) {
+  box-sizing:border-box;
+  min-height:44px;
+  border-radius:var(--soft-radius-control,999px);
+  padding:10px 20px;
+  font-weight:500;
+  box-shadow:none;
+  transition:transform var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),background-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),border-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),box-shadow var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1));
+}
+body.tt-private :is(.primary,.secondary),
+body.tt-chat .btn-main,
+body.taithai-movie .btn,
+body.tt-ace :is(.button-primary,.demo-tab) { min-height:48px; }
+body.tt-qr .logout-btn,
+body.tt-chat :is(.lang-global,.lang-mini,.leave-btn,.logout-btn-chat),
+body.tt-planner .logout-btn,
+body.taithai-movie .logout-btn { min-height:40px; padding:8px 12px; }
+body:is(.tt-qr,.tt-planner,.tt-downloader,.taithai-movie) .user-profile-bar { min-height:48px; padding:4px 12px 4px 8px; }
+body.tt-chat .user-profile-chat { min-height:48px; padding:4px 12px 4px 8px; }
+
+/* Fields use a capsule for a single line and a generous curve for prose. Color
+   pickers, upload inputs, range controls and hidden app state are untouched. */
+body.tt-qr :is(select,input[type="text"]),
+body.tt-shortlink #longUrl,
+body.tt-downloader :is(#ytUrl,#format),
+body.tt-public :is(.search input,.upload-options input,.password-box input),
+body.tt-private input.url-box,
+body.tt-chat .field input,
+body.tt-planner :is(select,.search-input,.share-url-input),
+body.taithai-movie :is(input.control,select.control),
+body.tt-chordly :is(.missingChord select,.timingControls input,.timingControls select),
+body.tt-ace :is(.field input,.field select) {
+  min-height:48px;
+  border-radius:var(--soft-radius-control,999px);
+  border-width:1px;
+  padding-block:12px;
+  transition:border-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),background-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),box-shadow var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1));
+}
+body.tt-qr textarea,
+body.taithai-movie textarea.control,
+body.tt-ace :is(.field textarea,.editable-output) { border-radius:20px; }
+body.tt-chat .chat-input { border-radius:24px; border-width:1px; }
+body.tt-public .search input { padding-inline-start:40px; }
+
+/* Icon controls stay centered and usable with a thumb. */
+body.tt-chat :is(.back-btn,.attach-btn,.send-btn,.lightbox-close),
+body.tt-public .modal-head button,
+body.taithai-movie :is(.close-modal-btn,.feature-scroll-btn),
+body.tt-chordly :is(.iconButton,.railButtons button),
+body.tt-ace .icon-button {
+  box-sizing:border-box;
+  width:44px;
+  height:44px;
+  min-width:44px;
+  min-height:44px;
+  padding:0;
+  border-radius:50%;
+  flex-shrink:0;
+  transition:transform var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),background-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1));
+}
+
+/* Selected views sit on one rounded plate; app state chooses the active view. */
+body.taithai-movie .view-toggle,
+body.tt-chordly :is(.viewModeTabs,.instrumentTabs),
+body.tt-ace .demo-tabs { padding:4px; gap:4px; border-radius:var(--soft-radius-control,999px); }
+body.taithai-movie .view-btn,
+body.tt-chordly :is(.viewModeTabs button,.instrumentTabs button) {
+  min-height:40px;
+  min-width:40px;
+  border-radius:var(--soft-radius-control,999px);
+  transition:background-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),border-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1));
+}
+
+/* The shared exits form a small, in-flow rail. They cannot cover a composer,
+   file action, media preview or app-specific floating button. */
+/* The fixed consent notice shares the same card and control geometry. */
+html .site-consent { border-radius:var(--soft-radius-card,24px)!important; }
+html .site-consent .button { border-radius:var(--soft-radius-control,999px)!important; }
+
+html .site-utility.site-utility { padding:16px 24px max(16px,env(safe-area-inset-bottom)); border:0; border-radius:0; background:transparent; }
+body:is(.tt-qr,.tt-shortlink)>.site-utility.site-utility { border:0; border-radius:0; }
+html .site-utility .site-utility__links {
+  width:fit-content;
+  max-width:100%;
+  padding:6px;
+  gap:4px;
+  border:1px solid var(--tt-border,#d8dbd3);
+  border-radius:var(--soft-radius-control,999px);
+  background:var(--tt-surface,#fff);
+  box-shadow:0 4px 20px #00000005;
+}
+html .site-utility a {
+  flex:0 0 auto;
+  justify-content:center;
+  min-height:44px;
+  padding:8px 16px;
+  gap:8px;
+  border-radius:var(--soft-radius-control,999px);
+  text-decoration:none;
+  font-weight:500;
+  white-space:nowrap;
+  transition:transform var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),background-color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1)),color var(--soft-duration-fast,160ms) var(--soft-ease,cubic-bezier(.2,.8,.2,1));
+}
+html .site-utility a:hover { color:var(--tt-text,#242522); background:var(--tt-raised,#efefec); text-decoration:none; }
+html .site-utility a[aria-current="page"] { background:var(--tt-raised,#efefec); color:var(--tt-text,#242522); font-weight:500; }
+html .site-utility a:focus-visible { border-radius:var(--soft-radius-control,999px); outline-offset:-3px; }
+html .site-utility .site-utility__icon { display:block; flex:0 0 auto; width:18px; height:18px; stroke-width:1.5; }
+html .site-utility .site-utility__offline { border-radius:20px; padding:12px 16px; }
+body.tt-chat>.site-utility.site-utility { margin:0; padding:4px 8px; border-bottom:1px solid var(--tt-border,#d8dbd3); background:var(--tt-surface,#fff); }
+body.tt-chat .site-utility .site-utility__links { padding:0; border:0; gap:4px; box-shadow:none; }
+body.tt-chat .site-utility a { min-height:40px; padding:8px 12px; }
+
+/* Lift applies to interface actions only, never a QR, poster or generated image. */
+@media(hover:hover) {
+  body.tt-qr :is(.primary,.secondary,.google-login-btn,.file-label,#startBtn,#openBtn):not(:disabled):hover,
+  body.tt-shortlink #createBtn:not(:disabled):hover,
+  body.tt-public :is(.choose,.download,.action):not(:disabled):hover,
+  body.tt-private :is(.primary,.secondary,.back,.copy):not(:disabled):hover,
+  body.tt-chat :is(.btn-main,.back-btn,.attach-btn,.send-btn):not(:disabled):hover,
+  body.tt-planner :is(.reset-btn,.search-btn,.share-btn):not(:disabled):hover,
+  body.taithai-movie :is(.btn,.page-button,.close-modal-btn,.settings-choice,.choice-card-btn):not(:disabled):hover,
+  body.tt-chordly :is(.softButton,.streamHeroActions a,.asideCard>button):not(:disabled):hover,
+  body.tt-ace :is(.button,.icon-button):not(:disabled):hover,
+  html .site-utility a:hover { transform:translateY(-1px); }
+}
+body.tt-qr :is(.primary,.secondary,.google-login-btn,#startBtn,#openBtn):not(:disabled):active,
+body.tt-shortlink #createBtn:not(:disabled):active,
+body.tt-public :is(.download,.action):not(:disabled):active,
+body.tt-private :is(.primary,.secondary,.back,.copy):not(:disabled):active,
+body.tt-chat :is(.btn-main,.back-btn,.attach-btn,.send-btn):not(:disabled):active,
+body.tt-planner :is(.reset-btn,.search-btn,.share-btn):not(:disabled):active,
+body.taithai-movie :is(.btn,.page-button,.close-modal-btn,.settings-choice,.choice-card-btn):not(:disabled):active,
+body.tt-chordly :is(.softButton,.streamHeroActions a,.asideCard>button):not(:disabled):active,
+body.tt-ace :is(.button,.icon-button):not(:disabled):active,
+html .site-utility a:active { transform:translateY(0) scale(.98); }
+
+@media(max-width:680px) {
+  body:is(.tt-qr,.tt-shortlink,.tt-downloader) { padding:16px; }
+  body.tt-qr main.card,
+  body.tt-qr :is(.left,.right),
+  body.tt-shortlink main.card,
+  body.tt-downloader main.card { padding:24px; }
+  body.tt-public .dropzone { padding:32px 20px; }
+  body.tt-public .upload-options { padding:16px; }
+  body.tt-public :is(th,td) { padding:12px; }
+  body.tt-private :is(.step,.device,.connection) { padding:20px; }
+  body.tt-chat :is(.sheet,.waiting-card) { padding-inline:20px; }
+  body.tt-planner :is(.selector-box,.progress-box,.search-box,.extra-box,.upload-box,.semester-card,.share-box,.summary-box,.legend-box) { padding:20px; }
+  body.taithai-movie .settings-panel { padding:20px; }
+  body.taithai-movie :is(.settings-panel-head,.panel-head) { margin-bottom:20px; }
+  body.taithai-movie .settings-choice { padding:12px; }
+  body.tt-ace .demo-tabs { border-radius:24px; }
+  body.tt-ace .demo-tab { padding:12px 8px; border-radius:20px; }
+  html .site-utility.site-utility { padding-inline:0; }
+  html .site-utility .site-utility__links,
+  body.tt-chat .site-utility .site-utility__links {
+    width:fit-content;
+    flex-wrap:nowrap;
+    justify-content:flex-start;
+    overflow-x:auto;
+    overscroll-behavior-inline:contain;
+    scrollbar-width:thin;
+  }
+  html .site-utility a { padding-inline:12px; }
+  body.tt-chat>.site-utility.site-utility { padding:4px 8px; }
+}
+
+@media(prefers-reduced-motion:reduce) {
+  body:is(.tt-qr,.tt-shortlink,.tt-downloader,.tt-public,.tt-private,.tt-chat,.tt-planner,.taithai-movie,.tt-chordly,.tt-ace) :is(button,.primary,.secondary,.back,.copy,.choose,.download,.action,.file-label,.btn,.page-button,.softButton,.button,.settings-choice,.choice-card-btn,.streamHeroActions a),
+  html .site-utility a { transition:none; transform:none!important; }
+}
+html:is([data-motion="reduce"],[data-mm-motion="reduced"]) body:is(.tt-qr,.tt-shortlink,.tt-downloader,.tt-public,.tt-private,.tt-chat,.tt-planner,.taithai-movie,.tt-chordly,.tt-ace) :is(button,.primary,.secondary,.back,.copy,.choose,.download,.action,.file-label,.btn,.page-button,.softButton,.button,.settings-choice,.choice-card-btn,.streamHeroActions a):is(:hover,:active),
+html[data-motion="reduce"] .site-utility a:is(:hover,:active) { transform:none!important; }
