@@ -134,6 +134,6 @@ test('account failures preserve app results and produce an accessible retry inst
 
 test('all primary pages load one shared search and expose community navigation',async()=>{
   for(const name of ['index.html','account/index.html','settings/index.html','help/index.html','about/index.html','privacy/index.html','support/index.html','community/index.html','profile/index.html','messages/index.html']){
-    const html=await readFile(new URL('../'+name,import.meta.url),'utf8');assert.equal((html.match(/src="\/assets\/site-search\.js"/g)||[]).length,1,name);assert.equal((html.match(/href="\/assets\/site-search\.css"/g)||[]).length,1,name);assert.match(html,/href="\/community\/"/,name);assert.match(html,/href="\/messages\/"/,name);
+    const html=await readFile(new URL('../'+name,import.meta.url),'utf8');assert.equal((html.match(/src="\/assets\/site-search\.js"/g)||[]).length,1,name);assert.equal((html.match(/href="\/assets\/site-search\.css"/g)||[]).length,1,name);assert.match(html,/href="(?:https:\/\/taithai\.app)?\/community\/"/,name);assert.match(html,/href="(?:https:\/\/taithai\.app)?\/messages\/"/,name);
   }
 });

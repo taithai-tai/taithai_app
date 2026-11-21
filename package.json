@@ -11,7 +11,7 @@
     "test:chordly": "node --experimental-strip-types --test chordly/tests/*.test.ts",
     "test:ticket": "node scripts/test-ticket-scanner.mjs",
     "start": "node server.js",
-    "test:site": "node --test scripts/test-site-preferences.mjs scripts/test-site-data.mjs scripts/test-site-account.mjs scripts/test-site-admin.mjs scripts/test-site-pages.mjs scripts/test-site-app-catalog.mjs scripts/test-site-app-gate.mjs scripts/test-site-app-cache.mjs scripts/test-site-app-visibility.mjs scripts/test-site-app-discovery.mjs scripts/test-site-owner-ui.mjs scripts/test-site-motion.mjs scripts/test-site-search.mjs scripts/test-site-social-ui.mjs && node scripts/test-site-private-drive.mjs && node scripts/test-qr-reader.mjs && node --test ace/tests/subpath.test.mjs",
+    "test:site": "node --test scripts/test-site-preferences.mjs scripts/test-site-data.mjs scripts/test-site-account.mjs scripts/test-site-admin.mjs scripts/test-site-pages.mjs scripts/test-site-app-catalog.mjs scripts/test-site-app-gate.mjs scripts/test-site-app-cache.mjs scripts/test-site-app-visibility.mjs scripts/test-site-app-discovery.mjs scripts/test-site-owner-ui.mjs scripts/test-site-motion.mjs scripts/test-site-search.mjs scripts/test-site-navigation.mjs scripts/test-site-social-ui.mjs && node scripts/test-site-private-drive.mjs && node scripts/test-qr-reader.mjs && node --test ace/tests/subpath.test.mjs",
     "test:site:rules": "node --test scripts/test-site-rules.mjs"
   },
   "dependencies": {
