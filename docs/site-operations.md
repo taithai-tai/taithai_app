@@ -4,7 +4,7 @@
 Settings `/settings/`; account `/account/`; help `/help/`; private support `/support/`; data notice `/privacy/`; about `/about/`; owner dashboard `/admin/`. The homepage and all ten apps link to the shared service pages. Movie Memory retains its separate app settings.
 
 ## Owner access
-Sign in through the existing Google/Firebase provider using the owner's verified email. Both the UI helper and Firestore `siteAdmin()` gate the exact owner address configured in source. Frontend visibility is not the access boundary: Firestore denies report/analytics reads to unauthorized accounts even when called directly. To change ownership, update `firestore.rules`, the site-data/admin helpers, their tests and redeploy rules. No new password or token is put in frontend code.
+Sign in through the existing Google/Firebase provider using the owner's verified email. Both the UI helper and Firestore `siteAdmin()` gate the exact owner address configured in source. Frontend visibility is not the access boundary: Firestore denies report/analytics reads to unauthorized accounts even when called directly. To change ownership, update `firestore.rules`, the site-data/admin helpers, their tests and redeploy rules. No new password or token is put in frontend code. Dashboard and app-management navigation starts hidden in HTML and is shown only after Firebase restores the verified owner. The shared owner-UI guard hides links on sign-out, account changes and page-cache suspension; hiding links is separate from the Firestore access boundary.
 
 ## Data collections
 - `siteReports`: acknowledged, private report submissions, optional guest identity, app/type/subject/details/steps/expected/contact, status/public reply and server timestamps
