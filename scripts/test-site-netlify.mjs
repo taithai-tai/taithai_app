@@ -71,7 +71,7 @@ test('authorized API and short-code paths continue without awaiting the Edge40s 
   let called=0;
   const context={next:()=>{called++;return new Promise(()=>{});}};
   const gate=createNetlifyAppGate({checkAccess:policy()});
-  for(const path of ['/api/membership/','/api/membership-webhook/','/api/chordly/charts','/api/ace/','/S/g-ABCdef7/']){
+  for(const path of ['/api/membership/','/api/membership-webhook/','/api/site-admin/','/api/chordly/charts','/api/ace/','/S/g-ABCdef7/']){
     assert.equal(await gate(request(path),context),undefined,path);
   }
   assert.equal(called,0);
@@ -157,7 +157,7 @@ test('ACE keeps model settings and bounds stateless generation within total55s a
 });
 test('every deployed API has canonical custom paths; internal helpers are outside function discovery',async()=>{
   const files=(await readdir(new URL('../netlify/functions/',import.meta.url))).filter(name=>name.endsWith('.js'));
-  assert.equal(files.length,11);
+  assert.equal(files.length,12);
   const paths=[];
   for(const file of files){const module=await import(`../netlify/functions/${file}`);assert.equal(typeof module.default,'function');assert.ok(module.config.path.every(path=>path.startsWith('/api/')||path.startsWith('/S/')));paths.push(...module.config.path);}
   assert.deepEqual(paths.sort(),[...NETLIFY_FUNCTION_PATHS].sort());

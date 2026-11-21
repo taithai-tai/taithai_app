@@ -22,7 +22,7 @@ export function providerRouting(env = process.env) {
 const RESERVED = new Set(('admin administrator root postmaster abuse security support help billing payment payments ' +
   'noreply mailerdaemon webmaster hostmaster domainmaster dns mail email smtp imap pop api assets system ' +
   'taithai taithai5002 owner official staff moderator contact info sales stripe accounts account www null undefined').split(' '));
-const uidPattern = /^[A-Za-z0-9:_-]{1,128}$/;
+const uidPattern = /^[A-Za-z0-9_.:-]{1,128}$/;
 const addressPattern = /^[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[A-Za-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\.)+[A-Za-z]{2,63}$/;
 const iso = value => new Date(value).toISOString();
 
@@ -36,8 +36,7 @@ const bounded = (value, max) => String(value ?? '').replace(/[\u0000-\u0008\u000
 const metadata = (value, max = 200) => bounded(value, max).replace(/[\r\n]+/g, ' ').replaceAll('<', '‹').replaceAll('>', '›');
 function uid(value) { if (typeof value !== 'string' || !uidPattern.test(value)) fail('AUTH_REQUIRED', 401); return value; }
 function identity(user) {
-  uid(user?.uid);
-  if (user.email_verified !== true && user.emailVerified !== true) fail('VERIFIED_EMAIL_REQUIRED', 403);
+  if (typeof user?.uid!=='string' || !uidPattern.test(user.uid) || user?.email_verified!==true || typeof user?.email!=='string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email)) fail('MAIL_ACCESS_REQUIRED',403);
   return user.uid;
 }
 function address(value) {
@@ -182,12 +181,10 @@ function publicMailbox(record) {
   return record ? { id: record.id || record.uid, address: record.address, localPart: record.localPart, provider: record.provider || 'migadu', status: record.status, createdAt: record.createdAt,
     ...(record.status === 'provisioning' && Number.isFinite(record.leaseUntil) ? { retryAt: iso(record.leaseUntil) } : {}) } : null;
 }
-function memberState(value, now) {
-  const periodValid = !value?.currentPeriodEnd || (Number.isFinite(Date.parse(value.currentPeriodEnd)) && Date.parse(value.currentPeriodEnd) > now);
-  const trialValid = value?.ownerTrial === true && Number.isFinite(Date.parse(value.expiresAt)) && Date.parse(value.expiresAt) > now;
-  return { active: value?.active === true && periodValid, paid: value?.paid === true && value?.ownerTrial !== true,
-    ownerTrial: value?.active === true && periodValid && trialValid,
-    mailboxes: value?.mailboxes === undefined ? 1 : Number.isSafeInteger(value.mailboxes) && value.mailboxes >= 1 && (value?.ownerTrial !== true || value.mailboxes <= 2) ? value.mailboxes : 0 };
+function memberState(value) {
+  const mailAccess=value?.active===true && value?.mailAccess===true && value?.adminAccess===true;
+  return {active:mailAccess,mailAccess,adminAccess:value?.adminAccess===true,ownerAccess:value?.ownerAccess===true && mailAccess,
+    adminOnly:true,role:mailAccess && value.role==='owner'?'owner':mailAccess?'admin':'none',permissions:mailAccess && Array.isArray(value.permissions)?value.permissions:[],paid:false,ownerTrial:false};
 }
 function recipientList(value) {
   const values = typeof value === 'string' ? value.trim().split(/[\s,;]+/).filter(Boolean) : value;
@@ -222,24 +219,23 @@ function safeMessage(raw, folder, uidValidity, body = false, mailboxId) {
 }
 
 /** store: get(path), set(path,value), runTransaction(tx => ...), where tx has
- * get/set. getMembership(uid,{user}) must read authoritative Stripe webhook
- * state or a narrowly scoped server-only owner-trial policy, never client data.
+ * get/set. getMembership(uid,{user}) must resolve the live server-only admin grant,
+ * never client flags, paid records or an expiring trial.
  * Client input never chooses a storage owner or supplies mailbox credentials. */
-export function createSiteMail({ store, getMembership, reserveTrialCapacity, provider, imap, smtp, env = process.env, now = Date.now, provisioningTimeoutMs = 45000 } = {}) {
+export function createSiteMail({ store, getMembership, capacityStatus, withProvisioningLock, provider, imap, smtp, env = process.env, now = Date.now, provisioningTimeoutMs = 45000 } = {}) {
   if (!store?.get || !store?.set || !(store.runTransaction || store.transaction) || typeof getMembership !== 'function') throw new TypeError('Mail requires a transactional store and trusted membership resolver');
   if (!Number.isSafeInteger(provisioningTimeoutMs) || provisioningTimeoutMs < 1 || provisioningTimeoutMs > 45000) throw new TypeError('Invalid mail provisioning deadline');
   const transaction = callback => (store.runTransaction || store.transaction).call(store, callback);
   const configured = () => {
+    if (env.OWNER_MAIL_ENABLED!=='true') fail('OWNER_MAIL_NOT_ENABLED',503);
     if (!mailConfiguration(env).ready || !provider || !imap || !smtp) fail('MAIL_NOT_CONFIGURED', 503);
     if (provider.id && provider.id !== env.MAIL_PROVIDER) fail('MAIL_PROVIDER_MISMATCH', 503);
   };
   const membership = async (userId, user) => {
-    const value = memberState(await getMembership(userId, { user }), now());
-    if (!['purelymail','hostinger'].includes(env.MAIL_PROVIDER)) value.ownerTrial = false;
-    return value;
+    return memberState(await getMembership(userId,{user}));
   };
-  const entitled = state => state.active && (state.paid || state.ownerTrial) && state.mailboxes > 0;
-  async function paid(userId, user) { const state = await membership(userId, user); if (!entitled(state)) fail('ACTIVE_MEMBERSHIP_REQUIRED', 403); return state; }
+  const entitled = state => state.active && state.mailAccess;
+  async function requireMailAccess(userId,user) {const state=await membership(userId,user);if(!entitled(state))fail('MAIL_ACCESS_REQUIRED',403);return state;}
   function credentialsFor(record) {
     const providerName = recordProvider(record);
     if (providerName !== env.MAIL_PROVIDER) fail('MAIL_PROVIDER_MISMATCH', 503);
@@ -287,9 +283,9 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     if (!record || record.status !== 'active') fail('MAILBOX_NOT_FOUND', 404);
     return record;
   }
-  const allocated = (records, record, member) => entitled(member) && records.filter(item => item.status !== 'unavailable').slice(0, member.mailboxes).some(item => item.id === record.id);
+  const allocated = (records, record, member) => entitled(member) && records.some(item=>item.status!=='unavailable' && item.id===record.id);
   async function paidMailbox(userId, user, id) {
-    const member = await paid(userId, user); const { records } = await accounts(userId);
+    const member = await requireMailAccess(userId,user); const { records } = await accounts(userId);
     const record = records.find(item => item.id === id && item.status === 'active');
     if (!record) fail('MAILBOX_NOT_FOUND', 404);
     if (!allocated(records, record, member)) fail('MAILBOX_NOT_ENTITLED', 403);
@@ -302,7 +298,8 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
       tx.set(key, { uid: userId, count: count + 1, windowStart, expiresAt: iso(now() + window * 2) }); });
   }
   async function owned(user, input = {}) {
-    const userId = identity(user); selection(input); configured();
+    const userId = identity(user);
+    await requireMailAccess(userId,user); configured(); selection(input);
     const { records } = await accounts(userId); const record = selected(records, input);
     await rate(userId, 'access', 90);
     return { record, records, credentials: credentialsFor(record) };
@@ -316,8 +313,15 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     try { return await operation(); } catch (error) { if (error instanceof MailError) throw error; fail('MAIL_UNAVAILABLE', 503); }
   }
   async function status(user) {
-    const userId = identity(user); const { records } = await accounts(userId); const member = await membership(userId, user);
-    const ready = mailConfiguration(env).ready && Boolean(provider && imap && smtp) && (!provider.id || provider.id === env.MAIL_PROVIDER) && records.every(record => {
+    const userId = identity(user);
+    const empty={ready:false,adminOnly:true,ownerAccess:false,adminAccess:false,mailAccess:false,paid:false,ownerTrial:false,domain:DOMAIN,provider:mailConfiguration(env).provider,
+      membership:null,mailbox:null,mailboxes:[],pendingMailboxes:[],mailboxCapacity:0,mailboxUsed:0,mailboxAvailable:0,capacityAvailable:false,
+      canCreate:false,canSend:false,canRetryProvisioning:false,canManageMessages:false,limits:MAIL_LIMITS};
+    const member=await membership(userId,user);if(!entitled(member))return empty;
+    const access={ownerAccess:member.ownerAccess,adminAccess:member.adminAccess,mailAccess:member.mailAccess,role:member.role,permissions:member.permissions};
+    if(env.OWNER_MAIL_ENABLED!=='true' || !mailConfiguration(env).ready)return {...empty,...access};
+    const {records}=await accounts(userId);
+    const ready = Boolean(provider && imap && smtp) && (!provider.id || provider.id === env.MAIL_PROVIDER) && records.every(record => {
       try { return record.status === 'unavailable' || recordProvider(record) === env.MAIL_PROVIDER; } catch { return false; }
     });
     const writable = ready && entitled(member);
@@ -332,15 +336,22 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     const mailboxes = visible.filter(item => item.status === 'active');
     const pendingMailboxes = visible.filter(item => item.status === 'provisioning');
     const mailboxUsed = visible.filter(item => item.status !== 'unavailable').length;
-    const mailboxCapacity = entitled(member) ? member.mailboxes : 0;
+    let stock=null;
+    try {
+      stock=await (capacityStatus ? capacityStatus(user) : provider.inventory?.());
+      if(!Number.isSafeInteger(stock?.capacity) || stock.capacity<1 || !Number.isSafeInteger(stock.used) || stock.used<0
+        || !Number.isSafeInteger(stock.available) || stock.available<0 || stock.available>stock.capacity)stock=null;
+    }catch{/* A management API outage blocks creation, not the owner's existing inbox. */}
+    const mailboxCapacity=stock?.capacity || 0,mailboxAvailable=stock?Math.max(0,stock.available-(capacityStatus?0:pendingMailboxes.length)):0;
     const mailbox = pendingMailboxes[0] || mailboxes[0] || visible[0] || null;
     return { ready, domain: DOMAIN, provider: mailConfiguration(env).provider, mailbox, mailboxes, pendingMailboxes, mailboxCapacity, mailboxUsed,
-      membership: member, ownerTrial: member.ownerTrial, canCreate: writable && mailboxUsed < mailboxCapacity,
+      membership:null,adminOnly:true,...access,paid:false,ownerTrial:false,mailboxAvailable,capacityAvailable:Boolean(stock),
+      canCreate:writable && mailboxAvailable>0,
       canSend: mailboxes.some(item => item.canSend), canRetryProvisioning: pendingMailboxes.some(item => item.canRetryProvisioning),
       canManageMessages: mailboxes.some(item => item.canManageMessages), limits: MAIL_LIMITS };
   }
   async function create(user, input = {}) {
-    const userId = identity(user); selection(input); configured(); const member = await paid(userId, user);
+    const userId = identity(user); const member = await requireMailAccess(userId,user); configured(); selection(input);
     const local = newMailboxLocalPart(input.localPart, env.MAIL_PROVIDER); await rate(userId, 'create', 40, 86400000);
     const requestId = input.requestId ?? createHash('sha256').update(`${userId}\n${local}`).digest('hex');
     if (typeof requestId !== 'string' || !/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) fail('INVALID_REQUEST_ID');
@@ -374,7 +385,6 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
         return renewed;
       }
       const retained = records.filter(item => item.status !== 'unavailable');
-      if (retained.length >= member.mailboxes) fail(member.mailboxes === 1 ? 'MAILBOX_ALREADY_EXISTS' : 'MAILBOX_CAPACITY_REACHED', 409);
       if (name) fail('ADDRESS_UNAVAILABLE', 409);
       if (selection(input) !== undefined) fail('MAILBOX_NOT_FOUND', 404);
       const id = records.length === 0 ? userId : `mbx_${randomUUID()}`;
@@ -388,19 +398,12 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     });
     const providerOptions = record.provider === 'hostinger' ? { signal: combineMembershipOperationSignal(AbortSignal.timeout(provisioningTimeoutMs)) } : {};
     const withinDeadline = () => { if (providerOptions.signal?.aborted) fail('MAILBOX_PROVISIONING_UNCERTAIN', 503); };
-    // Owner testing consumes the same physical inventory as paid customers.
-    // The runtime's trusted callback validates the exact owner/expiry and
-    // reserves globally, including pending paid-but-uncreated mailbox seats.
-    if (member.ownerTrial && record.provider === 'hostinger') {
-      if (typeof reserveTrialCapacity !== 'function') fail('MAIL_CAPACITY_NOT_CONFIGURED', 503);
-      if (await reserveTrialCapacity({ user, quantity: member.mailboxes }) !== true) fail('MAIL_PROVIDER_CAPACITY_REACHED', 503);
-    }
     withinDeadline();
     const result = async () => ({ ...await status(user), createdMailbox: publicMailbox({ ...record, status: 'active' }) });
     if (record.status === 'active') return result();
     const path = accountPath(userId, record.id);
-    try {
-      const latestMember = await paid(userId, user); const latestAccounts = await accounts(userId);
+    const provision=async(capacity)=>{
+      const latestMember = await requireMailAccess(userId,user); const latestAccounts = await accounts(userId);
       if (!allocated(latestAccounts.records, record, latestMember)) fail('MAILBOX_NOT_ENTITLED', 403);
       const usesPasswordProof = ['purelymail','hostinger'].includes(record.provider);
       if (usesPasswordProof && (!provider.assertReady || await provider.assertReady(providerOptions) !== true)) fail('MAIL_PROVIDER_NOT_READY', 503);
@@ -414,7 +417,8 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
         fail('ADDRESS_UNAVAILABLE', 409);
       }
       if (!found) {
-        if (provider.assertCapacity && await provider.assertCapacity(1, providerOptions) !== true) fail('MAIL_PROVIDER_CAPACITY_REACHED', 503);
+        if(capacity?.reserve)await capacity.reserve(record);
+        else if (!provider.assertCapacity || await provider.assertCapacity(1,providerOptions)!==true) fail('MAIL_PROVIDER_CAPACITY_REACHED',503);
         withinDeadline();
         await transaction(async tx => {
           const latest = await tx.get(path);
@@ -431,9 +435,13 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
         if (!latest || latest.operationId !== record.operationId) fail('MAILBOX_CONFLICT', 409);
         tx.set(path, { ...latest, status: 'active', leaseUntil: 0, updatedAt: iso(now()) });
       });
+      if(capacity?.complete)await capacity.complete(record);
       return result();
+    };
+    try {
+      return await (withProvisioningLock ? withProvisioningLock(user,provision) : provision());
     } catch (error) {
-      if (error instanceof MailError && ['ADDRESS_UNAVAILABLE','ACTIVE_MEMBERSHIP_REQUIRED','MAILBOX_NOT_ENTITLED','MAIL_PROVIDER_CAPACITY_REACHED'].includes(error.code)) throw error;
+      if (['ADDRESS_UNAVAILABLE','MAIL_ACCESS_REQUIRED','MAILBOX_NOT_ENTITLED','MAIL_PROVIDER_CAPACITY_REACHED','MAIL_CAPACITY_REVIEW_REQUIRED'].includes(error?.code)) throw new MailError(error.code,error.status || 503);
       fail('MAILBOX_PROVISIONING_UNCERTAIN', 503);
     }
   }
@@ -474,7 +482,8 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     await external(() => imap.trash(credentials, ref)); return { moved: true };
   }
   async function send(user, input = {}) {
-    const userId = identity(user); const requestedId = selection(input);
+    const userId = identity(user);
+    await requireMailAccess(userId,user); configured(); const requestedId = selection(input);
     const requestId = input.requestId;
     if (typeof requestId !== 'string' || !/^[A-Za-z0-9_-]{16,100}$/.test(requestId)) fail('INVALID_REQUEST_ID');
     if (typeof input.subject !== 'string' || input.subject.length > MAIL_LIMITS.maxSubject || /[\r\n\x00]/.test(input.subject)) fail('INVALID_SUBJECT');
@@ -492,9 +501,8 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
           ...(existing.rejected?.length ? { partial: true, rejected: existing.rejected } : {}) } : {}) };
     };
     // Receipt lookup is ownership/fingerprint-bound and performs no provider
-    // operation, even after expiry, a box switch or a configuration outage.
+    // operation, even after a box switch or provider-management outage.
     if (previous) return previousResult(previous);
-    configured(); await paid(userId, user);
     const { records } = await accounts(userId); const record = selected(records, input);
     await paidMailbox(userId, user, record.id); const credentials = credentialsFor(record);
     const replyRef = input.inReplyTo ? reference({ id: input.inReplyTo }, record, records) : null;
@@ -534,9 +542,9 @@ export function createSiteMail({ store, getMembership, reserveTrialCapacity, pro
     await store.set(jobPath, { ...job, status: 'sent', sentCopySaved, rejected, updatedAt: iso(now()) }).catch(() => {});
     return { status: 'sent', messageId: job.messageId, sentCopySaved, ...(rejected.length ? { partial: true, rejected } : {}) };
   }
-  async function syncMembership(userId) {
-    uid(userId); configured(); const { records } = await accounts(userId); const member = await membership(userId);
-    return { preserved: true, sendingEnabled: records.some(record => record.status === 'active' && allocated(records, record, member)) && member.paid };
+  async function syncMembership(user) {
+    const userId=identity(user);const member=await requireMailAccess(userId,user);configured();const {records}=await accounts(userId);
+    return {preserved:true,ownerAccess:member.ownerAccess,adminAccess:member.adminAccess,mailAccess:member.mailAccess,adminOnly:true,paid:false,sendingEnabled:records.some(record=>record.status==='active' && allocated(records,record,member))};
   }
   return { status, create, folders, list, message, read, trash, send, syncMembership };
 }
@@ -642,8 +650,8 @@ export function createHostingerProvider({ env = process.env, fetchImpl = globalT
   }
   const adapter = {
     id: 'hostinger', expectedMxHosts: MAIL_PROVIDER_SETTINGS.hostinger.expectedMxHosts, inventory,
-    // Orders expose no documented DNS-readiness flags. Root's DNS preflight and
-    // real owner-trial receive/send tests remain required before public sales.
+    // Orders expose no documented DNS-readiness flags. Operator DNS preflight
+    // and real receive/send verification remain separate from this API check.
     assertReady: options => operation(async request => { await orderPlan(request); return true; }, options),
     async assertCapacity(additionalCount = 1, options) {
       if (!Number.isSafeInteger(additionalCount) || additionalCount < 0) fail('MAIL_PROVIDER_CAPACITY_REVIEW', 503);

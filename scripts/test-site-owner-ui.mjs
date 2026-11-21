@@ -68,8 +68,8 @@ test('all public admin links are hidden in the HTML before JavaScript runs and h
       if (!entry.name.endsWith('.html')) continue;
       const html = await readFile(file, 'utf8');
       for (const match of html.matchAll(/<a\b[^>]*href=["']\/admin(?:\/|#|\?|["'])[^>]*>/g)) {
-        count++; assert.match(match[0], /\bdata-owner-only\b/, file); assert.match(match[0], /\bhidden\b/, file);
-        assert.match(html, /<script\b[^>]*type="module"[^>]*src="\/assets\/site-owner-ui\.js"/, file);
+        count++; assert.match(match[0], /\b(?:data-owner-only|data-dashboard-access)\b/, file); assert.match(match[0], /\bhidden\b/, file);
+        assert.match(html, /<script\b[^>]*type="module"[^>]*src="\/assets\/site-owner-ui\.js"/, file);if(match[0].includes('data-dashboard-access'))assert.match(html,/src="\/assets\/site-access-ui\.js"/,file);
       }
     }
   }

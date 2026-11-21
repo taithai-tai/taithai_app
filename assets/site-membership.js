@@ -10,8 +10,8 @@ const QUANTITY_COPY = {
   en:{price:'THB 99 / month',includes:'Taithai membership with @taithai.app email. More features will be added over time.',quantity:'Email quantity',paidQuantity:'Confirmed email quantity',unitPrice:'Membership starts at THB 99 per month · additional email THB 99 each per month',total:'Monthly total',increase:'Adjust membership',increaseTo:'Total email quantity after adjustment',reviewIncrease:'Review quantity increase in Stripe',resumeIncrease:'Reopen existing quantity review in Stripe',proration:'For an increase during a billing period, Stripe shows any prorated charge and terms before confirmation. New capacity opens after server-confirmed payment.',increasePending:'A quantity increase is awaiting confirmation. Current access remains limited to the confirmed quantity. Returning from Stripe does not cancel this review. Reopen the existing target; you can add further capacity after payment is confirmed.',increaseOnly:'Add email addresses as needed. Only increases are currently supported, preserving existing email.',openingUncertain:'Opening checkout could not be confirmed. Retry the original quantity and discount code.',retryOpening:'Retry original checkout',clearOpening:'Clear pending request',clearOpeningConfirm:'Have you checked the original checkout? Clearing this request does not cancel a subscription or checkout Stripe may already have created.',checkoutOpen:'An earlier checkout is still open. Check it before changing quantity or discount code.'}
 };
 const CAPACITY_COPY = {
-  th:{capacityReached:'จำนวนอีเมลตามสมาชิกปัจจุบันถูกใช้ครบแล้ว ปรับสมาชิกก่อนเพิ่มอีเมล',notEntitled:'กล่องนี้ยังไม่มีสิทธิ์ส่งอีเมล ตรวจสอบจำนวนอีเมลที่ยืนยันการชำระเงินแล้ว',selectionRequired:'กรุณาเลือกกล่องอีเมลก่อนดำเนินการ',dailyQuota:'กล่องนี้ใช้โควตาส่งในรอบวันครบแล้ว กรุณารอโควตารอบถัดไป',increaseUnavailable:'ขณะนี้ยังปรับสมาชิกไม่ได้ กรุณาตรวจสอบสถานะหรือติดต่อผู้ดูแล',paymentLimit:'ระบบชำระเงินยังรับยอดหรือจำนวนนี้ไม่ได้ กรุณาปรับจำนวนหรือติดต่อผู้ดูแล'},
-  en:{capacityReached:'Your current membership email quantity is fully used. Adjust membership to add email.',notEntitled:'Sending is not available for this mailbox. Check the confirmed paid mailbox quantity.',selectionRequired:'Choose a mailbox before continuing',dailyQuota:'This mailbox has reached its daily sending quota. Wait for the next quota period.',increaseUnavailable:'Membership adjustments are not available right now. Check the status or contact support.',paymentLimit:'The payment service cannot accept this amount or quantity. Adjust the quantity or contact support.'}
+  th:{capacityReached:'ผู้ให้บริการยังไม่มีพื้นที่สำหรับสร้างอีเมลเพิ่ม อีเมลเดิมยังใช้งานได้',notEntitled:'กล่องนี้ยังส่งอีเมลไม่ได้ ตรวจสอบสิทธิ์เจ้าของและสถานะบริการ',selectionRequired:'กรุณาเลือกกล่องอีเมลก่อนดำเนินการ',dailyQuota:'กล่องนี้ใช้โควตาส่งในรอบวันครบแล้ว กรุณารอโควตารอบถัดไป',increaseUnavailable:'ขณะนี้ยังปรับสมาชิกไม่ได้ กรุณาตรวจสอบสถานะหรือติดต่อผู้ดูแล',paymentLimit:'ระบบชำระเงินยังรับยอดหรือจำนวนนี้ไม่ได้ กรุณาปรับจำนวนหรือติดต่อผู้ดูแล'},
+  en:{capacityReached:'The email provider has no space for another address. Existing email can still be used.',notEntitled:'Sending is unavailable for this mailbox. Check owner access and service status.',selectionRequired:'Choose a mailbox before continuing',dailyQuota:'This mailbox has reached its daily sending quota. Wait for the next quota period.',increaseUnavailable:'Membership adjustments are not available right now. Check the status or contact support.',paymentLimit:'The payment service cannot accept this amount or quantity. Adjust the quantity or contact support.'}
 };
 export function membershipText(language = 'th') { const key = language === 'en' ? 'en' : 'th';return {...MESSAGES[key],...PAYMENT_STATUS[key],...QUANTITY_COPY[key],...CAPACITY_COPY[key]}; }
 export function mailboxQuantity(value) {const quantity = Number(value);if (!Number.isSafeInteger(quantity) || quantity < 1 || !Number.isSafeInteger(quantity * 9900)) throw Object.assign(Error('INVALID_QUANTITY'),{code:'INVALID_QUANTITY'});return quantity;}
@@ -23,7 +23,7 @@ export function membershipError(error, language = 'th', online = true) {
   if (/account.changed|session.changed/.test(code)) return text.changed;
   if (/timeout|abort/.test(code)) return text.timeout;
   if (/unauth|auth.required|auth.unavailable|token|sign.in/.test(code)) return text.auth;
-  if (/permission|forbidden|owner.only/.test(code)) return text.permission;
+  if (/permission|forbidden|owner.only|owner.required/.test(code)) return text.permission;
   if (/mailbox.capacity.reached/.test(code)) return text.capacityReached;
   if (/mailbox.not.entitled/.test(code)) return text.notEntitled;
   if (/mailbox.selection.required/.test(code)) return text.selectionRequired;
@@ -89,131 +89,16 @@ export function membershipSetup(ui, text, testMode = false) {
 export function checkoutDestination(value) {
   try { const url = new URL(value); return url.protocol === 'https:' && !url.port && ['checkout.stripe.com','billing.stripe.com'].includes(url.hostname) && !url.username && !url.password ? url.href : ''; } catch { return ''; }
 }
-export function initMembershipPage({ window: win = globalThis.window, document: doc = win?.document, loadAuth = () => import(AUTH_MODULE), request } = {}) {
+export function initMembershipPage({ window: win = globalThis.window, document: doc = win?.document } = {}) {
   const root = doc?.getElementById('membershipPanel');
   if (!root || root.dataset.membershipInitialized) return null;
   root.dataset.membershipInitialized = 'true';
-  const ui = createMemberUi(doc); let user = null, auth, checked = false, authFailed = false, authTimer, loading = false, busy = '', state = null, status = null, discount = '', disposed = false, epoch = 0, authGeneration = 0, checkoutQuantity = 1, upgradeQuantity = null, opening = null, unsubscribe = () => {};
-  const api = createMembershipApi({ getUser:() => user, window:win, request });
-  const locale = () => membershipLanguage(win,doc), t = () => membershipText(locale());
-  function announce(error) { status = error; render(); }
-  const paidQuantity = () => Number.isSafeInteger(Number(state?.quantity)) && Number(state.quantity) >= 0 && Number.isSafeInteger(Number(state.quantity) * 9900) ? Number(state.quantity) : membershipActive(state) ? 1 : 0;
-  const openingKey = () => 'taithai.membership.pending.v1:' + user?.uid;
-  function saveOpening() {try {if (opening) win.sessionStorage.setItem(openingKey(),JSON.stringify(opening));else win.sessionStorage.removeItem(openingKey());}catch {/* The original request remains locked in this page. */}}
-  function restoreOpening() {
-    opening = null;
-    try {const value = JSON.parse(win.sessionStorage.getItem(openingKey()) || 'null');if (value && ['checkout','quantity-update'].includes(value.action) && /^[A-Za-z0-9_-]{16,100}$/.test(value.payload?.requestId || '')) {mailboxQuantity(value.payload.quantity);opening = value;if (value.action === 'checkout') {checkoutQuantity = Number(value.payload.quantity);discount = String(value.payload.promotionCode || '');}else upgradeQuantity = Number(value.payload.quantity);}}catch {/* Ignore an invalid optional recovery record. */}
-  }
-  function quantityField(id,label,value,minimum,onChange,locked = false) {
-    const input = ui.el('input');input.id = id;input.type = 'number';input.min = String(minimum);input.step = '1';input.inputMode = 'numeric';input.required = true;input.value = String(value);input.disabled = Boolean(busy || opening || locked);
-    const update = () => {
-      let quantity;try {quantity = mailboxQuantity(input.value);if (quantity < minimum) throw Error('INVALID_QUANTITY');} catch {input.setCustomValidity?.(t().invalid);input.setAttribute('aria-invalid','true');const price = root.querySelector(id === 'membershipUpgradeQuantity' ? '.membership-new-total' : '.membership-price');if (price) price.textContent = '—';return;}
-      input.setCustomValidity?.('');input.removeAttribute?.('aria-invalid');onChange(quantity);
-      const price = root.querySelector(id === 'membershipUpgradeQuantity' ? '.membership-new-total' : '.membership-price');if (price) price.textContent = mailboxMonthlyPrice(quantity,locale());
-    };
-    input.addEventListener('input',update);input.addEventListener('change',update);return ui.field(label,input);
-  }
-  function limitsText() {return locale() === 'th' ? 'ส่งได้สูงสุด 20 ข้อความต่อวันต่ออีเมล ผู้รับไม่เกิน 5 คนต่อข้อความ รองรับข้อความธรรมดา ขณะนี้ยังส่งหรือดาวน์โหลดไฟล์แนบไม่ได้' : 'Up to 20 outgoing messages per day per email address and 5 recipients per message. Plain text is supported. Sending and downloading attachments are not available yet.';}
-  function guestPlan(checking = false) {
-    const text = t(),gate = ui.panel(text.plan);gate.classList.add('membership-plan');gate.id = 'quantity';
-    gate.append(ui.el('p',mailboxMonthlyPrice(checkoutQuantity,locale()),'membership-price'),ui.el('p',text.unitPrice,'muted'),ui.el('p',text.includes),quantityField('membershipQuantity',text.quantity,checkoutQuantity,1,value => {checkoutQuantity = value;}),ui.el('p',text.recurring,'muted'));
-    gate.append(ui.el('p',limitsText(),'small'));
-    if (checking) {const note = ui.el('p',text.loading,'muted');note.setAttribute('role','status');gate.append(note);}
-    else gate.append(ui.el('p',text.signInText,'muted'),ui.button(auth && !authFailed ? text.signIn : text.retry,auth && !authFailed ? signIn : start,{primary:true,disabled:Boolean(busy)}));
-    return gate;
-  }
+  const ui = createMemberUi(doc);
   function render() {
-    if (disposed) return;
-    const text = t(); root.replaceChildren(); root.setAttribute('aria-busy',String(!checked || loading || Boolean(busy)));
-    if (!checked) { root.append(guestPlan(true)); return; }
-    if (status) { const note = ui.el('p',membershipError(status,locale(),win.navigator?.onLine !== false),'notice notice-error'); note.setAttribute('role','alert'); root.append(note); }
-    if (!user) {root.append(guestPlan());return;}
-    const identity = ui.el('p',`${text.account} · ${user.email || user.uid}`,'membership-identity'); root.append(identity);
-    if (loading && !state) { root.append(ui.panel('',text.loading)); return; }
-    if (!state) { root.append(ui.button(text.retry,refresh,{disabled:Boolean(busy)})); return; }
-    if (state.ownerTrial === true) root.append(ui.panel(text.ownerTrialTitle,text.ownerTrialText));
-    if (!membershipReady(state)) root.append(membershipSetup(ui,text));
-    if (state.testMode === true) root.append(membershipSetup(ui,text,true));
-    if (opening) {const pending = ui.panel(text.openingUncertain);pending.append(ui.button(text.retryOpening,() => redirect(opening.action,true),{disabled:Boolean(busy) || !membershipReady(state)}),ui.button(text.clearOpening,clearOpening,{disabled:Boolean(busy)}));root.append(pending);}
-    const card = ui.panel(text.plan); card.classList.add('membership-plan');
-    card.append(ui.el('p',mailboxMonthlyPrice(paidQuantity() || checkoutQuantity,locale()),'membership-price'),ui.el('p',text.unitPrice,'muted'),ui.el('p',text.includes),ui.el('p',text.recurring,'muted'));
-    card.append(ui.el('p',limitsText(),'small'));
-    const membership = state.membership || {}, statusKey = membership.status || 'none';
-    const statusRow = ui.el('dl',undefined,'membership-details'); statusRow.append(ui.el('dt',text.status),ui.el('dd',text[statusKey] || text.unknown));
-    if (paidQuantity()) statusRow.append(ui.el('dt',text.paidQuantity),ui.el('dd',String(paidQuantity())));
-    if (membership.currentPeriodEnd) statusRow.append(ui.el('dt',text.renewal),ui.el('dd',memberDate(membership.currentPeriodEnd,locale())));
-    card.append(statusRow);
-    if (membership.cancelAtPeriodEnd === true) card.append(ui.el('p',text.canceling,'notice'));
-    const actions = ui.el('div',undefined,'button-row');
-    const hasSubscription = Boolean(membershipActive(state) || membership.status && !['none','canceled','incomplete_expired'].includes(membership.status));
-    if (!hasSubscription) card.id = 'quantity';
-    if (!hasSubscription) {
-      const form = ui.el('form');form.id = 'membershipCheckoutForm';form.append(quantityField('membershipQuantity',text.quantity,checkoutQuantity,1,value => {checkoutQuantity = value;}));const code = ui.el('input'); code.id = 'membershipDiscount'; code.type = 'text'; code.autocomplete = 'off'; code.maxLength = 64; code.value = discount; code.disabled = Boolean(busy || opening); code.addEventListener('input',() => { discount = code.value; });
-      form.append(ui.field(text.discount,code,text.discountHint));
-      const checkout = ui.el('button',busy === 'checkout' ? text.managing : text.subscribe,'button button-primary'); checkout.type = 'submit'; checkout.disabled = Boolean(busy || opening) || !membershipReady(state) || state.capabilities?.checkout === false; form.append(checkout); form.addEventListener('submit',event => { event.preventDefault(); void redirect('checkout'); }); card.append(form);
-    }
-    if (hasSubscription || state.capabilities?.portal === true) actions.append(ui.button(busy === 'portal' ? text.managing : text.manage,() => redirect('portal'),{disabled:Boolean(busy) || state.capabilities?.portal === false}));
-    const hasMailbox = Array.isArray(state.mailboxes) && state.mailboxes.length > 0;
-    if (state.capabilities?.mail === true || hasMailbox) actions.append(ui.link(text.inbox,'/mail/',true));
-    actions.append(ui.button(text.retry,refresh,{disabled:loading || Boolean(busy)})); card.append(actions,ui.el('p',text.refreshNote,'small'));
-    root.append(card);
-    if (Number(state.pendingQuantity) > paidQuantity()) root.append(ui.panel(text.increase,text.increasePending + ' (' + state.pendingQuantity + ')'));
-    if (hasSubscription && paidQuantity() > 0) {
-      const increase = ui.panel(text.increase,text.increaseOnly);increase.id = 'quantity';increase.append(ui.el('p',text.proration,'muted'));
-      if (state.quantityUpdateAvailable === true || Number(state.pendingQuantity) > paidQuantity()) {
-        const pendingTarget = Number(state.pendingQuantity) > paidQuantity() ? Number(state.pendingQuantity) : 0;
-        upgradeQuantity = pendingTarget || Math.max(paidQuantity() + 1,upgradeQuantity || paidQuantity() + 1);
-        const form = ui.el('form');form.id = 'membershipUpgradeForm';form.append(quantityField('membershipUpgradeQuantity',text.increaseTo,upgradeQuantity,paidQuantity() + 1,value => {upgradeQuantity = value;},Boolean(pendingTarget)),ui.el('p',mailboxMonthlyPrice(upgradeQuantity,locale()),'membership-new-total'));
-        const upgrade = ui.el('button',busy === 'quantity-update' ? text.managing : pendingTarget ? text.resumeIncrease : text.reviewIncrease,'button button-primary');upgrade.type = 'submit';upgrade.disabled = Boolean(busy || opening) || !membershipReady(state) || state.quantityUpdateAvailable !== true;form.append(upgrade);form.addEventListener('submit',event => {event.preventDefault();void redirect('quantity-update');});increase.append(form);
-      } else increase.append(ui.el('p',text.increaseUnavailable,'notice'),ui.link(text.help,'/support/?app=Taithai%20membership'));
-      root.append(increase);
-    }
-    const boxes = Array.isArray(state.mailboxes) ? state.mailboxes : [];
-    if (boxes.length) { const panel = ui.panel(text.currentMail); for (const box of boxes) panel.append(ui.el('p',box.address || '', 'membership-address')); panel.append(ui.link(text.inbox,'/mail/')); root.append(panel); }
-    else if (membershipActive(state)) root.append(ui.panel(text.currentMail,text.noMailbox));
-    root.append(ui.link(text.help,'/support/?app=Taithai%20membership'));
+    const th = membershipLanguage(win,doc) === 'th';
+    root.replaceChildren(ui.panel('',th ? 'ขณะนี้ยังไม่เปิดรับสมัครหรือชำระเงิน บริการอีเมลเปิดให้เจ้าของและผู้ดูแลที่ได้รับสิทธิ์' : 'Subscriptions and payments are paused. Mail is available to the owner and authorized administrators.'),ui.link(th ? 'ไปยังอีเมลผู้ดูแล' : 'Go to administrator mail','/mail/'),ui.link(th ? 'กลับไปหน้าแรก' : 'Back to apps','https://taithai.app/'));
   }
-  async function refresh() {
-    if (!user || loading || disposed) return;
-    const current = epoch; loading = true; status = null; render();
-    try { const result = await api.call('status'); if (current === epoch && !disposed) {state = result;if (opening && paidQuantity() >= Number(opening.payload.quantity) && membershipActive(state)) {opening = null;saveOpening();}} }
-    catch (error) { if (current === epoch && !disposed) status = error; }
-    finally { if (current === epoch && !disposed) { loading = false; render(); } }
-  }
-  async function redirect(action,resume = false) {
-    if (!user || busy || !state || action !== 'portal' && !membershipReady(state) || opening && !resume && action !== 'portal') return;
-    if (action === 'checkout' && !resume && state.capabilities?.checkout === false) return;
-    if (action === 'quantity-update' && !resume && state.quantityUpdateAvailable !== true) return;
-    let requestedQuantity;
-    if (action !== 'portal' && !resume) {try {requestedQuantity = mailboxQuantity(doc.getElementById(action === 'checkout' ? 'membershipQuantity' : 'membershipUpgradeQuantity')?.value);if (action === 'quantity-update' && requestedQuantity <= paidQuantity()) throw Object.assign(Error('INVALID_QUANTITY'),{code:'INVALID_QUANTITY'});}catch (error) {status = error;render();return;}}
-    const current = epoch; busy = action; status = null; render();
-    try {
-      if (action !== 'portal' && !resume) {
-        const quantity = requestedQuantity;
-        if (action === 'quantity-update' && quantity <= paidQuantity()) throw Object.assign(Error('INVALID_QUANTITY'),{code:'INVALID_QUANTITY'});
-        opening = {action,payload:{quantity,requestId:win.crypto.randomUUID(),...(action === 'checkout' ? {promotionCode:discount.trim()} : {})}};saveOpening();
-      }
-      const result = await api.call(action,{method:'POST',data:action === 'portal' ? {} : opening.payload});
-      if (current !== epoch || disposed) return;
-      const url = checkoutDestination(result.url); if (!url) throw Object.assign(Error('CHECKOUT_UNAVAILABLE'),{code:'CHECKOUT_UNAVAILABLE'});
-      if (action !== 'portal') {opening = null;saveOpening();}win.location.assign(url);
-    } catch (error) { if (current === epoch && !disposed) {status = error;if (!resume && error.status && error.status < 500) {opening = null;saveOpening();}} }
-    finally { if (current === epoch && !disposed) { busy = ''; render(); } }
-  }
-  function clearOpening() {if (busy || !win.confirm(t().clearOpeningConfirm)) return;opening = null;saveOpening();render();}
-  async function signIn() { if (busy) return; busy = 'login'; render(); try { await auth?.loginWithGoogle(); } catch (error) { announce(error); } finally { busy = ''; render(); } }
-  async function start() {
-    const current = ++authGeneration; epoch++; checked = false; authFailed = false; status = null;win.clearTimeout(authTimer);render();
-    authTimer = win.setTimeout(() => {if (!disposed && current === authGeneration && !checked) {checked = true;authFailed = true;status = Object.assign(Error('AUTH_UNAVAILABLE'),{code:'AUTH_UNAVAILABLE'});render();}},12000);
-    try { auth = await loadAuth(); if (disposed || current !== authGeneration) return; unsubscribe(); unsubscribe = auth.subscribeAuth(value => { if (disposed || current !== authGeneration) return;win.clearTimeout(authTimer);api.abort(); epoch++; user = value; checked = true;authFailed = false; loading = false; busy = ''; state = null; discount = '';opening = null;upgradeQuantity = null;status = null;if (user) restoreOpening();render();if (user) void refresh();}); }
-    catch (error) { if (!disposed && current === authGeneration) {win.clearTimeout(authTimer);checked = true;authFailed = true;status = error;render();} }
-  }
-  // Auth callbacks can fire repeatedly; each accepted callback must remain live.
-  // start's generation protects import completion; session updates are handled below.
-  function suspend() { authGeneration++; epoch++;win.clearTimeout(authTimer);api.abort(); unsubscribe(); unsubscribe = () => {}; user = null; state = null;opening = null;loading = false;busy = '';checked = false;render(); }
-  const preferences = () => render(), restore = event => { if (event.persisted) void start(); };
-  win.addEventListener('taithai:preferences',preferences); win.addEventListener('pagehide',suspend); win.addEventListener('pageshow',restore);
-  void start();
-  return { refresh, destroy() { disposed = true; authGeneration++; epoch++;win.clearTimeout(authTimer);api.abort(); unsubscribe(); win.removeEventListener('taithai:preferences',preferences); win.removeEventListener('pagehide',suspend); win.removeEventListener('pageshow',restore); delete root.dataset.membershipInitialized; } };
+  render();win.addEventListener('taithai:preferences',render);
+  return {refresh:render,destroy(){win.removeEventListener('taithai:preferences',render);delete root.dataset.membershipInitialized;}};
 }
 if (typeof window !== 'undefined' && document.body?.dataset.page === 'membership') initMembershipPage();

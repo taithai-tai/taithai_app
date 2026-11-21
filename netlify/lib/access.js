@@ -7,7 +7,7 @@ const CSP="default-src 'self'; script-src 'self' https://www.gstatic.com https:/
 // while Node functions have60s. Each wrapper independently applies the gate and
 // security headers before it runs the original handler.
 export const NETLIFY_FUNCTION_PATHS=Object.freeze([
-  'app-access','membership','membership-webhook','healthcare-learning','movie-poster','analyze-movie-ticket','shortlinks',
+  'app-access','membership','membership-webhook','site-admin','healthcare-learning','movie-poster','analyze-movie-ticket','shortlinks',
   'ace','chordly/metadata','chordly/charts','chordly/lyrics',
 ].flatMap(name=>[`/api/${name}`,`/api/${name}/`]).concat(['/S/:code','/S/:code/']));
 export function privateError(code,status=503) {

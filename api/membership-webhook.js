@@ -1,3 +1,3 @@
 import { createMembershipWebhook } from '../server-lib/site-membership-router.js';
-// Stripe's signature is checked against the original request bytes, not JSON re-encoding.
+// Payment work is cancelled; the webhook fails closed without loading Stripe.
 export default { fetch:createMembershipWebhook() };

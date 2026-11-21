@@ -1,6 +1,83 @@
 import { createHash } from 'node:crypto';
 import { liveMailMembership, ownerMailTrialAllowed, MAX_MEMBERSHIP_MAILBOXES, MembershipError } from './site-membership-core.js';
 
+// Permanent delegated-admin mail consumes real provider seats. Uncertain POSTs
+// retain a global hold without an assumed expiry, including after revocation.
+// The archived payment capacity ledger below is never used by this runtime.
+export function createOwnerMailCapacityService({store,provider,config,resolveAccess,now=()=>Date.now()}={}) {
+  if(config?.mailProvider!=='hostinger')return null;
+  const ledgerPath='siteMailProvisioningLedger/hostinger';
+  const safeId=value=>typeof value==='string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(value);
+  const reject=code=>{throw new MembershipError(code,code==='MAIL_ACCESS_REQUIRED'?403:503);};
+  async function authorize(user) {
+    if(typeof resolveAccess!=='function' || !(await resolveAccess(user)).mailAccess)reject('MAIL_ACCESS_REQUIRED');
+    if(config.ownerMailEnabled!==true || config.mailReady!==true)reject('OWNER_MAIL_NOT_ENABLED');
+  }
+  function inventory(value) {
+    if(!Number.isSafeInteger(value?.capacity) || value.capacity<1 || !Number.isSafeInteger(value.used) || value.used<0
+      || !Number.isSafeInteger(value.available) || value.available<0 || value.available>value.capacity || value.used+value.available>value.capacity)reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+    return value;
+  }
+  async function holds() {
+    const ledger=await store.get(ledgerPath);
+    if(ledger && (ledger.provider!=='hostinger' || !Array.isArray(ledger.holds) || ledger.holds.length>500))reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+    const rows=ledger?.holds || [],keys=new Set();
+    for(const row of rows) {
+      if(!safeId(row.uid) || !safeId(row.mailboxId) || typeof row.address!=='string' || !/^[a-z0-9][a-z0-9.]{1,28}[a-z0-9]@taithai\.app$/.test(row.address)
+        || keys.has(row.mailboxId))reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+      keys.add(row.mailboxId);
+    }
+    // A recorded active mailbox has already passed provider ownership proof;
+    // it is physically counted in inventory, so a lost hold-release response
+    // must not count that same seat twice. Unknown/pending records stay held.
+    const pending=[];
+    for(const row of rows) {
+      const record=await store.get(row.mailboxId===row.uid?`siteMailboxes/${row.uid}`:`siteMailAccounts/${row.mailboxId}`);
+      if(record?.uid===row.uid && record.provider==='hostinger' && record.address===row.address && record.status==='active')continue;
+      pending.push(row);
+    }
+    return pending;
+  }
+  async function save(rows) {await store.set(ledgerPath,{provider:'hostinger',holds:rows,updatedAt:new Date(now()).toISOString()});}
+  function validRecord(user,record) {
+    if(record?.uid!==user.uid || !safeId(record.id) || record.provider!=='hostinger' || typeof record.address!=='string' || !/^[a-z0-9][a-z0-9.]{1,28}[a-z0-9]@taithai\.app$/.test(record.address))reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+  }
+  return {
+    async status(user) {
+      await authorize(user);
+      if(!store?.get || typeof provider?.inventory!=='function')reject('MAIL_CAPACITY_NOT_CONFIGURED');
+      const stock=inventory(await provider.inventory()),rows=await holds();
+      return {capacity:stock.capacity,used:stock.used,reserved:rows.length,available:Math.max(0,stock.available-rows.length)};
+    },
+    async withProvisioningLock(user,operation) {
+      await authorize(user);
+      if(!store?.withLock || !store?.get || !store?.set || typeof provider?.inventory!=='function')reject('MAIL_CAPACITY_NOT_CONFIGURED');
+      return store.withLock('hostinger-admin-mail-provisioning',async()=>{
+        await authorize(user);
+        return operation({
+          async reserve(record) {
+            await authorize(user);validRecord(user,record);
+            const rows=await holds(),own=rows.find(row=>row.mailboxId===record.id);
+            if(own && (own.uid!==user.uid || own.address!==record.address))reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+            const stock=inventory(await provider.inventory());
+            if(stock.available < rows.length-(own?1:0)+1)reject('MAIL_PROVIDER_CAPACITY_REACHED');
+            if(!own) {
+              if(rows.length>=500)reject('MAIL_CAPACITY_REVIEW_REQUIRED');
+              rows.push({uid:user.uid,mailboxId:record.id,address:record.address,createdAt:new Date(now()).toISOString()});
+            }
+            await save(rows);
+          },
+          async complete(record) {
+            validRecord(user,record);
+            const rows=await holds();
+            await save(rows.filter(row=>row.mailboxId!==record.id));
+          },
+        });
+      });
+    },
+  };
+}
+
 const validUid=value=>typeof value==='string' && /^[A-Za-z0-9:_-]{1,128}$/.test(value);
 const validQuantity=value=>Number.isSafeInteger(value) && value>=1 && value<=MAX_MEMBERSHIP_MAILBOXES;
 const fail=code=>{throw new MembershipError(code);};

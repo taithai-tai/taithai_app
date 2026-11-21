@@ -5,16 +5,19 @@ import { withMembershipOperationBudget } from '../server-lib/site-operation-budg
 import { MAIL_LIMITS, MailError, createSiteMail, createMigaduProvider, createPurelymailProvider, createHostingerProvider, createMailProvider, createMailProtocolAdapters, mailConfiguration,
   encryptMailboxCredential, decryptMailboxCredential, encodeMailMessageId, decodeMailMessageId, readableMailHtml } from '../server-lib/site-mail.js';
 
-const user = { uid: 'member_123', email: 'person@example.com', email_verified: true };
-const env = { MAIL_READY: 'true', MAIL_DOMAIN: 'taithai.app', MAIL_PROVIDER: 'migadu',
+const grant=(ownerAccess=true)=>({active:true,paid:false,ownerAccess,adminAccess:true,mailAccess:true,role:ownerAccess?'owner':'admin',permissions:['mail']});
+const user = { uid: 'member_123', email: 'taithai5002@gmail.com', email_verified: true };
+const env = { OWNER_MAIL_ENABLED: 'true', MAIL_READY: 'true', MAIL_DOMAIN: 'taithai.app', MAIL_PROVIDER: 'migadu',
   MAIL_CREDENTIAL_SECRET: Buffer.alloc(32, 42).toString('base64'), MIGADU_API_USER: 'owner@example.com', MIGADU_API_KEY: 'test-api-key-not-real' };
 const purelyEnv = { ...env, MAIL_PROVIDER: 'purelymail', PURELYMAIL_API_TOKEN: 'purelymail-test-token-not-real' };
 const hostingerEnv = { ...env, MAIL_PROVIDER: 'hostinger', HOSTINGER_API_TOKEN: 'hostinger-test-token-not-real', HOSTINGER_MAIL_ORDER_ID: 'OR_test_order' };
 const clone = value => value === undefined ? undefined : structuredClone(value);
 function memoryStore() {
-  const docs = new Map(); let queue = Promise.resolve();
-  return { docs, get: async key => clone(docs.get(key)), set: async (key, value) => docs.set(key, clone(value)),
+  const docs = new Map(); const touches = []; let queue = Promise.resolve(); let lockQueue = Promise.resolve();
+  return { docs, touches, get: async key => { touches.push(['get', key]); return clone(docs.get(key)); }, set: async (key, value) => { touches.push(['set', key]); return docs.set(key, clone(value)); },
+    withLock(_key, operation) { const result = lockQueue.then(operation); lockQueue = result.catch(() => {}); return result; },
     runTransaction(operation) {
+      touches.push(['transaction']);
       const result = queue.then(async () => {
         const writes = new Map(); const tx = { get: async key => clone(docs.get(key)), set: (key, value) => writes.set(key, clone(value)) };
         const value = await operation(tx); for (const [key, next] of writes) docs.set(key, next); return value;
@@ -23,12 +26,14 @@ function memoryStore() {
     } };
 }
 function fixture(overrides = {}) {
-  const store = memoryStore(); let timestamp = Date.parse('2026-11-21T10:00:00Z'); let membership = { active: true, paid: true };
+  const store = memoryStore(); let timestamp = Date.parse('2026-11-21T10:00:00Z'); let membership = grant(); let capacity = 5;
   const boxes = new Map(); const calls = { create: [], sending: [], list: [], messages: [], read: [], trash: [], send: [], append: [] };
   const raw = { uid: 42, envelope: { subject: '<img src=x onerror=alert(1)>', from: [{ name: '<script>Bad</script>', address: 'sender@example.com' }],
     to: [{ name: 'Member', address: 'sunny@taithai.app' }], cc: [], messageId: '<original@example.com>', date: new Date(timestamp) },
     flags: new Set(), size: 1234, text: 'Plain body with an https://example.com link', attachments: [{ filename: '<unsafe>.pdf', contentType: 'application/pdf', size: 123 }] };
-  const provider = { async findMailbox(local) { return boxes.get(local) || null; },
+  const provider = { async inventory() { return { capacity, used: boxes.size, available: Math.max(0, capacity - boxes.size) }; },
+    async assertCapacity(count = 1) { if ((await this.inventory()).available < count) throw new MailError('MAIL_PROVIDER_CAPACITY_REACHED', 503); return true; },
+    async findMailbox(local) { return boxes.get(local) || null; },
     async createMailbox(input) { calls.create.push(input); boxes.set(input.localPart, { name: input.marker, address: `${input.localPart}@taithai.app` }); },
     async setSending(...args) { calls.sending.push(args); } };
   const imap = { async folders() { return [{ id: 'INBOX', name: 'Inbox', total: 1, unread: 1 }]; },
@@ -38,9 +43,9 @@ function fixture(overrides = {}) {
     async trash(credentials, input) { calls.trash.push({ credentials, input }); },
     async appendSent(credentials, bytes) { calls.append.push({ credentials, bytes }); } };
   const smtp = { async send(credentials, message) { calls.send.push({ credentials, message }); return { accepted: message.to, raw: Buffer.from('fixture-only') }; } };
-  const service = createSiteMail({ store, getMembership: async () => membership, provider, imap, smtp, env, now: () => timestamp, ...overrides });
+  const service = createSiteMail({ store, getMembership: async (uid,{user:actor}) => uid===user.uid && actor?.uid===user.uid && actor?.email===user.email && actor?.email_verified===true ? membership : {active:false}, withProvisioningLock: (_user, operation) => store.withLock('owner-mail', operation), provider, imap, smtp, env, now: () => timestamp, ...overrides });
   return { service, store, boxes, calls, provider, imap, smtp, raw,
-    setMembership(value) { membership = value; }, advance(ms) { timestamp += ms; } };
+    setMembership(value) { membership = value; }, setCapacity(value) { capacity = value; }, advance(ms) { timestamp += ms; } };
 }
 const code = expected => error => error instanceof MailError && error.code === expected;
 const sendInput = (id = 'request_0123456789') => ({ requestId: id, to: ['friend@example.com'], subject: 'Hello', text: 'A real plain text message' });
@@ -69,6 +74,10 @@ function purelyFixture() {
   }, async verifyMailboxCredentials(credentials) {
     probes.push(credentials); return credentials.provider === 'purelymail' && users.get(credentials.address)?.password === credentials.password;
   } });
+  // Inventory is supplied only by this service fixture; the provider API-shape
+  // tests below still exercise the real adapter unchanged.
+  provider.inventory = async () => ({ capacity: 5, used: users.size, available: Math.max(0, 5 - users.size) });
+  provider.assertCapacity = async (count = 1) => { if (5 - users.size < count) throw new MailError('MAIL_PROVIDER_CAPACITY_REACHED', 503); return true; };
   return { provider, users, requests, probes, domain, loseCreateResponse() { loseCreateResponse = true; } };
 }
 
@@ -153,20 +162,68 @@ test('credential encryption uses authenticated random nonces bound to the exact 
 
 test('mail methods require a verified server identity and never use a client mailbox as an owner', async () => {
   const f = fixture();
-  await assert.rejects(f.service.status(null), code('AUTH_REQUIRED'));
-  await assert.rejects(f.service.status({ ...user, uid: '../victim' }), code('AUTH_REQUIRED'));
-  await assert.rejects(f.service.status({ ...user, email_verified: false }), code('VERIFIED_EMAIL_REQUIRED'));
+  await assert.rejects(f.service.status(null), code('MAIL_ACCESS_REQUIRED'));
+  await assert.rejects(f.service.status({ ...user, uid: '../victim' }), code('MAIL_ACCESS_REQUIRED'));
+  await assert.rejects(f.service.status({ ...user, email_verified: false }), code('MAIL_ACCESS_REQUIRED'));
   await f.service.create(user, { localPart: 'sunny' });
   await assert.rejects(f.service.list(user, { mailbox: 'victim' }), code('MAILBOX_NOT_FOUND'));
   assert.equal(f.calls.list.length, 0);
 });
 
-test('creation requires an active paid entitlement, not trials, stale periods or client claims', async () => {
-  const f = fixture();
-  for (const value of [{ active: false, paid: true }, { active: true, paid: false }, { active: true, paid: true, currentPeriodEnd: '2020-01-01T00:00:00Z' }]) {
-    f.setMembership(value);
-    await assert.rejects(f.service.create({ ...user, paid: true }, { localPart: 'sunny', paid: true }), code('ACTIVE_MEMBERSHIP_REQUIRED'));
+test('every public mail action rejects malformed and nonadmin identities before private storage, quota and provider work', async () => {
+  let membershipReads = 0, inventoryReads = 0;
+  const f = fixture({ getMembership: async () => { membershipReads++; return {active:false}; } });
+  f.provider.inventory = async () => { inventoryReads++; throw Error('must not query inventory for a nonadmin'); };
+  const malformed = [null,user.uid,{...user,uid:12345},{...user,email_verified:false,emailVerified:true},{...user,uid:'../victim'}];
+  const ordinary = [{...user,email:'other@example.com',paid:true,ownerAccess:true,adminAccess:true,mailAccess:true},{...user,email:'taithai5002+alias@gmail.com',owner:true,isOwner:true}];
+  const input = {...sendInput(),localPart:'sunny',id:messageId(),read:true};
+  for(const actor of malformed)for(const action of ['status','create','folders','list','message','read','trash','send','syncMembership'])await assert.rejects(f.service[action](actor,input),error=>code('MAIL_ACCESS_REQUIRED')(error)&&error.status===403,action);
+  assert.equal(membershipReads,0);
+  for(const actor of ordinary)for(const action of ['status','create','folders','list','message','read','trash','send','syncMembership']){
+    if(action==='status'){const state=await f.service.status(actor);assert.equal(state.mailAccess,false);assert.deepEqual(state.mailboxes,[]);}
+    else await assert.rejects(f.service[action](actor,input),error=>code('MAIL_ACCESS_REQUIRED')(error)&&error.status===403,action);
   }
+  assert.ok(membershipReads>0);assert.deepEqual(f.store.touches,[]);assert.equal(inventoryReads,0);
+  for(const calls of Object.values(f.calls))assert.equal(calls.length,0);
+});
+
+test('delegated mail admins use their own tenant and cannot read or replay another admin inbox/send receipt',async()=>{
+  const delegate={uid:'delegate.456',email:'delegate@example.com',email_verified:true};let enabled=true;
+  const f=fixture({getMembership:async(uid,{user:actor})=>actor?.email_verified===true && uid===actor.uid && ((uid===user.uid && actor.email===user.email)||(enabled&&uid===delegate.uid&&actor.email===delegate.email))?grant(uid===user.uid):{active:false}});
+  const first=await f.service.create(user,{localPart:'ownerbox'}),second=await f.service.create(delegate,{localPart:'delegatebox'});
+  assert.equal(first.mailbox.id,user.uid);assert.equal(second.mailbox.id,delegate.uid);assert.equal(second.ownerAccess,false);assert.equal(second.mailAccess,true);assert.equal(second.paid,false);
+  await f.service.list(delegate,{mailbox:delegate.uid});assert.equal(f.calls.list.at(-1).credentials.address,'delegatebox@taithai.app');
+  await assert.rejects(f.service.list(delegate,{mailbox:user.uid}),code('MAILBOX_NOT_FOUND'));
+  await assert.rejects(f.service.message(delegate,{mailbox:delegate.uid,id:encodeMailMessageId({folder:'INBOX',uid:42,uidValidity:'123',mailboxId:user.uid})}),code('INVALID_MESSAGE'));
+  const input=sendInput();await f.service.send(user,input);await f.service.send(delegate,input);assert.equal(f.calls.send.length,2);assert.equal(f.calls.send[1].credentials.address,'delegatebox@taithai.app');
+  await assert.rejects(f.service.send(delegate,{...input,mailbox:user.uid}),code('MAILBOX_NOT_FOUND'));
+  const before=clone([...f.store.docs]);enabled=false;
+  for(const action of ['list','send','syncMembership'])await assert.rejects(f.service[action](delegate,input),code('MAIL_ACCESS_REQUIRED'));
+  const state=await f.service.status(delegate);assert.equal(state.mailAccess,false);assert.deepEqual(state.mailboxes,[]);assert.deepEqual([...f.store.docs],before);
+  await assert.rejects(f.service.send({...delegate,email_verified:false},input),code('MAIL_ACCESS_REQUIRED'));
+});
+
+test('server access revocation blocks existing owner content and sending without deleting credentials or retry identity', async () => {
+  const f = fixture(); await f.service.create(user, { localPart: 'sunny' });
+  const input = sendInput(); const sent = await f.service.send(user, input);
+  const before = clone([...f.store.docs]);
+  f.setMembership({ active: false, paid: true, ownerAccess: true });
+  const state = await f.service.status(user); assert.equal(state.ownerAccess, false); assert.equal(state.canSend, false); assert.deepEqual(state.mailboxes, []);
+  for (const action of ['list','send','syncMembership']) await assert.rejects(f.service[action](user, input), code('MAIL_ACCESS_REQUIRED'));
+  assert.deepEqual([...f.store.docs], before); assert.equal(f.calls.send.length, 1);
+  f.setMembership(grant());
+  assert.deepEqual(await f.service.send(user, input), sent); assert.equal(f.calls.send.length, 1);
+  assert.deepEqual(await f.service.syncMembership(user), { preserved: true, ownerAccess: true, adminAccess:true, mailAccess:true, adminOnly:true, paid: false, sendingEnabled: true });
+});
+
+test('permanent owner access requires its explicit server flag and trusted resolver, never client paid or trial claims', async () => {
+  for (const value of [{ active: false, paid: true, ownerAccess: true }, { active: true, paid: true }, { active: true, paid: false, ownerTrial: true }]) {
+    const f = fixture(); f.setMembership(value);
+    await assert.rejects(f.service.create({ ...user, paid: true, ownerAccess: true }, { localPart: 'sunny', ownerAccess: true, paid: true }), code('MAIL_ACCESS_REQUIRED'));
+    assert.equal(f.calls.create.length, 0);
+  }
+  const f = fixture({ env: { ...env, OWNER_MAIL_ENABLED: 'false' } });
+  await assert.rejects(f.service.create(user, { localPart: 'sunny' }), code('OWNER_MAIL_NOT_ENABLED'));
   assert.equal(f.calls.create.length, 0);
 });
 
@@ -178,7 +235,7 @@ test('creation rejects reserved names, case variants, punctuation aliases and in
 });
 
 test('provisioning creates one real provider mailbox, stores ciphertext and never returns passwords', async () => {
-  const f = fixture(); const result = await f.service.create(user, { localPart: 'Sunny' });
+  const f = fixture(); f.setCapacity(1); const result = await f.service.create(user, { localPart: 'Sunny' });
   assert.equal(result.mailbox.address, 'sunny@taithai.app'); assert.equal(result.mailbox.id, user.uid); assert.equal(result.canSend, true);
   assert.equal(f.calls.create.length, 1); assert.equal(f.calls.create[0].password.length, 43);
   const stored = await f.store.get(`siteMailboxes/${user.uid}`);
@@ -186,14 +243,16 @@ test('provisioning creates one real provider mailbox, stores ciphertext and neve
   assert.equal(JSON.stringify(result).includes(f.calls.create[0].password), false);
   assert.equal(JSON.stringify(result).includes('ciphertext'), false);
   await f.service.create(user, { localPart: 'sunny' }); assert.equal(f.calls.create.length, 1);
-  await assert.rejects(f.service.create(user, { localPart: 'second' }), code('MAILBOX_ALREADY_EXISTS'));
+  await assert.rejects(f.service.create(user, { localPart: 'second' }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
 });
 
-test('transactional reservations prevent two accounts claiming a name and concurrent second boxes', async () => {
-  const f = fixture(); const other = { ...user, uid: 'member_456' };
+test('strict owner checks reject another account before reservation and serialize concurrent creation against real inventory', async () => {
+  const f = fixture(); f.setCapacity(1); const other = { ...user, uid: 'member_456', email: 'other@example.com', paid: true, ownerAccess: true };
   const results = await Promise.allSettled([f.service.create(user, { localPart: 'sunny' }), f.service.create(other, { localPart: 'sunny' })]);
   assert.equal(results.filter(item => item.status === 'fulfilled').length, 1); assert.equal(f.calls.create.length, 1);
-  const g = fixture(); const ownResults = await Promise.allSettled([g.service.create(user, { localPart: 'first' }), g.service.create(user, { localPart: 'second' })]);
+  assert.equal(results[1].reason.code, 'MAIL_ACCESS_REQUIRED');
+  const g = fixture(); g.setCapacity(1);
+  const ownResults = await Promise.allSettled([g.service.create(user, { localPart: 'first' }), g.service.create(user, { localPart: 'second' })]);
   assert.equal(ownResults.filter(item => item.status === 'fulfilled').length, 1); assert.equal(g.calls.create.length, 1);
 });
 
@@ -263,28 +322,31 @@ test('changing configured provider does not migrate a saved mailbox or send its 
   assert.equal(f.calls.list.length, 0); assert.equal((await f.store.get(`siteMailboxes/${user.uid}`)).provider, 'migadu');
 });
 
-test('owner trial comes only from trusted verified-actor context, stays unpaid and expires without a client bypass', async () => {
-  const p = purelyFixture(); const owner = { ...user, email: 'taithai5002@gmail.com' }; const contexts = [];
+test('permanent owner mail stays unpaid and works after years without expiry or client mailbox grants', async () => {
+  const p = purelyFixture(); const contexts = [];
   const f = fixture({ env: purelyEnv, provider: p.provider, getMembership: async (id, context) => {
     contexts.push(context);
-    return context.user?.uid === id && context.user.email === owner.email && context.user.email_verified === true
-      ? { active: true, paid: false, ownerTrial: true, expiresAt: '2026-11-22T10:00:00Z' } : { active: false, paid: false };
+    return context.user?.uid === id && context.user.email === user.email && context.user.email_verified === true
+      ? grant() : { active: false, paid: false };
   } });
-  const state = await f.service.status(owner); assert.equal(state.ownerTrial, true); assert.equal(state.membership.paid, false);
-  await f.service.create(owner, { localPart: 'trialbox', ownerTrial: true }); await f.service.send(owner, sendInput());
-  assert.equal(f.calls.send.length, 1); assert.ok(contexts.every(item => item.user?.uid === owner.uid));
-  await assert.rejects(f.service.create({ ...owner, uid: 'another', email: 'other@example.com' }, { localPart: 'another', ownerTrial: true }), code('ACTIVE_MEMBERSHIP_REQUIRED'));
-  f.advance(2 * 86400000); await assert.rejects(f.service.send(owner, sendInput('new_trial_send_after_expiry')), code('ACTIVE_MEMBERSHIP_REQUIRED'));
-  assert.equal(f.calls.send.length, 1);
+  const state = await f.service.status(user); assert.equal(state.ownerAccess, true); assert.equal(state.paid, false); assert.equal(state.ownerTrial, false);
+  await f.service.create(user, { localPart: 'ownerbox', ownerAccess: true, mailboxes: 999 }); await f.service.send(user, sendInput());
+  f.advance(3660 * 86400000);
+  const later = await f.service.status(user); assert.equal(later.ownerAccess, true); assert.equal(later.canSend, true); assert.equal(later.ownerTrial, false);
+  await f.service.send(user, sendInput('permanent_owner_after_years'));
+  assert.equal(f.calls.send.length, 2); assert.ok(contexts.every(item => item.user?.uid === user.uid));
+  assert.equal(later.membership, null); assert.equal('expiresAt' in later, false);
+  await assert.rejects(f.service.create({ ...user, uid: 'another', email: 'other@example.com' }, { localPart: 'another', ownerAccess: true }), code('MAIL_ACCESS_REQUIRED'));
 });
 
-test('expiration preserves inbox ownership and message controls while gating new sends and boxes', async () => {
-  const f = fixture(); await f.service.create(user, { localPart: 'sunny' }); f.setMembership({ active: false, paid: true });
-  const status = await f.service.status(user); assert.equal(status.canSend, false); assert.equal(status.canCreate, false); assert.equal(status.canManageMessages, true);
+test('unavailable inventory blocks new creation while preserving existing owner reading and sending', async () => {
+  const f = fixture(); await f.service.create(user, { localPart: 'sunny' });
+  f.provider.inventory = async () => { throw new Error('private inventory outage'); };
+  const status = await f.service.status(user); assert.equal(status.canSend, true); assert.equal(status.canCreate, false); assert.equal(status.canManageMessages, true);
   await f.service.list(user); await f.service.message(user, { id: messageId() }); await f.service.read(user, { id: messageId(), read: true }); await f.service.trash(user, { id: messageId() });
-  await assert.rejects(f.service.send(user, sendInput()), code('ACTIVE_MEMBERSHIP_REQUIRED'));
-  assert.deepEqual(await f.service.syncMembership(user.uid), { preserved: true, sendingEnabled: false });
-  assert.equal((await f.store.get(`siteMailboxes/${user.uid}`)).status, 'active'); assert.deepEqual(f.calls.sending, []);
+  await f.service.send(user, sendInput());
+  await assert.rejects(f.service.create(user, { localPart: 'second' }), error => error instanceof MailError && error.status === 503);
+  assert.equal((await f.store.get(`siteMailboxes/${user.uid}`)).status, 'active'); assert.deepEqual(f.calls.sending, []); assert.equal(f.calls.create.length, 1);
 });
 
 test('inbox outputs contain bounded inert metadata/plain text and no HTML, raw MIME, attachments or credentials', async () => {
@@ -356,20 +418,22 @@ test('concurrent double-send submits once and uncertain SMTP acceptance never au
   assert.deepEqual(await g.service.send(user, sendInput()), { status: 'uncertain' }); assert.equal(g.calls.send.length, 1);
 });
 
-test('own immutable send receipts remain readable after expiry and provider configuration outage with zero resend', async () => {
+test('owner immutable send receipts survive a temporary configuration stop without resend after restoration', async () => {
   const mutableEnv = { ...env }; const f = fixture({ env: mutableEnv });
   await f.service.create(user, { localPart: 'sunny' }); const input = sendInput(); const sent = await f.service.send(user, input);
-  f.setMembership({ active: false, paid: false }); mutableEnv.MAIL_READY = 'false'; mutableEnv.MAIL_CREDENTIAL_SECRET = '';
+  mutableEnv.MAIL_READY = 'false'; mutableEnv.MAIL_CREDENTIAL_SECRET = '';
+  await assert.rejects(f.service.send(user, input), code('MAIL_NOT_CONFIGURED')); assert.equal(f.calls.send.length, 1);
+  const touches = f.store.touches.length;
+  await assert.rejects(f.service.send({ ...user, uid: 'other_member', email: 'other@example.com', ownerAccess: true }, input), code('MAIL_ACCESS_REQUIRED'));
+  assert.equal(f.store.touches.length, touches);
+  mutableEnv.MAIL_READY = 'true'; mutableEnv.MAIL_CREDENTIAL_SECRET = env.MAIL_CREDENTIAL_SECRET;
   assert.deepEqual(await f.service.send(user, input), sent); assert.equal(f.calls.send.length, 1);
   await assert.rejects(f.service.send(user, { ...input, text: 'Changed' }), code('REQUEST_ID_CONFLICT'));
-  await assert.rejects(f.service.send({ ...user, uid: 'other_member' }, input), code('MAIL_NOT_CONFIGURED'));
-  await assert.rejects(f.service.send(user, sendInput('a_different_request_id')), code('MAIL_NOT_CONFIGURED'));
   await assert.rejects(f.service.send(user, { ...input, mailbox: 'other_member' }), code('MAILBOX_NOT_FOUND'));
-  mutableEnv.MAIL_READY = 'true'; mutableEnv.MAIL_CREDENTIAL_SECRET = env.MAIL_CREDENTIAL_SECRET;
-  await assert.rejects(f.service.send(user, sendInput('a_different_request_id')), code('ACTIVE_MEMBERSHIP_REQUIRED'));
+  f.advance(3660 * 86400000); await f.service.send(user, sendInput('a_different_request_id')); assert.equal(f.calls.send.length, 2);
   const g = fixture(); await g.service.create(user, { localPart: 'sunny' });
   g.smtp.send = async () => { g.calls.send.push({}); throw new Error('uncertain'); };
-  await g.service.send(user, input); g.setMembership({ active: false, paid: false });
+  await g.service.send(user, input); g.advance(3660 * 86400000);
   assert.deepEqual(await g.service.send(user, input), { status: 'uncertain' }); assert.equal(g.calls.send.length, 1);
 });
 
@@ -705,48 +769,46 @@ test('Hostinger unknown-create recovery proves only the persisted password and n
   assert.equal(r.requests.filter(item => item.options.method === 'POST').length, 1);
 });
 
-test('trusted paid quantity allows two isolated mailboxes and rejects client quantity or foreign mailbox selection', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+test('purchased provider capacity allows two isolated owner mailboxes and rejects client quantity or foreign selection', async () => {
+  const f = fixture(); f.setCapacity(2);
   const first = (await f.service.create(user, { localPart: 'sunny', requestId: 'first_box_create_0001' })).createdMailbox;
   const second = (await f.service.create(user, { localPart: 'second', requestId: 'second_box_create_0001' })).createdMailbox;
   assert.equal(first.id, user.uid); assert.match(second.id, /^mbx_/); assert.notEqual(first.id, second.id);
   const status = await f.service.status(user); assert.equal(status.mailboxCapacity, 2); assert.equal(status.mailboxUsed, 2); assert.equal(status.canCreate, false); assert.equal(status.mailboxes.length, 2);
-  await assert.rejects(f.service.create(user, { localPart: 'third', quantity: 20, mailboxes: 20 }), code('MAILBOX_CAPACITY_REACHED'));
+  await assert.rejects(f.service.create(user, { localPart: 'third', quantity: 999, mailboxes: 999 }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
   await assert.rejects(f.service.list(user), code('MAILBOX_SELECTION_REQUIRED'));
   await f.service.list(user, { mailbox: second.id }); assert.equal(f.calls.list[0].credentials.address, 'second@taithai.app');
-  await assert.rejects(f.service.list({ ...user, uid: 'another_member' }, { mailbox: second.id }), code('MAILBOX_NOT_FOUND'));
+  await assert.rejects(f.service.list({ ...user, uid: 'another_member', email: 'other@example.com', ownerAccess: true }, { mailbox: second.id }), code('MAIL_ACCESS_REQUIRED'));
   await assert.rejects(f.service.list(user, { mailbox: second.id, mailboxId: first.id }), code('MAILBOX_NOT_FOUND'));
   await f.service.send(user, { ...sendInput(), mailbox: second.id }); assert.equal(f.calls.send[0].message.from, 'second@taithai.app');
   const extra = await f.store.get(`siteMailAccounts/${second.id}`); assert.equal(extra.uid, user.uid); assert.equal(extra.id, second.id); assert.equal(JSON.stringify(status).includes('ciphertext'), false);
 });
 
 test('concurrent mailbox creates cannot exceed purchased quantity or reuse one creation request for another name', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+  const f = fixture(); f.setCapacity(2);
   const results = await Promise.allSettled(['first','second','third'].map((localPart, i) => f.service.create(user, { localPart, requestId: `concurrent_create_${i}` })));
-  assert.equal(results.filter(item => item.status === 'fulfilled').length, 2); assert.equal(f.calls.create.length, 2); assert.equal((await f.service.status(user)).mailboxUsed, 2);
-  const g = fixture(); g.setMembership({ active: true, paid: true, mailboxes: 2 });
+  assert.equal(results.filter(item => item.status === 'fulfilled').length, 2); assert.equal(f.calls.create.length, 2); const state = await f.service.status(user); assert.equal(state.mailboxes.length, 2); assert.equal(state.pendingMailboxes.length, 1); assert.equal(state.canCreate, false);
+  const g = fixture(); g.setCapacity(2);
   await g.service.create(user, { localPart: 'first', requestId: 'immutable_create_001' });
   await assert.rejects(g.service.create(user, { localPart: 'second', requestId: 'immutable_create_001' }), code('REQUEST_ID_CONFLICT'));
   assert.equal(g.calls.create.length, 1);
 });
 
-test('downgraded excess mailboxes remain readable and manageable, with stable oldest paid allocation and no deletion', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+test('provider inventory shrink never archives, deletes or revokes existing permanent owner mailboxes', async () => {
+  const f = fixture(); f.setCapacity(2);
   const first = (await f.service.create(user, { localPart: 'first' })).createdMailbox;
   const second = (await f.service.create(user, { localPart: 'second' })).createdMailbox;
-  f.setMembership({ active: true, paid: true, mailboxes: 1 });
-  const status = await f.service.status(user); assert.equal(status.mailboxUsed, 2); assert.equal(status.mailboxCapacity, 1);
-  assert.equal(status.mailboxes[0].canSend, true); assert.equal(status.mailboxes[1].canSend, false); assert.equal(status.mailboxes[1].archived, true); assert.equal(status.mailboxes[1].canManageMessages, true);
+  f.setCapacity(1);
+  const status = await f.service.status(user); assert.equal(status.mailboxUsed, 2); assert.equal(status.canCreate, false);
+  assert.equal(status.mailboxes[0].canSend, true); assert.equal(status.mailboxes[1].canSend, true); assert.equal(status.mailboxes[1].archived, false); assert.equal(status.mailboxes[1].canManageMessages, true);
   const page = await f.service.list(user, { mailbox: second.id }); const id = page.messages[0].id;
   await f.service.message(user, { mailbox: second.id, id }); await f.service.read(user, { mailbox: second.id, id, read: true }); await f.service.trash(user, { mailbox: second.id, id });
-  await assert.rejects(f.service.send(user, { ...sendInput(), mailbox: second.id }), code('MAILBOX_NOT_ENTITLED'));
-  await f.service.send(user, { ...sendInput('paid_first_mailbox_send'), mailbox: first.id });
-  assert.equal(f.calls.send.length, 1); assert.equal((await f.store.get(`siteMailAccounts/${second.id}`)).status, 'active'); assert.deepEqual(f.calls.sending, []);
-  f.setMembership({ active: true, paid: true, mailboxes: 2 }); assert.equal((await f.service.status(user)).mailboxes[1].canSend, true);
+  await f.service.send(user, { ...sendInput(), mailbox: second.id }); await f.service.send(user, { ...sendInput('permanent_first_send'), mailbox: first.id });
+  assert.equal(f.calls.send.length, 2); assert.equal((await f.store.get(`siteMailAccounts/${second.id}`)).status, 'active'); assert.deepEqual(f.calls.sending, []);
 });
 
 test('message IDs and cursors bind the selected mailbox, rejecting cross-box actions before IMAP', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+  const f = fixture(); f.setCapacity(2);
   const first = (await f.service.create(user, { localPart: 'first' })).createdMailbox; const second = (await f.service.create(user, { localPart: 'second' })).createdMailbox;
   f.imap.list = async () => ({ uidValidity: '123', messages: [f.raw], nextCursor: 'provider-cursor' });
   const page = await f.service.list(user, { mailbox: first.id }); const id = page.messages[0].id; assert.equal(decodeMailMessageId(id).mailboxId, first.id);
@@ -759,53 +821,48 @@ test('message IDs and cursors bind the selected mailbox, rejecting cross-box act
   assert.equal(f.calls.messages.length, 0); assert.equal(f.calls.read.length, 0); assert.equal(f.calls.trash.length, 0); assert.equal(f.calls.send.length, 0);
 });
 
-test('send receipt cannot be reused under another mailbox, remains readable after downgrade and quotas are per mailbox', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+test('send receipts bind their mailbox, survive inventory shrink and retain independent per-mailbox quotas', async () => {
+  const f = fixture(); f.setCapacity(2);
   const first = (await f.service.create(user, { localPart: 'first' })).createdMailbox; const second = (await f.service.create(user, { localPart: 'second' })).createdMailbox;
   const input = { ...sendInput(), mailbox: second.id }; const sent = await f.service.send(user, input);
   await assert.rejects(f.service.send(user, { ...input, mailbox: first.id }), code('MAILBOX_NOT_FOUND'));
-  f.setMembership({ active: true, paid: true, mailboxes: 1 }); assert.deepEqual(await f.service.send(user, input), sent); assert.equal(f.calls.send.length, 1);
-  f.setMembership({ active: true, paid: true, mailboxes: 2 });
+  f.setCapacity(1); assert.deepEqual(await f.service.send(user, input), sent); assert.equal(f.calls.send.length, 1);
+  f.setCapacity(2);
   for (let i = 1; i < 20; i++) await f.service.send(user, { ...sendInput(`second_box_send_${i.toString().padStart(4, '0')}`), mailbox: second.id });
   await assert.rejects(f.service.send(user, { ...sendInput('second_box_over_daily'), mailbox: second.id }), code('MAIL_DAILY_LIMIT'));
   await f.service.send(user, { ...sendInput('first_box_still_has_quota'), mailbox: first.id }); assert.equal(f.calls.send.length, 21);
 });
 
-test('legacy mailbox gains an index without copying or replacing ciphertext when adding a paid second mailbox', async () => {
+test('legacy mailbox gains an index without copying or replacing ciphertext when adding another owner mailbox', async () => {
   const f = fixture(); await f.service.create(user, { localPart: 'first' }); const legacy = await f.store.get(`siteMailboxes/${user.uid}`);
-  f.store.docs.delete(`siteMailUserAccounts/${user.uid}`); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+  f.store.docs.delete(`siteMailUserAccounts/${user.uid}`); f.setCapacity(2);
   const second = (await f.service.create(user, { localPart: 'second' })).createdMailbox;
   assert.deepEqual((await f.store.get(`siteMailUserAccounts/${user.uid}`)).mailboxIds, [user.uid, second.id]);
   assert.deepEqual((await f.store.get(`siteMailboxes/${user.uid}`)).credential, legacy.credential);
   assert.equal(await f.store.get(`siteMailAccounts/${user.uid}`), undefined);
 });
 
-test('Hostinger trusted owner trial can exercise two purchased seats without becoming paid or accepting client capacity', async () => {
-  const p = hostingerFixture(); const owner = { ...user, email: 'taithai5002@gmail.com' }; let quantity = 2;
-  const reservations = [];
-  const f = fixture({ env: hostingerEnv, provider: p.provider, reserveTrialCapacity: async input => { reservations.push(input); return true; }, getMembership: async (id, context) =>
-    context.user?.uid === id && context.user.email === owner.email && context.user.email_verified === true
-      ? { active: true, paid: false, ownerTrial: true, expiresAt: '2026-11-22T10:00:00Z', mailboxes: quantity } : { active: false, paid: false } });
-  const first = (await f.service.create(owner, { localPart: 'first' })).createdMailbox; await f.service.create(owner, { localPart: 'second' });
-  const status = await f.service.status(owner); assert.equal(status.ownerTrial, true); assert.equal(status.membership.paid, false); assert.equal(status.mailboxCapacity, 2);
-  assert.equal(reservations.length, 2); assert.ok(reservations.every(input => input.user === owner && input.quantity === 2));
-  await assert.rejects(f.service.create(owner, { localPart: 'third', mailboxes: 20 }), code('MAILBOX_CAPACITY_REACHED'));
-  quantity = 20; await assert.rejects(f.service.send(owner, { ...sendInput(), mailbox: first.id }), code('ACTIVE_MEMBERSHIP_REQUIRED'));
-  quantity = 2; f.advance(2 * 86400000); await assert.rejects(f.service.send(owner, { ...sendInput(), mailbox: first.id }), code('ACTIVE_MEMBERSHIP_REQUIRED'));
-  await f.service.list(owner, { mailbox: first.id }); assert.equal(f.calls.send.length, 0);
+test('Hostinger permanent owner capacity follows purchased seats without subscriptions, trials or client grants', async () => {
+  const p = hostingerFixture(); p.order.seats = 2; p.plan.domain.mailbox_quota = 2;
+  const f = fixture({ env: hostingerEnv, provider: p.provider });
+  const first = (await f.service.create(user, { localPart: 'first' })).createdMailbox; await f.service.create(user, { localPart: 'second' });
+  const status = await f.service.status(user); assert.equal(status.ownerAccess, true); assert.equal(status.ownerTrial, false); assert.equal(status.paid, false); assert.equal(status.mailboxCapacity, 2);
+  await assert.rejects(f.service.create(user, { localPart: 'third', mailboxes: 999, paid: true }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
+  f.advance(3660 * 86400000); await f.service.send(user, { ...sendInput(), mailbox: first.id });
+  assert.equal(f.calls.send.length, 1); assert.equal(p.requests.filter(item => item.options.method === 'POST').length, 2);
 });
 
-test('a paid twenty-mailbox plan can provision its full quantity within the account creation rate limit', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 20 });
+test('twenty purchased provider seats can be used within the account creation rate limit', async () => {
+  const f = fixture(); f.setCapacity(20);
   for (let i = 0; i < 20; i++) await f.service.create(user, { localPart: `mailbox${i}` });
   const status = await f.service.status(user); assert.equal(status.mailboxCapacity, 20); assert.equal(status.mailboxUsed, 20); assert.equal(status.canCreate, false); assert.equal(f.calls.create.length, 20);
-  await assert.rejects(f.service.create(user, { localPart: 'mailboxlast' }), code('MAILBOX_CAPACITY_REACHED'));
+  await assert.rejects(f.service.create(user, { localPart: 'mailboxlast' }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
   const p = hostingerFixture(); p.order.seats = 30; p.plan.domain.mailbox_quota = 30;
   assert.equal(await p.provider.assertCapacity(25), true); await assert.rejects(p.provider.assertCapacity(31), code('MAIL_PROVIDER_CAPACITY_REACHED'));
 });
 
 test('creation binds fresh idempotency IDs even when returning an existing active mailbox, and false capacity never provisions', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 2 });
+  const f = fixture(); f.setCapacity(2);
   await f.service.create(user, { localPart: 'first' });
   await f.service.create(user, { localPart: 'first', requestId: 'fresh_active_receipt_id' });
   await assert.rejects(f.service.create(user, { localPart: 'second', requestId: 'fresh_active_receipt_id' }), code('REQUEST_ID_CONFLICT')); assert.equal(f.calls.create.length, 1);
@@ -816,24 +873,15 @@ test('creation binds fresh idempotency IDs even when returning an existing activ
   assert.equal(p.requests.length, 0); assert.equal(p.probes.length, 0);
 });
 
-test('Hostinger owner trial must reserve globally held customer inventory before any provider call, including retries', async () => {
-  const owner = { ...user, email: 'taithai5002@gmail.com' };
-  const getMembership = async () => ({ active: true, paid: false, ownerTrial: true, expiresAt: '2026-11-22T10:00:00Z', mailboxes: 1 });
-  const p = hostingerFixture(); const missing = fixture({ env: hostingerEnv, provider: p.provider, getMembership });
-  await assert.rejects(missing.service.create(owner, { localPart: 'ownertrial' }), code('MAIL_CAPACITY_NOT_CONFIGURED'));
-  assert.equal(p.requests.length, 0); assert.equal(p.probes.length, 0);
-  const q = hostingerFixture(); let attempts = 0; let allowed = false;
-  const blocked = fixture({ env: hostingerEnv, provider: q.provider, getMembership, reserveTrialCapacity: async input => {
-    attempts++; assert.equal(input.user, owner); assert.equal(input.quantity, 1); return allowed;
-  } });
-  await assert.rejects(blocked.service.create(owner, { localPart: 'ownertrial', mailboxes: 20 }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
-  assert.equal(q.requests.length, 0); assert.equal(q.probes.length, 0); assert.equal(attempts, 1);
-  blocked.advance(31000);
-  await assert.rejects(blocked.service.create(owner, { localPart: 'ownertrial' }), code('MAIL_PROVIDER_CAPACITY_REACHED'));
-  assert.equal(q.requests.length, 0); assert.equal(attempts, 2);
-  allowed = true; blocked.advance(31000);
-  assert.equal((await blocked.service.create(owner, { localPart: 'ownertrial' })).createdMailbox.status, 'active');
-  assert.equal(attempts, 3); assert.equal(q.requests.filter(item => item.options.method === 'POST').length, 1);
+test('owner provisioning lock serializes real provider capacity and full-inventory recovery still proves its committed mailbox', async () => {
+  const p = hostingerFixture(); p.order.seats = 1; p.plan.domain.mailbox_quota = 1; p.loseCreateResponse();
+  let locks = 0; const f = fixture({ env: hostingerEnv, provider: p.provider,
+    withProvisioningLock: async (actor, operation) => { locks++; assert.equal(actor, user); return operation(); } });
+  await assert.rejects(f.service.create(user, { localPart: 'ownermail' }), code('MAILBOX_PROVISIONING_UNCERTAIN'));
+  assert.equal((await p.provider.inventory()).available, 0); assert.equal(p.requests.filter(item => item.options.method === 'POST').length, 1);
+  f.advance(31000);
+  assert.equal((await f.service.create(user, { localPart: 'ownermail' })).createdMailbox.status, 'active');
+  assert.ok(locks >= 2); assert.equal(p.requests.filter(item => item.options.method === 'POST').length, 1); assert.equal(p.probes.length, 1);
 });
 
 test('new Hostinger names use the help/OpenAPI common subset before any reservation or provider request', async () => {
@@ -860,8 +908,8 @@ test('Hostinger new-name compatibility restriction does not invalidate saved cre
   assert.equal((await h.service.create(user, { localPart: 'sunny_name' })).createdMailbox.address, 'sunny_name@taithai.app');
 });
 
-test('paid account quantity above twenty is accepted and large indexes use bounded storage read batches', async () => {
-  const f = fixture(); f.setMembership({ active: true, paid: true, mailboxes: 60 });
+test('provider capacity above twenty has no application count cap and large indexes use bounded storage read batches', async () => {
+  const f = fixture(); f.setCapacity(60);
   for (let i = 0; i < 26; i++) await f.service.create(user, { localPart: `manybox${i}` });
   const index = await f.store.get(`siteMailUserAccounts/${user.uid}`); assert.equal(index.mailboxIds.length, 26);
   let concurrent = 0; let maximum = 0; const original = f.store.get;
@@ -876,7 +924,8 @@ test('paid account quantity above twenty is accepted and large indexes use bound
   assert.ok(maximum <= 25); assert.ok(maximum > 1);
   await f.service.send(user, { ...sendInput(), mailbox: state.mailboxes[25].id }); assert.equal(f.calls.send[0].message.from, 'manybox25@taithai.app');
   for (const invalid of [0,-1,1.5,Number.MAX_SAFE_INTEGER + 1,Infinity]) {
-    f.setMembership({ active: true, paid: true, mailboxes: invalid }); assert.equal((await f.service.status(user)).mailboxCapacity, 0);
+    f.setMembership({...grant(),mailboxes:invalid});
+    const stable = await f.service.status(user); assert.equal(stable.mailboxCapacity, 60); assert.equal(stable.canSend, true);
   }
 });
 
@@ -888,15 +937,12 @@ function waitForProviderAbort(signal) {
   });
 }
 
-test('shared provisioning deadline includes initial trusted trial reservation time and retains the durable name', async () => {
-  const p = hostingerFixture(); const owner = { ...user, email: 'taithai5002@gmail.com' }; let held = false;
+test('shared provisioning deadline includes the initial owner provisioning lock and retains the durable name', async () => {
+  const p = hostingerFixture(); let held = false;
   const f = fixture({ env: hostingerEnv, provider: p.provider, provisioningTimeoutMs: 20,
-    getMembership: async () => ({ active: true, paid: false, ownerTrial: true, expiresAt: '2026-11-22T10:00:00Z' }),
-    reserveTrialCapacity: async () => { held = true; await new Promise(resolve => setTimeout(resolve, 40)); return true; } });
-  await assert.rejects(f.service.create(owner, { localPart: 'slowtrial' }), code('MAILBOX_PROVISIONING_UNCERTAIN'));
-  assert.equal(held, true); assert.equal(p.requests.length, 0); assert.equal(p.probes.length, 0);
-  const record = await f.store.get(`siteMailboxes/${user.uid}`); assert.equal(record.status, 'provisioning'); assert.ok(record.credential); assert.equal(record.creationAttemptedAt, undefined);
-  assert.equal((await f.store.get('siteMailNames/slowtrial')).uid, owner.uid);
+    withProvisioningLock: async (actor, operation) => { assert.equal(actor, user); held = true; await new Promise(resolve => setTimeout(resolve, 40)); return operation(); } });
+  await assert.rejects(f.service.create(user, { localPart: 'slowowner' }), code('MAILBOX_PROVISIONING_UNCERTAIN'));
+  assert.equal(held, true); assert.equal(p.requests.some(item => item.options.method === 'POST'), false); assert.equal(p.probes.length, 0);
 });
 
 test('shared Hostinger deadline aborts capacity work before POST without releasing an attempted-creation reservation', async () => {

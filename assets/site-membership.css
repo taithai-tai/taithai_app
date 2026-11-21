@@ -70,3 +70,18 @@
   .mailbox-name-control { gap: 8px; flex-wrap: wrap; }
   .mailbox-name-control span { margin-inline-start: 16px; }
 }
+
+/* Personal inbox search and owner-managed administrator permissions. */
+.mail-search-controls { display: flex; align-items: start; gap: 12px; flex-wrap: wrap; }
+.mail-search-controls .field { flex: 1 1 180px; min-width: 0; margin: 0; }
+.mail-search-controls input { width: 100%; border-radius: 999px; }
+.mail-search-controls > .button { margin-top: 28px; }
+.mail-search-results { display: grid; gap: 8px; }
+.admin-permission-fields { display: grid; gap: 12px; margin-block: 20px; padding: 20px; border: 1px solid var(--border); border-radius: 20px; }
+.admin-permission-fields legend { padding-inline: 8px; }
+.admin-permission-choice { display: flex; align-items: start; gap: 12px; line-height: 1.6; }
+.admin-permission-choice input { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 3px; accent-color: var(--accent); }
+.admin-roster-row { display: grid; gap: 12px; padding-block: 24px; border-top: 1px solid var(--border); }
+.admin-roster-row:first-of-type { margin-top: 20px; }
+.admin-roster-row h3 { font-size: 1rem; overflow-wrap: anywhere; }
+.admin-roster-row .button-row { margin: 0; }

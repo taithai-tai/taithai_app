@@ -86,7 +86,7 @@ async function setup(user, overrides = {}) {
   if (overrides.hash) dom.window.location = {hash:overrides.hash};
   const data = { async getAppVisibilitySettings() { calls.appReads.push(true); return normalizeAppSettings(null); }, async updateAppVisibilitySettings(input) { calls.appWrites.push(input); return { ...normalizeAppSettings(null), exists: true, revision: input.expectedRevision + 1, apps: input.apps }; }, async listEvents(args) { calls.events.push(args); return { items: [], nextCursor: null }; }, async listReports(args) { calls.reports.push(args); return { items: [], nextCursor: null }; }, async updateReport(id, changes) { calls.writes.push({ id, changes }); return { id, ...changes }; }, ...overrides.data };
   const auth = { subscribeAuth(fn) { notify = fn; fn(user); return () => {}; }, async loginWithGoogle() { notify(owner()); return owner(); }, async logout() { notify(null); }, ...overrides.auth };
-  const controller = await initAdminPage({ ...dom, loadAuth: overrides.loadAuth || (async () => auth), loadData: async () => { dataLoads++; return data; }, loadMembership:overrides.loadMembership, now: () => new Date('2026-11-21T05:00:00Z') });
+  const controller = await initAdminPage({ ...dom, loadAuth: overrides.loadAuth || (async () => auth), loadData: async () => { dataLoads++; return data; }, loadMembership:overrides.loadMembership,request:overrides.request,loadAccess:overrides.loadAccess || (async current => ({adminAccess:isSiteOwner(current),ownerAccess:isSiteOwner(current),dashboardAccess:isSiteOwner(current),mailAccess:isSiteOwner(current),canManageAdmins:isSiteOwner(current),canManageReports:isSiteOwner(current),canManageApps:isSiteOwner(current),role:isSiteOwner(current)?'owner':'user'})), now: () => new Date('2026-11-21T05:00:00Z') });
   await flush();
   return { ...dom, controller, calls, auth, data, notify: value => notify(value), get dataLoads() { return dataLoads; } };
 }
@@ -315,47 +315,27 @@ test('unsaved app settings trigger the normal leave warning and prevent accident
   assert.equal(app.document.getElementById('adminAppVisibility-movie-memory').value, 'unlisted'); app.controller.destroy();
 });
 
-test('membership module is lazy for the owner and never loads for other accounts, including its direct hash', async () => {
+
+
+test('paused billing is absent even for the owner and a direct membership hash never imports it', async () => {
   let loads = 0;
-  const source = {initMembershipAdmin(){return {destroy(){}};}};
-  for (const user of [null,{...owner(),emailVerified:false},{...owner(),email:'other@example.com'}]) {
-    const app = await setup(user,{hash:'#membership',loadMembership:async () => {loads++;return source;}});
-    assert.equal(loads,0);assert.equal(app.document.getElementById('adminTab-membership'),null);assert.equal(app.calls.events.length,0);app.controller.destroy();
+  for (const user of [owner(),null,{uid:'other',email:'other@example.com',emailVerified:true}]) {
+    const app = await setup(user,{hash:'#membership',loadMembership:async () => {loads++;throw Error('billing must stay unloaded');}});await flush();assert.equal(app.document.getElementById('adminTab-membership'),null);assert.equal(app.document.getElementById('adminView-membership'),null);assert.doesNotMatch(app.root.textContent,/Membership and discounts|สมาชิกและส่วนลด/);app.controller.destroy();
   }
-  const app = await setup(owner(),{loadMembership:async () => {loads++;return source;}});
-  assert.equal(loads,0);await app.document.getElementById('adminTab-membership').fire('click');await flush();assert.equal(loads,1);app.controller.destroy();
-  const direct = await setup(owner(),{hash:'#membership',loadMembership:async () => {loads++;return source;}});
-  assert.equal(direct.calls.events.length,0,'opening membership does not query analytics');assert.equal(direct.dataLoads,0);direct.controller.destroy();
+  assert.equal(loads,0);
 });
 
-test('membership view and draft survive tab switches and language rerenders without duplicate initialization', async () => {
-  let initializes = 0,destroys = 0;
-  const source = {initMembershipAdmin(container,{document,getUser}){initializes++;assert.equal(getUser().uid,'owner');const input = document.createElement('input');input.id = 'membershipDraftProbe';input.value = 'Draft terms';container.append(input);return {destroy(){destroys++;},dirty:() => true,isSaving:() => false,leaveMessage:() => 'Keep pending discount terms?'};}};
-  const app = await setup(owner(),{hash:'#membership',loadMembership:async () => source});
-  const view = app.document.getElementById('adminView-membership'),draft = app.document.getElementById('membershipDraftProbe');draft.value = 'Unconfirmed batch terms';
-  await app.document.getElementById('adminTab-reports').fire('click');await flush();await app.document.getElementById('adminTab-membership').fire('click');await flush();
-  assert.equal(app.document.getElementById('adminView-membership'),view);assert.equal(app.document.getElementById('membershipDraftProbe'),draft);assert.equal(draft.value,'Unconfirmed batch terms');
-  app.language('th');assert.equal(app.document.getElementById('adminView-membership'),view);assert.equal(app.document.getElementById('membershipDraftProbe'),draft);assert.equal(draft.value,'Unconfirmed batch terms');assert.equal(initializes,1);
-  const leaving = new Event('beforeunload',{cancelable:true});app.window.dispatchEvent(leaving);assert.equal(leaving.defaultPrevented,true);
-  app.window.confirm = () => false;await app.find(item => item.tagName === 'button' && item.textContent === 'ออกจากระบบ').fire('click');assert.equal(destroys,0);
-  app.notify({uid:'other',email:'other@example.com',emailVerified:true});assert.equal(destroys,1);assert.equal(app.document.getElementById('membershipDraftProbe'),null);assert.doesNotMatch(app.root.textContent,/Unconfirmed batch terms/);app.controller.destroy();
+const delegateAccess = (patch = {}) => ({adminAccess:true,ownerAccess:false,dashboardAccess:true,mailAccess:true,canManageAdmins:false,canManageReports:false,canManageApps:false,role:'admin',permissions:['dashboard','mail'],...patch});
+test('delegated dashboard uses server capabilities and report reads stay available without editing grants',async()=>{
+  const report={id:'readonly',status:'open',subject:'Readable report',description:'Report details',publicReply:''};
+  const app=await setup({uid:'delegate',email:'delegate@example.com',emailVerified:true},{loadAccess:async()=>delegateAccess(),data:{listReports:async()=>({items:[report]})}});
+  assert.ok(app.document.getElementById('adminTab-overview'));assert.equal(app.document.getElementById('adminTab-apps'),null);assert.equal(app.document.getElementById('adminTab-admins'),null);await app.document.getElementById('adminTab-reports').fire('click');await flush();await app.find(item=>item.tagName==='button'&&item.textContent==='View report').fire('click');assert.equal(app.document.getElementById('adminReportReply').disabled,true);assert.equal(app.document.getElementById('adminSaveReport').disabled,true);await app.document.getElementById('adminReportForm').fire('submit');assert.equal(app.calls.writes.length,0);app.controller.destroy();
 });
-
-test('late membership imports cannot initialize or reveal owner controls after account changes or destruction', async () => {
-  let release,initializes = 0;
-  const source = {initMembershipAdmin(container,{document}){initializes++;container.append(Object.assign(document.createElement('p'),{textContent:'PRIVATE OWNER BILLING'}));return {destroy(){}};}};
-  const app = await setup(owner(),{hash:'#membership',loadMembership:() => new Promise(resolve => {release = resolve;})});
-  app.notify(null);release(source);await flush();assert.equal(initializes,0);assert.equal(app.document.getElementById('adminView-membership'),null);assert.doesNotMatch(app.root.textContent,/PRIVATE OWNER BILLING/);app.controller.destroy();
-  let releaseDestroyed;
-  const closed = await setup(owner(),{hash:'#membership',loadMembership:() => new Promise(resolve => {releaseDestroyed = resolve;})});closed.controller.destroy();releaseDestroyed(source);await flush();assert.equal(initializes,0);
+test('optional delegated app and report management never exposes administrator grants',async()=>{
+  const app=await setup({uid:'delegate',email:'delegate@example.com',emailVerified:true},{hash:'#apps',loadAccess:async()=>delegateAccess({canManageApps:true,canManageReports:true,canManageAdmins:true})});assert.ok(app.document.getElementById('adminTab-apps'));assert.equal(app.calls.appReads.length,1);assert.equal(app.document.getElementById('adminTab-admins'),null,'owner identity is also required to manage administrators');app.controller.destroy();
 });
-
-test('bfcache suspension clears membership details and waits for fresh owner authentication before remounting', async () => {
-  let authLoads = 0,releaseAuth,initializes = 0,destroys = 0;const identities = [];
-  const auth = {subscribeAuth(callback){callback(owner());return () => {};}};
-  const source = {initMembershipAdmin(container,{document,getUser}){initializes++;identities.push(getUser);container.append(Object.assign(document.createElement('p'),{textContent:'PRIVATE MEMBERSHIP DETAILS'}));return {destroy(){destroys++;}};}};
-  const app = await setup(owner(),{hash:'#membership',loadAuth:() => ++authLoads === 1 ? Promise.resolve(auth) : new Promise(resolve => {releaseAuth = resolve;}),loadMembership:async () => source});
-  assert.equal(initializes,1);app.window.dispatchEvent(new Event('pagehide'));assert.equal(destroys,1);assert.equal(identities[0](),null);assert.doesNotMatch(app.root.textContent,/PRIVATE MEMBERSHIP DETAILS/);
-  const restored = new Event('pageshow');Object.defineProperty(restored,'persisted',{value:true});app.window.dispatchEvent(restored);await flush();assert.equal(initializes,1);assert.doesNotMatch(app.root.textContent,/PRIVATE MEMBERSHIP DETAILS/);
-  releaseAuth(auth);await flush();assert.equal(initializes,2);assert.match(app.root.textContent,/PRIVATE MEMBERSHIP DETAILS/);app.controller.destroy();assert.equal(destroys,2);
+test('fresh role checks hide revoked dashboards and stale role responses cannot restore old private data',async()=>{
+  let access=delegateAccess(),release;
+  const app=await setup({uid:'delegate',email:'delegate@example.com',emailVerified:true},{loadAccess:async()=>access});assert.ok(app.document.getElementById('adminTab-overview'));access=delegateAccess({adminAccess:false,dashboardAccess:false,mailAccess:false});app.window.dispatchEvent(new Event('focus'));await flush();assert.equal(app.document.getElementById('adminTab-overview'),null);assert.equal(app.document.getElementById('adminReportDialog'),null);
+  app.controller.destroy();let current=owner();const auth={subscribeAuth(fn){this.notify=fn;fn(current);return()=>{};}};const stale=await setup(owner(),{loadAuth:async()=>auth,loadAccess:()=>new Promise(resolve=>{release=resolve;})});auth.notify(null);release(delegateAccess({ownerAccess:true,canManageAdmins:true}));await flush();assert.equal(stale.document.getElementById('adminTab-overview'),null);assert.equal(stale.document.getElementById('adminTab-admins'),null);stale.controller.destroy();
 });

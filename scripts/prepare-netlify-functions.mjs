@@ -6,7 +6,7 @@ import { build } from 'esbuild';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const netlifyFunctionsDirectory = path.join(root, 'netlify', 'generated-functions');
 const source = path.join(root, 'netlify', 'functions');
-const membershipFunctions = new Set(['membership.js', 'membership-webhook.js']);
+const membershipFunctions = new Set(['membership.js', 'membership-webhook.js', 'site-admin.js']);
 
 export async function prepareNetlifyFunctions() {
   await rm(netlifyFunctionsDirectory, { recursive: true, force: true });

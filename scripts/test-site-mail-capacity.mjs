@@ -1,8 +1,89 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { createMailCapacityService } from '../server-lib/site-mail-capacity.js';
+import { createMailCapacityService,createOwnerMailCapacityService } from '../server-lib/site-mail-capacity.js';
+import { createSiteMail } from '../server-lib/site-mail.js';
 
 const moment=Date.UTC(2026,10,21),config={liveMode:true,mailProvider:'hostinger'};
+const owner={uid:'owner_123',email:'taithai5002@gmail.com',email_verified:true};
+const delegate={uid:'delegate.123',email:'delegate@example.com',email_verified:true};
+const resolveAccess=async user=>({mailAccess:user?.email_verified===true && [owner,delegate].some(actor=>actor.uid===user.uid && actor.email===user.email)});
+function adminFixture({capacity=1}={}) {
+  const docs=new Map(),calls=[];let serial=Promise.resolve(),used=0;
+  const store={get:async key=>{calls.push(['get',key]);return docs.get(key)||null;},set:async(key,value)=>{calls.push(['set',key]);docs.set(key,structuredClone(value));},
+    withLock(key,fn){calls.push(['lock',key]);const task=serial.then(fn);serial=task.catch(()=>{});return task;}};
+  const provider={inventory:async()=>{calls.push(['inventory']);return {capacity,used,available:Math.max(0,capacity-used)};}};
+  const config={mailProvider:'hostinger',ownerMailEnabled:true,mailReady:true};
+  const service=createOwnerMailCapacityService({store,provider,config,resolveAccess,now:()=>moment});
+  const record=user=>({uid:user.uid,id:user.uid,address:`${user===owner?'ownerbox':'delegatebox'}@taithai.app`,provider:'hostinger',status:'provisioning'});
+  return {docs,calls,store,provider,config,service,record,setUsed:value=>{used=value;},setCapacity:value=>{capacity=value;}};
+}
+test('permanent admin capacity follows provider stock without paid/trial records or expiry',async()=>{
+  const f=adminFixture();assert.deepEqual(await f.service.status(owner),{capacity:1,used:0,reserved:0,available:1});
+  assert.equal(await f.service.withProvisioningLock(delegate,async()=>{f.calls.push(['lookup-proof-before-stock']);return 'recovered';}),'recovered');
+  assert.equal(f.calls.some(call=>call[0]==='lock'&&call[1]==='hostinger-admin-mail-provisioning'),true);
+});
+test('capacity denies unverified, changed UID/email and disabled flags before provider or ledger IO',async()=>{
+  const f=adminFixture();for(const user of [{...owner,email:'other@example.com',mailAccess:true,paid:true},{...delegate,email_verified:false},{...delegate,uid:'other'},{uid:owner.uid,email:owner.email,emailVerified:true}]){
+    await assert.rejects(f.service.status(user),error=>error.code==='MAIL_ACCESS_REQUIRED');
+    await assert.rejects(f.service.withProvisioningLock(user,()=>{throw Error('forbidden');}),error=>error.code==='MAIL_ACCESS_REQUIRED');
+  }
+  f.config.ownerMailEnabled=false;await assert.rejects(f.service.status(owner),error=>error.code==='OWNER_MAIL_NOT_ENABLED');assert.deepEqual(f.calls,[]);
+});
+test('admin capacity rejects malformed inventory without inventing available seats',async()=>{
+  for(const inventory of [{capacity:1,used:0,available:2},{capacity:0,used:0,available:0},{capacity:1,used:0,available:NaN},{capacity:1,used:1,available:1}]){
+    const f=adminFixture();f.provider.inventory=async()=>inventory;
+    await assert.rejects(f.service.status(owner),error=>error.code==='MAIL_CAPACITY_REVIEW_REQUIRED');
+  }
+});
+test('a shared persistent hold protects the last provider seat across concurrent delegated admins and process restarts',async()=>{
+  const f=adminFixture();const results=await Promise.allSettled([owner,delegate].map(user=>f.service.withProvisioningLock(user,async capacity=>{await capacity.reserve(f.record(user));return user.uid;})));
+  assert.equal(results[0].status,'fulfilled');assert.equal(results[1].status,'rejected');assert.equal(results[1].reason.code,'MAIL_PROVIDER_CAPACITY_REACHED');
+  const restarted=createOwnerMailCapacityService({store:f.store,provider:f.provider,config:f.config,resolveAccess,now:()=>moment+365*86400000});
+  assert.deepEqual(await restarted.status(delegate),{capacity:1,used:0,reserved:1,available:0});
+  await assert.rejects(restarted.withProvisioningLock(delegate,capacity=>capacity.reserve(f.record(delegate))),error=>error.code==='MAIL_PROVIDER_CAPACITY_REACHED');
+  // Revoking the actor cannot release an uncertain physical provider request.
+  const revoked=createOwnerMailCapacityService({store:f.store,provider:f.provider,config:f.config,resolveAccess:async user=>({mailAccess:user.uid===delegate.uid})});
+  assert.equal((await revoked.status(delegate)).available,0);
+});
+test('matching full-stock recovery runs before reservation and a proven active mailbox is never counted twice',async()=>{
+  const f=adminFixture();const record=f.record(owner);await f.service.withProvisioningLock(owner,capacity=>capacity.reserve(record));f.setUsed(1);
+  await f.service.withProvisioningLock(owner,async capacity=>{
+    // The mail service performs lookup and persisted-password proof here.
+    await f.store.set(`siteMailboxes/${owner.uid}`,{...record,status:'active'});
+    await capacity.complete(record);
+  });
+  assert.deepEqual(await f.service.status(delegate),{capacity:1,used:1,reserved:0,available:0});
+  // Simulate a lost release acknowledgement after activation.
+  f.docs.set('siteMailProvisioningLedger/hostinger',{provider:'hostinger',holds:[{uid:owner.uid,mailboxId:record.id,address:record.address}]});
+  assert.equal((await f.service.status(owner)).reserved,0);
+});
+test('mail service retains a global hold for an uncertain provider POST and recovers its last seat before capacity checks',async()=>{
+  const f=adminFixture(),boxes=new Map();let postCount=0,timestamp=moment,loseResponse=true;
+  f.store.runTransaction=async operation=>operation(f.store);
+  const provider={id:'hostinger',inventory:f.provider.inventory,assertReady:async()=>true,
+    findMailbox:async local=>boxes.get(local)||null,
+    verifyMailboxOwnership:async({localPart,password})=>boxes.get(localPart)?.password===password,
+    async createMailbox({localPart,password}){postCount++;boxes.set(localPart,{password});f.setUsed(boxes.size);if(loseResponse)throw Error('lost response after commit');}};
+  const capacity=createOwnerMailCapacityService({store:f.store,provider,config:f.config,resolveAccess,now:()=>timestamp});
+  const env={OWNER_MAIL_ENABLED:'true',MAIL_READY:'true',MAIL_DOMAIN:'taithai.app',MAIL_PROVIDER:'hostinger',HOSTINGER_API_TOKEN:'fixture-token-only',HOSTINGER_MAIL_ORDER_ID:'OR_fixture',MAIL_CREDENTIAL_SECRET:Buffer.alloc(32,3).toString('base64')};
+  const mail=createSiteMail({store:f.store,provider,imap:{},smtp:{},env,now:()=>timestamp,
+    getMembership:async(uid,{user})=>({active:uid===user.uid&&(await resolveAccess(user)).mailAccess,mailAccess:true,adminAccess:true,ownerAccess:user.uid===owner.uid,role:user.uid===owner.uid?'owner':'admin',permissions:['mail']}),
+    capacityStatus:capacity.status,withProvisioningLock:capacity.withProvisioningLock});
+  await assert.rejects(mail.create(owner,{localPart:'ownerbox'}),error=>error.code==='MAILBOX_PROVISIONING_UNCERTAIN');
+  assert.equal(f.docs.get('siteMailProvisioningLedger/hostinger').holds.length,1);assert.equal(postCount,1);
+  await assert.rejects(mail.create(delegate,{localPart:'delegatebox'}),error=>error.code==='MAIL_PROVIDER_CAPACITY_REACHED');assert.equal(postCount,1);
+  timestamp+=31000;loseResponse=false;
+  const recovered=await mail.create(owner,{localPart:'ownerbox'});assert.equal(recovered.createdMailbox.status,'active');assert.equal(postCount,1);assert.equal(f.docs.get('siteMailProvisioningLedger/hostinger').holds.length,0);
+  // A new physical seat is an operator/provider change, never an automatic buy.
+  f.setCapacity(2);const added=await mail.create(delegate,{localPart:'delegatebox'});assert.equal(added.createdMailbox.address,'delegatebox@taithai.app');assert.equal(added.ownerAccess,false);assert.equal(postCount,2);
+  assert.deepEqual((await mail.status(delegate)).mailboxes.map(item=>item.address),['delegatebox@taithai.app']);
+});
+test('capacity ledger ownership corruption and foreign completion attempts fail closed',async()=>{
+  const f=adminFixture();await f.service.withProvisioningLock(owner,capacity=>capacity.reserve(f.record(owner)));
+  await assert.rejects(f.service.withProvisioningLock(delegate,capacity=>capacity.complete(f.record(owner))),error=>error.code==='MAIL_CAPACITY_REVIEW_REQUIRED');
+  f.docs.set('siteMailProvisioningLedger/hostinger',{provider:'hostinger',holds:[{uid:'../bad',mailboxId:'bad',address:'bad@taithai.app'}]});
+  await assert.rejects(f.service.status(owner),error=>error.code==='MAIL_CAPACITY_REVIEW_REQUIRED');
+});
 function fixture({capacity=2,policy={}}={}) {
   const docs=new Map();let serial=Promise.resolve(),used=0;const checks=[];
   const store={

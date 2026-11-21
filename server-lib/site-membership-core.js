@@ -3,10 +3,11 @@ import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import { FieldPath, getFirestore } from 'firebase-admin/firestore';
 import { mailConfiguration } from './site-mail.js';
+import { SITE_ADMIN_OWNER } from './site-admin-access.js';
 
 export const MEMBERSHIP_PROJECT = 'gen-lang-client-0141234491';
 export const MEMBERSHIP_DATABASE = 'ai-studio-remixtaithaiapp-75e1f35e-2cc5-45a8-8a42-e4a81ea8cffb';
-export const MEMBERSHIP_OWNER = 'taithai5002@gmail.com';
+export const MEMBERSHIP_OWNER = SITE_ADMIN_OWNER;
 // Numeric integrity guard only; membership has no fixed mailbox-count tier.
 export const MAX_MEMBERSHIP_MAILBOXES = Number.MAX_SAFE_INTEGER;
 export const MEMBERSHIP_PLAN = Object.freeze({ amount:9900, unitAmount:9900, currency:'thb', interval:'month', mailboxes:1, domain:'taithai.app' });
@@ -38,23 +39,20 @@ export function membershipConfig(env=process.env) {
   const stripeConfigured = /^(?:sk|rk)_(?:test|live)_[A-Za-z0-9]+$/.test(secret) && Boolean(env.STRIPE_PRICE_ID && env.STRIPE_WEBHOOK_SECRET);
   const databaseConfigured = Boolean(env.FIREBASE_SERVICE_ACCOUNT_JSON || env.FIREBASE_SERVICE_ACCOUNT_BASE64);
   const mail = mailConfiguration(env), mailConfigured = mail.ready;
-  const salesEnabled = env.MEMBERSHIP_SALES_ENABLED === 'true';
-  const trialEnd=Date.parse(env.OWNER_MAIL_TRIAL_EXPIRES_AT || '');
-  const trialOrigin=/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.netlify\.app$/.test(env.OWNER_MAIL_TRIAL_ORIGIN || '')?env.OWNER_MAIL_TRIAL_ORIGIN:null;
+  const ownerMailEnabled=env.OWNER_MAIL_ENABLED==='true';
+  const ownerMailOrigin=/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.netlify\.app$/.test(env.OWNER_MAIL_ORIGIN || '')?env.OWNER_MAIL_ORIGIN:null;
   return {
     ...MEMBERSHIP_PLAN, baseUrl:'https://taithai.app', priceId:env.STRIPE_PRICE_ID || '',
     webhookSecret:env.STRIPE_WEBHOOK_SECRET || '', apiVersion:'2026-11-18.endive',
     portalConfigurationId:env.STRIPE_PORTAL_CONFIGURATION_ID || '',
     quantityPortalConfigurationId:env.STRIPE_QUANTITY_PORTAL_CONFIGURATION_ID || '',
-    quantityUpdatesVerified:env.STRIPE_QUANTITY_UPDATES_VERIFIED==='true',
+    quantityUpdatesVerified:false,
     testMode:/^(?:sk|rk)_test_/.test(secret), stripeConfigured, databaseConfigured,
     mailConfigured, mailReady:mailConfigured && databaseConfigured, mailProvider:mail.provider,
-    salesEnabled, ownerTrialEnabled:env.OWNER_MAIL_TRIAL_ENABLED==='true',
-    ownerTrialExpiresAt:Number.isFinite(trialEnd)?new Date(trialEnd).toISOString():null,
-    ownerTrialMailboxes:['1','2'].includes(env.OWNER_MAIL_TRIAL_MAILBOXES)?Number(env.OWNER_MAIL_TRIAL_MAILBOXES):1,
-    ownerTrialOrigin:trialOrigin,
+    adminOnly:true,ownerMailEnabled,ownerMailOrigin,
+    salesEnabled:false,ownerTrialEnabled:false,ownerTrialExpiresAt:null,ownerTrialMailboxes:0,ownerTrialOrigin:null,
     databaseReady:databaseConfigured, liveMode:! /^(?:sk|rk)_test_/.test(secret),
-    ready:stripeConfigured && databaseConfigured && mailConfigured,
+    ready:ownerMailEnabled && databaseConfigured && mailConfigured,
   };
 }
 

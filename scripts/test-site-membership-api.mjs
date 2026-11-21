@@ -1,311 +1,161 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createMembershipHandler, createMembershipWebhook, readMembershipRequest } from '../server-lib/site-membership-router.js';
-import { membershipConfig, membershipBillingStore, liveMailMembership, consumeMembershipRate, verifyMembershipUser, readMembershipBody, MembershipError, ownerMailTrialAllowed } from '../server-lib/site-membership-core.js';
-import { assertMembershipMailRouting, membershipMailEntitlement } from '../server-lib/site-membership-runtime.js';
+import { membershipConfig, consumeMembershipRate, verifyMembershipUser, MembershipError } from '../server-lib/site-membership-core.js';
+import { membershipMailEntitlement, assertMembershipMailRouting } from '../server-lib/site-membership-runtime.js';
+import { createAdminAccess } from '../server-lib/site-admin-access.js';
 
-const owner={uid:'owner',email:'taithai5002@gmail.com',email_verified:true};
-const member={uid:'member_1',email:'member@example.com',email_verified:true};
-const tokens={member:'member_token_fixture_123456789',owner:'owner_token_fixture_123456789',unverified:'unverified_fixture_123456789',revoked:'revoked_token_fixture_123456789'};
-const env={NODE_ENV:'production',STRIPE_SECRET_KEY:['rk','test','fixture12345678901234567890'].join('_'),STRIPE_PRICE_ID:'price_fixture',STRIPE_WEBHOOK_SECRET:'webhook_fixture_private',FIREBASE_SERVICE_ACCOUNT_JSON:'{}'};
-
-function memory() {
-  const data=new Map(),keys=[];let chain=Promise.resolve();
-  const store={
-    data,keys,
-    async get(key){keys.push(['get',key]);return data.get(key)||null;},
-    async set(key,value,{merge=false}={}){keys.push(['set',key]);data.set(key,merge?{...data.get(key),...value}:value);},
-    async create(key,value){keys.push(['create',key]);if(data.has(key))throw Error('exists');data.set(key,value);},
-    async delete(key){keys.push(['delete',key]);data.delete(key);},
-    async list(name){keys.push(['list',name]);return [...data].filter(([key])=>key.startsWith(name+'/')).map(([key,value])=>({...value,id:key.split('/')[1]}));},
-    transaction(fn){const operation=chain.then(()=>fn(store));chain=operation.catch(()=>{});return operation;},
-    runTransaction(fn){return store.transaction(fn);},
-    async withLock(key,fn){keys.push(['lock',key]);return fn();},
-  };return store;
-}
+const owner={uid:'owner_123',email:'taithai5002@gmail.com',email_verified:true};
+const member={uid:'other_123',email:'other@example.com',email_verified:true,ownerAccess:true,paid:true,isOwner:true};
+const delegate={uid:'delegate_123',email:'delegate@example.com',email_verified:true};
+const dashboard={uid:'dashboard_123',email:'dashboard@example.com',email_verified:true};
+const tokens={delegate:'delegate_token_fixture_123456789',dashboard:'dashboard_token_fixture_123456789',owner:'owner_token_fixture_123456789',member:'member_token_fixture_123456789',unverified:'unverified_fixture_123456789',revoked:'revoked_token_fixture_123456789'};
+const env={NODE_ENV:'production',OWNER_MAIL_ENABLED:'true',MAIL_READY:'true',MAIL_DOMAIN:'taithai.app',MAIL_PROVIDER:'hostinger',
+  HOSTINGER_API_TOKEN:'hostinger-fixture-token',HOSTINGER_MAIL_ORDER_ID:'OR_fixture',MAIL_CREDENTIAL_SECRET:Buffer.alloc(32,8).toString('base64'),
+  FIREBASE_SERVICE_ACCOUNT_JSON:'{}',OWNER_MAIL_ORIGIN:'https://taithai-app.netlify.app'};
 function harness(extra={}) {
-  const calls=[],store=memory();let runtimeCalls=0;
-  const runtime={store,
-    auth:{async verifyIdToken(token,revoked){calls.push(['auth',token,revoked]);if(token===tokens.revoked)throw Error('revoked');if(token===tokens.owner)return owner;if(token===tokens.unverified)return {...member,email_verified:false};if(token===tokens.member)return member;throw Error('invalid');}},
-    billing:{
-      async getStatus(user){calls.push(['billing-status',user.uid]);return {ready:true,membership:{active:false,paid:false,status:'none'},checkoutAvailable:true,portalAvailable:false};},
-      async checkout(user,input){calls.push(['checkout',user.uid,input]);return {url:'https://checkout.stripe.com/c/pay/fixture'};},
-      async updateQuantity(user,input){calls.push(['quantity-update',user.uid,input]);return {url:'https://billing.stripe.com/p/session/quantity_fixture'};},
-      async portal(user){calls.push(['portal',user.uid]);return {url:'https://billing.stripe.com/p/session/fixture'};},
-      async adminList(){calls.push(['discount-list']);return {discounts:[]};},
-      async adminCreate(user,input){calls.push(['discount-create',user.uid,input]);return {batchId:'fixture',discounts:[]};},
-      async adminDisable(user,input){calls.push(['discount-disable',user.uid,input]);return {disabled:[]};},
-      async webhook(input){calls.push(['webhook',input]);return {received:true};},
-    },
-    mail:{
-      async status(user){calls.push(['mail-status',user.uid]);return {ready:false,mailboxes:[],canCreate:false,canSend:false};},
-      async folders(user,input){calls.push(['folders',user.uid,input]);return {folders:[]};},
-      async list(user,input){calls.push(['messages',user.uid,input]);return {messages:[]};},
-      async message(user,input){calls.push(['message',user.uid,input]);return {text:'safe'};},
-      async create(user,input){calls.push(['mailbox-create',user.uid,input]);return {mailboxes:[]};},
-      async send(user,input){calls.push(['send',user.uid,input]);return {status:'sent'};},
-      async read(user,input){calls.push(['read',user.uid,input]);return {updated:true};},
-      async trash(user,input){calls.push(['trash',user.uid,input]);return {moved:true};},
-    },
+  const calls=[],data=new Map([[`siteAdminGrants/${delegate.uid}`,{...delegate,active:true,permissions:['mail']}],[`siteAdminGrants/${dashboard.uid}`,{...dashboard,active:true,permissions:['dashboard']}]]),store={keys:[],async get(key){this.keys.push(['get',key]);return data.get(key)||null;},async set(key,value){this.keys.push(['set',key]);data.set(key,value);},async list(){return [];},async transaction(fn){return fn(this);}};
+  let runtimeCalls=0;
+  const runtime={store,auth:{async getUserByEmail(){throw Error('unused');},async verifyIdToken(token,revoked){calls.push(['auth',token,revoked]);if(token===tokens.owner)return owner;if(token===tokens.delegate)return delegate;if(token===tokens.dashboard)return dashboard;if(token===tokens.member)return member;if(token===tokens.unverified)return {...owner,email_verified:false};throw Error('revoked or invalid');}},
+    mail:{async status(user){calls.push(['status',user.uid]);return {ready:true,ownerAccess:true,adminOnly:true,paid:false,ownerTrial:false,mailboxes:[],pendingMailboxes:[],mailboxCapacity:1,mailboxUsed:0,mailboxAvailable:1,capacityAvailable:true,canCreate:true,canSend:false,canManageMessages:false};},
+      async folders(user,input){calls.push(['folders',user.uid,input]);return {folders:[]};},async list(user,input){calls.push(['list',user.uid,input]);return {messages:[]};},async message(user,input){calls.push(['message',user.uid,input]);return {text:'safe fixture'};},
+      async create(user,input){calls.push(['create',user.uid,input]);return {adminOnly:true,ownerAccess:true,createdMailbox:{address:'fixture@taithai.app'}};},async send(user,input){calls.push(['send',user.uid,input]);return {status:'sent'};},
+      async read(user,input){calls.push(['read',user.uid,input]);return {updated:true};},async trash(user,input){calls.push(['trash',user.uid,input]);return {updated:true};}},
+    billing:new Proxy({},{get(){throw Error('Billing must never be accessed');}})};
+  runtime.resolveAccess=createAdminAccess({store,auth:runtime.auth}).resolveAccess;
+  const options={env,getRuntime:async()=>{runtimeCalls++;return runtime;},rate:async(store,user,scope)=>{calls.push(['rate',user.uid,scope]);},verifyUnconfiguredOwner:async authorization=>{calls.push(['setup-owner']);if(authorization!=='Bearer '+tokens.owner)throw new MembershipError('OWNER_REQUIRED',403);},...extra};
+  const handler=createMembershipHandler(options);
+  const request=(action,{method='GET',token=tokens.owner,body,origin='https://taithai.app',url='https://taithai.app/api/membership/'}={})=>{
+    const headers={...(token?{authorization:'Bearer '+token}:{}),...(origin?{origin}:{}),...(body!==undefined?{'content-type':'application/json'}:{})};
+    return new Request(url+'?action='+action,{method,headers,...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{})});
   };
-  const options={env:{...env,...extra.env},getRuntime:async()=>{runtimeCalls++;return runtime;},
-    rate:(s,u,scope,config)=>consumeMembershipRate(s,u,scope,{...config,now:100000}),
-    checkMailRouting:async()=>{calls.push(['routing']);},...extra};
-  const handler=createMembershipHandler(options),webhook=createMembershipWebhook({getRuntime:options.getRuntime});
-  const request=(action,{method='GET',token=tokens.member,origin='https://taithai.app',body,headers={},url,contentType='application/json'}={})=>{
-    const h={...headers};if(token)h.authorization=`Bearer ${token}`;if(origin)h.origin=origin;if(body!==undefined)h['content-type']=contentType;
-    return new Request(url||`https://taithai.app/api/membership?action=${action}`,{method,headers:h,...(body!==undefined?{body:typeof body==='string'?body:JSON.stringify(body)}:{})});
-  };
-  return {handler,webhook,runtime,calls,store,request,runtimeCalls:()=>runtimeCalls};
+  return {handler,request,calls,store,data,runtime,runtimeCalls:()=>runtimeCalls};
 }
-async function result(response){return {status:response.status,body:await response.json(),headers:response.headers};}
+const json=async response=>({status:response.status,body:await response.json(),headers:response.headers});
 
-test('public/unconfigured status never initializes Firebase or exposes setup secrets',async()=>{
-  const f=harness();const anonymous=await result(await f.handler(f.request('status',{token:null})));
-  assert.equal(anonymous.status,200);assert.equal(anonymous.body.ready,false);assert.equal(f.runtimeCalls(),0);
-  assert.match(anonymous.headers.get('cache-control'),/no-store/);assert.equal(anonymous.headers.get('x-robots-tag'),'noindex, nofollow, noarchive');
-  const unavailable=harness({env:{...env,FIREBASE_SERVICE_ACCOUNT_JSON:''}});
-  const response=await result(await unavailable.handler(unavailable.request('status')));
-  assert.equal(response.body.ready,false);assert.equal(unavailable.runtimeCalls(),0);
-  assert.equal(JSON.stringify(response.body).includes(env.STRIPE_WEBHOOK_SECRET),false);
+test('public owner-mail status is private/unavailable and never initializes services or exposes billing/configuration',async()=>{
+  const f=harness(),response=await json(await f.handler(f.request('status',{token:null})));
+  assert.equal(response.status,200);assert.equal(response.body.adminOnly,true);assert.equal(response.body.ownerAccess,false);assert.equal(response.body.ready,false);
+  assert.equal(f.runtimeCalls(),0);assert.match(response.headers.get('cache-control'),/no-store/);
+  for(const key of ['unitAmount','totalAmount','quantity','expiresAt','plan','testMode'])assert.equal(Object.hasOwn(response.body,key),false,key);
+  assert.equal(JSON.stringify(response.body).includes(env.HOSTINGER_API_TOKEN),false);
 });
-test('aborted API and webhook requests serialize a private timeout before accessing services',async()=>{
-  const f=harness(),controller=new AbortController();controller.abort();
-  const api=await result(await f.handler(new Request(f.request('checkout',{method:'POST',body:{requestId:'request_aborted_12345'}}),{signal:controller.signal})));
-  assert.equal(api.status,503);assert.equal(api.body.error.code,'OPERATION_TIMEOUT');assert.equal(f.runtimeCalls(),0);
-  const hook=await result(await f.webhook(new Request('https://taithai.app/api/membership-webhook/',{method:'POST',body:'{}',headers:{'stripe-signature':'fixture'},signal:controller.signal})));
-  assert.equal(hook.status,503);assert.equal(hook.body.error.code,'OPERATION_TIMEOUT');assert.equal(f.runtimeCalls(),0);
-  assert.match(hook.headers.get('cache-control'),/no-store/);
-});
-test('total API budget includes authentication and late auth completion cannot start a payment',async()=>{
-  let release,entered;
-  const started=new Promise(resolve=>{entered=resolve;});
-  const waiting=new Promise(resolve=>{release=resolve;});
-  const f=harness({operationTimeoutMs:15,verifyUser:async()=>{entered();await waiting;return member;}});
-  const pending=f.handler(f.request('checkout',{method:'POST',body:{requestId:'request_delayed_auth_12345'}}));
-  await started;
-  const response=await result(await pending);assert.equal(response.status,503);assert.equal(response.body.error.code,'OPERATION_TIMEOUT');
-  release();await new Promise(resolve=>setImmediate(resolve));
-  assert.equal(f.calls.some(call=>call[0]==='checkout'),false);assert.equal(f.store.keys.length,0);
-});
-test('protected actions verify revoked Firebase tokens and require a verified account',async()=>{
-  const f=harness();
-  for(const [token,status]of [[null,401],[tokens.revoked,401],[tokens.unverified,403]]){
-    assert.equal((await f.handler(f.request('portal',{method:'POST',token,body:{}}))).status,status);
+test('permanent admin entitlement reads only live grants, never paid records or trial dates',async()=>{
+  const f=harness(),resolve=membershipMailEntitlement({resolveAccess:f.runtime.resolveAccess});
+  for(const user of [owner,delegate]) {
+    const result=await resolve(user.uid,{user});assert.equal(result.active,true);assert.equal(result.mailAccess,true);
+    assert.equal(result.ownerAccess,user===owner);assert.equal(result.paid,false);assert.equal(result.ownerTrial,false);assert.equal('expiresAt' in result,false);
   }
-  assert.equal(f.calls.some(call=>call[0]==='portal'),false);
-  assert.ok(f.calls.filter(call=>call[0]==='auth').every(call=>call[2]===true));
-  await assert.rejects(verifyMembershipUser('Bearer short',{auth:f.runtime.auth}),error=>error.code==='AUTH_REQUIRED');
+  for(const user of [member,dashboard,{...delegate,email_verified:false},{...delegate,email:'changed@example.com'}])assert.equal((await resolve(user.uid,{user})).active,false);
+  f.data.get(`siteAdminGrants/${delegate.uid}`).active=false;assert.equal((await resolve(delegate.uid,{user:delegate})).active,false);
+  assert.equal((await resolve(owner.uid,{user:delegate})).active,false);
+  assert.equal(f.store.keys.some(([,key])=>key.startsWith('siteMemberships/')),false);
 });
-test('write origins are checked before auth/business calls; production rejects localhost and missing origins',async()=>{
-  const f=harness();
-  for(const origin of [null,'https://evil.example','http://localhost:3000']){
-    const response=await result(await f.handler(f.request('checkout',{method:'POST',origin,body:{requestId:'fixture'}})));
-    assert.equal(response.status,403);assert.equal(response.body.error.code,'ORIGIN_NOT_ALLOWED');
+test('owner status and mailboxes are ready without subscription, trial, price or Stripe credentials',async()=>{
+  const f=harness();for(const action of ['status','mailboxes']){
+    const response=await json(await f.handler(f.request(action)));
+    assert.equal(response.status,200);assert.equal(response.body.ready,true);assert.equal(response.body.ownerAccess,true);
+    assert.equal(response.body.adminOnly,true);assert.equal(response.body.paid,false);assert.equal(response.body.ownerTrial,false);
+    assert.equal(response.body.membership,null);assert.equal(response.body.mailboxAvailable,1);assert.equal(response.body.canCreate,true);
+    assert.deepEqual(response.body.capabilities,{checkout:false,portal:false,mail:true});
   }
-  assert.equal(f.runtimeCalls(),0);
-  const local=harness({env:{...env,NODE_ENV:'development'}});
-  assert.equal((await local.handler(local.request('portal',{method:'POST',origin:'http://localhost:3000',url:'http://localhost:3000/api/membership?action=portal',body:{}}))).status,200);
+  assert.equal(f.calls.some(call=>call[0]==='auth'&&call[2]===true),true);
 });
-test('only the verified owner can list/create/disable discounts or inspect setup status',async()=>{
-  const f=harness();
-  for(const action of ['admin-discounts','admin-status','admin-discount-create','admin-discount-disable']){
-    const method=action.endsWith('create')||action.endsWith('disable')?'POST':'GET';
-    assert.equal((await f.handler(f.request(action,{method,...(method==='POST'?{body:{}}:{})}))).status,403);
-  }
-  assert.equal((await f.handler(f.request('admin-discounts',{token:tokens.owner}))).status,200);
-  assert.equal((await f.handler(f.request('admin-discount-create',{method:'POST',token:tokens.owner,body:{percentOff:50,count:1}}))).status,200);
-  assert.equal(f.calls.filter(call=>call[0]==='discount-create').length,1);
-});
-test('route accepts only declared action/method combinations and validates JSON before business writes',async()=>{
-  const f=harness();
-  assert.equal((await f.handler(f.request('checkout',{method:'GET'}))).status,404);
-  assert.equal((await f.handler(f.request('status',{method:'DELETE'}))).status,405);
-  for(const body of ['{bad','null','[]'])assert.equal((await f.handler(f.request('checkout',{method:'POST',body}))).status,400);
-  assert.equal((await f.handler(f.request('checkout',{method:'POST',body:'{}',contentType:'text/plain'}))).status,400);
-  assert.equal(f.calls.some(call=>call[0]==='checkout'),false);
-});
-test('streamed and declared body sizes are bounded even with a misleading Content-Length',async()=>{
-  await assert.rejects(readMembershipRequest(new Request('https://taithai.app/',{method:'POST',body:'12345',headers:{'content-length':'100','content-type':'application/json'}}),{maximum:8}),error=>error.status===413);
-  const stream=new ReadableStream({start(controller){controller.enqueue(new Uint8Array(5));controller.enqueue(new Uint8Array(5));controller.close();}});
-  await assert.rejects(readMembershipRequest(new Request('https://taithai.app/',{method:'POST',body:stream,duplex:'half',headers:{'content-length':'1','content-type':'application/json'}}),{maximum:8}),error=>error.status===413);
-  const f=harness();
-  const response=await f.handler(f.request('checkout',{method:'POST',body:'x'.repeat(262145),headers:{'content-length':'1'}}));
-  assert.equal(response.status,413);assert.equal(f.calls.some(call=>call[0]==='checkout'),false);
-});
-test('persistent user/action rates stop the sixth hourly Checkout before payment execution',async()=>{
-  const f=harness();const statuses=[];
-  for(let i=0;i<6;i++)statuses.push((await f.handler(f.request('checkout',{method:'POST',body:{requestId:`fixture-${i}`}}))).status);
-  assert.deepEqual(statuses,[200,200,200,200,200,429]);assert.equal(f.calls.filter(call=>call[0]==='checkout').length,5);
-  assert.ok([...f.store.data.keys()].every(key=>key.startsWith('siteMembershipRateLimits/')));
-});
-test('Checkout forwards canonical discount input and live routes verify real mailbox routing first',async()=>{
-  const f=harness({env:{...env,STRIPE_SECRET_KEY:['rk','live','fixture12345678901234567890'].join('_'),MEMBERSHIP_SALES_ENABLED:'true'}});
-  assert.equal((await f.handler(f.request('checkout',{method:'POST',body:{requestId:'fixture',discountCode:'HELLO'}}))).status,200);
-  assert.ok(f.calls.findIndex(call=>call[0]==='routing')<f.calls.findIndex(call=>call[0]==='checkout'));
-  assert.deepEqual(f.calls.find(call=>call[0]==='checkout')[2],{requestId:'fixture',promotionCode:'HELLO'});
-  const blocked=harness({env:{...env,STRIPE_SECRET_KEY:['rk','live','fixture12345678901234567890'].join('_'),MEMBERSHIP_SALES_ENABLED:'true'},checkMailRouting:async()=>{throw new MembershipError('MAIL_NOT_READY');}});
-  assert.equal((await blocked.handler(blocked.request('checkout',{method:'POST',body:{}}))).status,503);
-  assert.equal(blocked.calls.some(call=>call[0]==='checkout'),false);
-});
-test('webhook transport preserves exact bytes without Origin/auth, requires a signature, and rejects pre-parsed bodies',async()=>{
-  const f=harness(),body=' { "nested": [1, 2], "text": "ภาษาไทย" }\n';
-  const request=new Request('https://taithai.app/api/membership-webhook',{method:'POST',body,headers:{'stripe-signature':'signature_fixture'}});
-  assert.equal((await f.webhook(request)).status,200);
-  const input=f.calls.find(call=>call[0]==='webhook')[1];assert.ok(Buffer.isBuffer(input.rawBody));assert.deepEqual(input.rawBody,Buffer.from(body));
-  assert.equal(f.calls.some(call=>call[0]==='auth'),false);
-  assert.equal((await f.webhook(new Request('https://taithai.app/api/membership-webhook',{method:'POST',body:'{}'}))).status,400);
-  await assert.rejects(readMembershipBody({body:{id:'parsed'}},{raw:true}),error=>error.code==='WEBHOOK_RAW_BODY_REQUIRED');
-});
-test('server failures return sanitized error codes/messages without provider details or keys',async()=>{
-  const f=harness();f.runtime.billing.portal=async()=>{throw new Error('Provider secret leaked_value fixture_private');};
-  const response=await result(await f.handler(f.request('portal',{method:'POST',body:{}})));
-  assert.equal(response.status,503);assert.equal(response.body.error.code,'SERVICE_UNAVAILABLE');
-  assert.equal(JSON.stringify(response.body).includes('leaked_value'),false);assert.equal('stack'in response.body,false);
-});
-test('test billing paths, transactions and locks cannot write live membership/payment collections',async()=>{
-  const store=memory(),sandbox=membershipBillingStore(store,{testMode:true});
-  await sandbox.set('siteMemberships/member_1',{paid:true});await sandbox.create('siteBillingInvoices/in_1',{paid:true});
-  await sandbox.transaction(async tx=>{assert.equal((await tx.get('siteMemberships/member_1')).paid,true);tx.set('siteBillingEvents/evt_1',{done:true});});
-  await sandbox.runTransaction(async tx=>{await tx.get('siteBillingInvoices/in_1');tx.delete('siteBillingInvoices/in_1');});
-  await sandbox.withLock('member_1',async()=>{});await sandbox.list('siteBillingEvents');
-  await sandbox.set('siteMailboxes/member_1',{address:'real@taithai.app'});
-  assert.equal(await store.get('siteMemberships/member_1'),null);
-  assert.equal((await store.get('siteTestMemberships/member_1')).paid,true);
-  assert.equal((await store.get('siteTestBillingEvents/evt_1')).done,true);
-  assert.ok(store.keys.some(([kind,key])=>kind==='lock'&&key==='test:member_1'));
-  assert.ok(store.keys.some(([kind,key])=>kind==='list'&&key==='siteTestBillingEvents'));
-  assert.equal((await store.get('siteMailboxes/member_1')).address,'real@taithai.app');
-  assert.equal(membershipBillingStore(store,{testMode:false}),store);
-});
-test('live mailbox routing rejects old MX, extra MX and failed DNS without any external request',async()=>{
-  const config={mailReady:true},provider={assertReady:async()=>true};
-  const valid=async()=>[{exchange:'aspmx1.migadu.com.'},{exchange:'ASPMX2.MIGADU.COM'}];
-  await assertMembershipMailRouting({config,provider,resolve:valid});
-  for(const records of [[{exchange:'smtp.secureserver.net'}],[{exchange:'aspmx1.migadu.com'},{exchange:'aspmx2.migadu.com'},{exchange:'other.example'}]]){
-    await assert.rejects(assertMembershipMailRouting({config,provider,resolve:async()=>records}),error=>error.code==='MAIL_NOT_READY');
-  }
-  await assert.rejects(assertMembershipMailRouting({config,provider,resolve:async()=>{throw Error('DNS secret');}}),error=>error.code==='MAIL_NOT_READY');
-  for(const check of [async()=>false,async()=>{throw Error('provider credentials detail');}]){
-    await assert.rejects(assertMembershipMailRouting({config,provider:{assertReady:check},resolve:valid}),error=>error.code==='MAIL_NOT_READY');
-  }
-  await assert.rejects(assertMembershipMailRouting({config,resolve:valid}),error=>error.code==='MAIL_NOT_READY');
-  const testConfig=membershipConfig(env);assert.equal(testConfig.testMode,true);assert.equal(testConfig.liveMode,false);
-});
-test('real mail entitlement requires live mode, exact plan, paid current expiry and no risk hold',()=>{
-  const now=Date.UTC(2026,10,21),record={active:true,paid:true,livemode:true,planId:'mailbox-99',amount:9900,currency:'thb',mailboxes:1,currentPeriodEnd:new Date(now+86400000).toISOString()};
-  assert.equal(liveMailMembership(record,{liveMode:true},now),record);
-  const rejected=[null,{},...[
-    {active:false},{paid:false},{livemode:false},{livemode:undefined},{planId:'other'},{amount:9901},
-    {currency:'usd'},{mailboxes:0},{mailboxes:2.5},{mailboxes:Number.MAX_SAFE_INTEGER+1},{mailboxes:'2'},{quantity:2},{currentPeriodEnd:null},{currentPeriodEnd:undefined},
-    {currentPeriodEnd:'invalid'},{currentPeriodEnd:new Date(now).toISOString()},{riskBlocked:true},
-  ].map(patch=>({...record,...patch}))];
-  for(const value of rejected)assert.deepEqual(liveMailMembership(value,{liveMode:true},now),{active:false,paid:false});
-  assert.deepEqual(liveMailMembership(record,{liveMode:false},now),{active:false,paid:false});
-  assert.deepEqual(liveMailMembership(record,{},now),{active:false,paid:false});
-});
-test('unconfigured owner setup fallback exposes safe checks only and never enables mutations or initializes Firebase',async()=>{
-  const verified=[];
-  const f=harness({env:{...env,FIREBASE_SERVICE_ACCOUNT_JSON:''},verifyUnconfiguredOwner:async authorization=>{
-    verified.push(authorization);if(authorization!==`Bearer ${tokens.owner}`)throw new MembershipError('OWNER_REQUIRED',403);
-  }});
-  for(const action of ['admin-status','admin-discounts']){
-    const response=await result(await f.handler(f.request(action,{token:tokens.owner})));
-    assert.equal(response.status,200);assert.equal(response.body.ready,false);assert.equal(response.body.checks.database,false);
-    assert.deepEqual(response.body.discounts,[]);assert.equal(JSON.stringify(response.body).includes(env.STRIPE_WEBHOOK_SECRET),false);
-    assert.equal((await f.handler(f.request(action))).status,403);
-  }
-  assert.equal((await f.handler(f.request('admin-discount-create',{method:'POST',token:tokens.owner,body:{}}))).status,503);
-  assert.equal(f.runtimeCalls(),0);assert.equal(f.calls.length,0);assert.equal(verified.length,4);
-});
-
-
-test('live mail trials do not open public checkout without the independent sales flag',async()=>{
-  const f=harness({env:{...env,STRIPE_SECRET_KEY:['rk','live','fixture12345678901234567890'].join('_')}});
-  f.runtime.mail.status=async()=>({ready:true,ownerTrial:true,mailboxes:[],canCreate:true,canSend:true});
-  const status=await result(await f.handler(f.request('status',{token:tokens.owner})));
-  assert.equal(status.body.ownerTrial,true);assert.equal(status.body.mailReady,true);
-  assert.equal(status.body.membership.paid,false);assert.equal(status.body.ready,false);
-  assert.equal(status.body.capabilities.checkout,false);assert.equal(status.body.capabilities.mail,true);
-  assert.equal(status.body.canCreate,true);
-  const checkout=await result(await f.handler(f.request('checkout',{method:'POST',token:tokens.owner,body:{requestId:'owner_trial_fixture'}})));
-  assert.equal(checkout.status,503);assert.equal(checkout.body.error.code,'SALES_NOT_OPEN');
-  assert.equal(f.calls.some(item=>['routing','checkout'].includes(item[0])),false);
-  assert.equal(membershipConfig({}).salesEnabled,false);
-});
-test('owner trial requires trusted verified identity, correct provider and an explicit short expiry',async()=>{
-  const now=Date.UTC(2026,10,21),expiresAt=new Date(now+7*86400000).toISOString();
-  const config={ownerTrialEnabled:true,ownerTrialExpiresAt:expiresAt,mailReady:true,mailProvider:'purelymail',liveMode:false};
-  assert.equal(ownerMailTrialAllowed(owner,config,now),true);
-  for(const user of [null,member,{...owner,email_verified:false},{...owner,email:'taithai5002@gmail.com.evil.test'}])assert.equal(ownerMailTrialAllowed(user,config,now),false);
-  for(const patch of [{ownerTrialEnabled:false},{mailReady:false},{mailProvider:'migadu'},{ownerTrialExpiresAt:null},{ownerTrialExpiresAt:new Date(now).toISOString()},{ownerTrialExpiresAt:new Date(now+32*86400000).toISOString()}])assert.equal(ownerMailTrialAllowed(owner,{...config,...patch},now),false);
-  assert.equal(ownerMailTrialAllowed(owner,config,now+7*86400000),false);
-  const store=memory(),getMembership=membershipMailEntitlement({store,config,now:()=>now});
-  assert.deepEqual(await getMembership(owner.uid,{user:owner}),{active:true,paid:false,ownerTrial:true,expiresAt,mailboxes:1});
-  for(const [uid,context] of [[owner.uid,undefined],[member.uid,{user:owner}],[owner.uid,{user:{...owner,email_verified:false}}],[member.uid,{user:member}]])assert.deepEqual(await getMembership(uid,context),{active:false,paid:false});
-  assert.equal(store.data.size,0);
-});
-test('Purelymail checkout routing requires its single official MX and never accepts provider mixing',async()=>{
-  const config={mailReady:true,mailProvider:'purelymail'},provider={assertReady:async()=>true};
-  await assertMembershipMailRouting({config,provider,resolve:async()=>[{exchange:'MAILSERVER.PURELYMAIL.COM.'}]});
-  for(const hosts of [['aspmx1.migadu.com','aspmx2.migadu.com'],['mailserver.purelymail.com','smtp.secureserver.net'],['purelymail.com'],[]])await assert.rejects(assertMembershipMailRouting({config,provider,resolve:async()=>hosts.map(exchange=>({exchange}))}),error=>error.code==='MAIL_NOT_READY');
-  await assert.rejects(assertMembershipMailRouting({config:{...config,mailProvider:'unknown'},provider,resolve:async()=>[{exchange:'mailserver.purelymail.com'}]}),error=>error.code==='MAIL_NOT_READY');
-});
-
-test('preview trial writes require an exact configured origin and the verified owner, never permit billing mutations',async()=>{
-  const trialOrigin='https://taithai-owner-trial.netlify.app';
-  const trialEnv={...env,MAIL_PROVIDER:'purelymail',MAIL_DOMAIN:'taithai.app',MAIL_READY:'true',PURELYMAIL_API_TOKEN:'purelymail_fixture_token',MAIL_CREDENTIAL_SECRET:Buffer.alloc(32,3).toString('base64'),OWNER_MAIL_TRIAL_ENABLED:'true',OWNER_MAIL_TRIAL_EXPIRES_AT:new Date(Date.now()+7*86400000).toISOString(),OWNER_MAIL_TRIAL_ORIGIN:trialOrigin};
-  const f=harness({env:trialEnv});
-  const request=(action,options={})=>f.request(action,{method:'POST',body:{},token:tokens.owner,origin:trialOrigin,url:`${trialOrigin}/api/membership/?action=${action}`,...options});
-  assert.equal((await f.handler(request('send'))).status,200);
-  assert.equal((await f.handler(request('mailbox-create'))).status,200);
-  assert.equal((await f.handler(request('send',{token:tokens.member}))).status,403);
-  for(const action of ['checkout','quantity-update','portal','admin-discount-create','admin-discount-disable'])assert.equal((await f.handler(request(action))).status,403);
-  assert.equal((await f.handler(request('send',{origin:'https://other-site.netlify.app'}))).status,403);
-  assert.equal((await f.handler(request('send',{url:'https://other-site.netlify.app/api/membership/?action=send'}))).status,403);
-  const disabled=harness({env:{...trialEnv,OWNER_MAIL_TRIAL_ENABLED:'false'}});
-  assert.equal((await disabled.handler(request('send'))).status,403);
-  for(const value of ['*','https://*.netlify.app','https://taithai-owner-trial.netlify.app/path','http://taithai-owner-trial.netlify.app','https://taithai-owner-trial.netlify.app.evil.test'])assert.equal(membershipConfig({...trialEnv,OWNER_MAIL_TRIAL_ORIGIN:value}).ownerTrialOrigin,null);
-});
-
-
-test('quantity increases use the same live sales, origin, routing and hourly limits as first checkout',async()=>{
-  const live={...env,STRIPE_SECRET_KEY:['rk','live','fixture12345678901234567890'].join('_')};
-  const closed=harness({env:live});
-  assert.equal((await closed.handler(closed.request('quantity-update',{method:'POST',body:{quantity:2,requestId:'request_quantity_123456789'}}))).status,503);
-  assert.equal(closed.calls.some(item=>item[0]==='quantity-update'),false);
-  const f=harness({env:{...live,MEMBERSHIP_SALES_ENABLED:'true'}});
-  const data={quantity:2,requestId:'request_quantity_123456789'};
-  assert.equal((await f.handler(f.request('quantity-update',{method:'POST',body:data,origin:'https://evil.example'}))).status,403);
-  for(let i=0;i<5;i++)assert.equal((await f.handler(f.request('quantity-update',{method:'POST',body:{...data,requestId:data.requestId+i}}))).status,200);
-  assert.equal((await f.handler(f.request('quantity-update',{method:'POST',body:data}))).status,429);
-  assert.equal(f.calls.filter(item=>item[0]==='quantity-update').length,5);
-  assert.ok(f.calls.findIndex(item=>item[0]==='routing')<f.calls.findIndex(item=>item[0]==='quantity-update'));
-  assert.equal(f.calls.find(item=>item[0]==='quantity-update')[2].quantity,2);
-});
-test('status exposes confirmed per-mailbox pricing and tenant mailbox selection without opening closed sales',async()=>{
-  const f=harness({env:{...env,STRIPE_SECRET_KEY:['rk','live','fixture12345678901234567890'].join('_')}});
-  f.runtime.billing.getStatus=async()=>({ready:true,quantity:2,unitAmount:9900,totalAmount:19800,mailboxLimit:2,quantityUpdateAvailable:true,membership:{active:true,paid:true,mailboxes:2},checkoutAvailable:true});
-  f.runtime.mail.status=async()=>({ready:true,mailboxes:[{id:'member_1',address:'one@taithai.app',canSend:true}],pendingMailboxes:[{id:'mbx_second',address:'two@taithai.app',status:'provisioning'}],mailboxCapacity:2,mailboxUsed:2,canCreate:false,canSend:true,canManageMessages:true});
-  const response=await result(await f.handler(f.request('status')));
-  assert.equal(response.body.quantity,2);assert.equal(response.body.totalAmount,19800);assert.equal(response.body.unitAmount,9900);
-  assert.equal(response.body.mailboxCapacity,2);assert.equal(response.body.mailboxUsed,2);assert.equal(response.body.pendingMailboxes[0].id,'mbx_second');
-  assert.equal(response.body.quantityUpdateAvailable,false);assert.equal(response.body.capabilities.checkout,false);assert.equal(response.body.capabilities.mail,true);
-  await f.handler(f.request('message',{url:'https://taithai.app/api/membership/?action=message&mailboxId=mbx_second&id=bound_message'}));
-  assert.equal(f.calls.find(item=>item[0]==='message')[2].mailboxId,'mbx_second');
-});
-test('paid multiple-mailbox proof accepts exact bounded quantities and rejects mismatched current/purchased units',()=>{
-  const now=Date.UTC(2026,10,21),record={active:true,paid:true,livemode:true,planId:'mailbox-99',amount:9900,currency:'thb',currentPeriodEnd:new Date(now+86400000).toISOString()};
-  for(const quantity of [1,2,20,21,75]){
-    const paid={...record,mailboxes:quantity,quantity};assert.equal(liveMailMembership(paid,{liveMode:true},now),paid);
-    assert.deepEqual(liveMailMembership({...paid,quantity:quantity+1},{liveMode:true},now),{active:false,paid:false});
+test('ordinary and dashboard-only users cannot perform mail actions despite fake paid/client-admin flags',async()=>{
+  for(const token of [tokens.member,tokens.dashboard])for(const [action,method,body] of [['status','GET'],['mailboxes','GET'],['folders','GET'],['messages','GET'],['message','GET'],['admin-status','GET'],['mailbox-create','POST',{localPart:'sunny'}],['send','POST',{}],['message-flags','POST',{read:true}]]){
+    const f=harness(),response=await json(await f.handler(f.request(action,{method,body,token})));
+    assert.equal(response.status,action==='status'?200:403,action);
+    if(action==='status'){assert.equal(response.body.mailAccess,false);assert.equal('role' in response.body,false);assert.deepEqual(response.body.mailboxes,[]);}
+    else assert.equal(response.body.error.code,'MAIL_ACCESS_REQUIRED',action);
+    assert.equal(f.store.keys.some(([,key])=>!key.startsWith('siteAdminGrants/')),false);
+    assert.equal(f.calls.some(call=>call[0]!=='auth'),false);
   }
 });
-test('Hostinger live routing and optional owner trial capacity remain independent from paid entitlement',async()=>{
-  await assertMembershipMailRouting({config:{mailReady:true,mailProvider:'hostinger'},provider:{assertReady:async()=>true},resolve:async()=>[{exchange:'mx1.hostinger.com'},{exchange:'MX2.HOSTINGER.COM.'}]});
-  await assert.rejects(assertMembershipMailRouting({config:{mailReady:true,mailProvider:'hostinger'},provider:{assertReady:async()=>true},resolve:async()=>[{exchange:'smtp.secureserver.net'},{exchange:'mailstore1.secureserver.net'}]}),error=>error.code==='MAIL_NOT_READY');
-  const now=Date.UTC(2026,10,21),config={ownerTrialEnabled:true,ownerTrialExpiresAt:new Date(now+86400000).toISOString(),ownerTrialMailboxes:2,mailReady:true,mailProvider:'hostinger',liveMode:false};
-  const getMembership=membershipMailEntitlement({store:memory(),config,now:()=>now});
-  const trial=await getMembership(owner.uid,{user:owner});assert.equal(trial.mailboxes,2);assert.equal(trial.ownerTrial,true);assert.equal(trial.paid,false);
-  assert.deepEqual(await getMembership(member.uid,{user:member}),{active:false,paid:false});
+test('authorized delegate mail operations stay bound to its verified UID and revocation takes effect on next request',async()=>{
+  const f=harness();for(const action of ['status','mailboxes','folders','messages','message']){
+    const response=await json(await f.handler(f.request(action,{token:tokens.delegate})));assert.equal(response.status,200);
+    if(action==='status'){assert.equal(response.body.ownerAccess,false);assert.equal(response.body.adminAccess,true);assert.equal(response.body.mailAccess,true);assert.equal(response.body.role,'admin');}
+  }
+  for(const [action,body] of [['mailbox-create',{localPart:'sunny'}],['send',{}],['message-flags',{read:true}]])assert.equal((await f.handler(f.request(action,{token:tokens.delegate,method:'POST',body}))).status,200);
+  assert.equal(f.calls.filter(call=>['status','folders','list','message','create','send','read','rate'].includes(call[0])).every(call=>call[1]===delegate.uid),true);
+  f.data.get(`siteAdminGrants/${delegate.uid}`).active=false;
+  assert.equal((await f.handler(f.request('send',{token:tokens.delegate,method:'POST',body:{}}))).status,403);
+  const state=await json(await f.handler(f.request('status',{token:tokens.delegate})));assert.equal(state.body.mailAccess,false);assert.equal(state.body.mailboxes.length,0);
+});
+test('revoked, unverified, malformed and missing credentials never reach mail or quota writes',async()=>{
+  for(const token of [tokens.unverified,tokens.revoked,'short',null]){
+    const f=harness(),response=await json(await f.handler(f.request('folders',{token})));
+    assert.ok([401,403].includes(response.status));assert.equal(f.store.keys.length,0);assert.equal(f.calls.some(call=>call[0]!=='auth'),false);
+  }
+  const access=harness().runtime.resolveAccess;
+  assert.equal((await access({...owner,email:'alias+taithai5002@gmail.com'})).ownerAccess,false);
+  assert.equal((await access({...member,emailVerified:true})).ownerAccess,false);
+});
+test('explicit owner/mail flags disable access before records and provider calls; old trial flags cannot enable it',async()=>{
+  for(const patch of [{OWNER_MAIL_ENABLED:'false'},{MAIL_READY:'false'},{OWNER_MAIL_ENABLED:'false',OWNER_MAIL_TRIAL_ENABLED:'true',OWNER_MAIL_TRIAL_EXPIRES_AT:'2099-01-01T00:00:00Z'}]){
+    const f=harness({env:{...env,...patch}}),response=await json(await f.handler(f.request('status')));
+    assert.equal(response.body.ownerAccess,true);assert.equal(response.body.mailAccess,true);assert.equal(response.body.ready,false);assert.equal(f.calls.some(call=>call[0]!=='auth'),false);
+    const denied=await json(await f.handler(f.request('mailbox-create',{method:'POST',body:{localPart:'sunny'}})));assert.equal(denied.status,503);
+    assert.equal(f.store.keys.length,0);assert.equal(f.calls.some(call=>call[0]==='create'),false);
+  }
+});
+test('all billing actions and webhook are disabled before runtime/auth regardless live/test keys and sales flags',async()=>{
+  for(const mode of ['test','live'])for(const action of ['checkout','quantity-update','portal','admin-discounts','admin-discount-create','admin-discount-disable'])for(const method of ['GET','POST']){
+    const f=harness({env:{...env,STRIPE_SECRET_KEY:'rk_'+mode+'_fixture123456789',STRIPE_PRICE_ID:'price_fixture',STRIPE_WEBHOOK_SECRET:'fixture',MEMBERSHIP_SALES_ENABLED:'true'}});
+    const response=await json(await f.handler(f.request(action,{method,token:tokens.owner,origin:null,body:method==='POST'?'not JSON':undefined})));
+    assert.equal(response.status,403);assert.equal(response.body.error.code,'BILLING_DISABLED');assert.equal(f.runtimeCalls(),0);assert.equal(f.calls.length,0);
+  }
+  let calls=0;const webhook=createMembershipWebhook({getRuntime:()=>{calls++;throw Error('must not initialize');}});
+  for(const method of ['GET','POST']){const response=await json(await webhook(new Request('https://taithai.app/api/membership-webhook/',{method,...(method==='POST'?{body:'{}',headers:{'stripe-signature':'old-valid-looking-signature'}}:{})})));assert.equal(response.status,403);assert.equal(response.body.error.code,'BILLING_DISABLED');}
+  assert.equal(calls,0);assert.equal(membershipConfig({...env,MEMBERSHIP_SALES_ENABLED:'true',STRIPE_QUANTITY_UPDATES_VERIFIED:'true'}).salesEnabled,false);
+});
+test('permanent preview writes require exact trusted origin plus verified owner and no expiry',async()=>{
+  const f=harness();const response=await json(await f.handler(f.request('mailbox-create',{method:'POST',body:{localPart:'sunny'},origin:env.OWNER_MAIL_ORIGIN,url:env.OWNER_MAIL_ORIGIN+'/api/membership/'})));
+  assert.equal(response.status,200);assert.equal(f.calls.some(call=>call[0]==='create'),true);
+  for(const candidate of [null,'https://evil.example','https://other.netlify.app','https://taithai-app.netlify.app.evil.example','https://taithai.app']){
+    const blocked=harness(),res=await json(await blocked.handler(blocked.request('send',{method:'POST',body:{},origin:candidate,url:env.OWNER_MAIL_ORIGIN+'/api/membership/'})));
+    assert.equal(res.status,403);assert.equal(res.body.error.code,'ORIGIN_NOT_ALLOWED');assert.equal(blocked.runtimeCalls(),0);
+  }
+  const other=harness(),denied=await json(await other.handler(other.request('send',{method:'POST',body:{},token:tokens.member,origin:env.OWNER_MAIL_ORIGIN,url:env.OWNER_MAIL_ORIGIN+'/api/membership/'})));
+  assert.equal(denied.status,403);assert.equal(denied.body.error.code,'MAIL_ACCESS_REQUIRED');
+});
+test('owner requests retain method/JSON/body bounds and message-flag validation before writes',async()=>{
+  const f=harness();assert.equal((await f.handler(new Request('https://taithai.app/api/membership/?action=status',{method:'DELETE'}))).status,405);
+  assert.equal((await f.handler(f.request('unknown'))).status,404);
+  assert.equal((await f.handler(f.request('send',{method:'POST',body:'not json'}))).status,400);
+  assert.equal((await f.handler(f.request('message-flags',{method:'POST',body:{trash:true,read:true}}))).status,400);
+  await assert.rejects(readMembershipRequest(new Request('https://taithai.app/',{method:'POST',body:'123456',headers:{'content-type':'application/json','content-length':'100'}}),{maximum:5}),error=>error.code==='REQUEST_TOO_LARGE');
+  assert.equal(f.calls.some(call=>call[0]==='send'),false);
+});
+test('owner mail read/write dispatch stays identity-bound with existing persistent rates',async()=>{
+  const f=harness();for(const action of ['folders','messages','message'])assert.equal((await f.handler(f.request(action))).status,200);
+  for(const [action,body] of [['send',{}],['message-flags',{read:true}],['message-flags',{trash:true}]])assert.equal((await f.handler(f.request(action,{method:'POST',body}))).status,200);
+  assert.equal(f.calls.filter(call=>call[0]==='rate').every(call=>call[1]===owner.uid),true);
+  const store=harness().store;await consumeMembershipRate(store,owner,'send',{limit:1,now:1000});await assert.rejects(consumeMembershipRate(store,owner,'send',{limit:1,now:1000}),error=>error.code==='TOO_MANY_REQUESTS');
+});
+test('inventory unavailability preserves owner inbox access and disables only creation',async()=>{
+  const f=harness();f.runtime.mail.status=async()=>({ready:true,ownerAccess:true,mailboxes:[{id:owner.uid,address:'sunny@taithai.app',canSend:true}],mailboxCapacity:0,mailboxAvailable:0,capacityAvailable:false,canCreate:false,canSend:true,canManageMessages:true});
+  const response=await json(await f.handler(f.request('status')));assert.equal(response.body.ownerAccess,true);assert.equal(response.body.ready,true);assert.equal(response.body.canCreate,false);assert.equal(response.body.canSend,true);assert.equal(response.body.capacityAvailable,false);
+});
+test('unconfigured setup exposes only safe owner checks without initializing a private database',async()=>{
+  const f=harness({env:{...env,FIREBASE_SERVICE_ACCOUNT_JSON:''}});
+  const response=await json(await f.handler(f.request('admin-status')));assert.equal(response.status,200);assert.equal(response.body.checks.database,false);assert.equal(response.body.checks.payments,false);assert.equal(f.runtimeCalls(),0);
+  assert.equal((await f.handler(f.request('admin-status',{token:tokens.member}))).status,403);
+});
+test('total request deadline includes auth and late completion cannot start mail provisioning',async()=>{
+  let release;const paused=new Promise(resolve=>{release=resolve;});
+  const f=harness({operationTimeoutMs:10,verifyUser:async()=>{await paused;return owner;}});
+  const response=await json(await f.handler(f.request('mailbox-create',{method:'POST',body:{localPart:'sunny'}})));
+  assert.equal(response.status,503);assert.equal(response.body.error.code,'OPERATION_TIMEOUT');release();await new Promise(resolve=>setImmediate(resolve));
+  assert.equal(f.calls.some(call=>call[0]==='create'||call[0]==='rate'),false);
+});
+test('owner authentication always retains Firebase revoked/disabled-token verification',async()=>{
+  const f=harness();await verifyMembershipUser('Bearer '+tokens.owner,f.runtime);assert.equal(f.calls[0][2],true);
+  await assert.rejects(verifyMembershipUser('Bearer '+tokens.revoked,f.runtime),error=>error.code==='AUTH_REQUIRED');
+});
+test('Hostinger routing preflight still rejects old or mixed MX and does not invent delivery proof',async()=>{
+  const config=membershipConfig(env);let calls=0;
+  const options={config,provider:{async assertReady(){calls++;return true;}}};
+  await assert.rejects(assertMembershipMailRouting({...options,resolve:async()=>[{exchange:'smtp.secureserver.net'}]}),error=>error.code==='MAIL_NOT_READY');assert.equal(calls,0);
+  await assertMembershipMailRouting({...options,resolve:async()=>[{exchange:'mx1.hostinger.com'},{exchange:'mx2.hostinger.com'}]});assert.equal(calls,1);
 });
