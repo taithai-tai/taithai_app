@@ -15,6 +15,7 @@ const copy = {
     session: 'Your session', sessionNote: 'Signing out ends the Taithai session in this browser. Your saved movies, files, and website preferences are kept.',
     appData: 'Your app data', appDataNote: 'Each app manages its own saved content. Signing in here does not move local files or browser data to the cloud.',
     movies: 'Movie Memory account', privacy: 'Privacy and data', support: 'Get help', settings: 'Website settings',
+    publicProfile: 'Your public profile', publicProfileNote: 'Choose a username and publish a profile before posting or following people. Your sign-in email is not shown on your public profile.', openProfile:'Set up or view your profile',community:'Community and posts',messages:'Private messages',
     cancelled: 'Sign-in was cancelled. You can try again whenever you are ready.', blocked: 'Google could not open. Allow pop-ups for this site, then try again.',
     offline: 'You appear to be offline. Reconnect and try again.', network: 'We could not reach Google. Check your connection and try again.',
     unauthorized: 'Sign-in is not available on this domain. Please open taithai.app or report the problem.',
@@ -35,6 +36,7 @@ const copy = {
     session: 'การเข้าสู่ระบบ', sessionNote: 'การออกจากระบบจะสิ้นสุดการเข้าสู่ระบบ Taithai ในเบราว์เซอร์นี้ โดยยังเก็บหนัง ไฟล์ และการตั้งค่าเว็บไซต์ไว้',
     appData: 'ข้อมูลในแอปของคุณ', appDataNote: 'แต่ละแอปจัดการข้อมูลของตัวเอง การเข้าสู่ระบบที่นี่ไม่ได้ย้ายไฟล์หรือข้อมูลในเบราว์เซอร์ขึ้นคลาวด์โดยอัตโนมัติ',
     movies: 'บัญชี Movie Memory', privacy: 'ความเป็นส่วนตัวและข้อมูล', support: 'ขอความช่วยเหลือ', settings: 'ตั้งค่าเว็บไซต์',
+    publicProfile: 'โปรไฟล์สาธารณะของคุณ', publicProfileNote:'เลือกชื่อผู้ใช้และเผยแพร่โปรไฟล์ก่อนโพสต์หรือติดตามบัญชีอื่น อีเมลที่ใช้เข้าสู่ระบบจะไม่แสดงบนโปรไฟล์สาธารณะ',openProfile:'ตั้งค่าหรือดูโปรไฟล์',community:'ชุมชนและโพสต์',messages:'ข้อความส่วนตัว',
     cancelled: 'ยกเลิกการเข้าสู่ระบบแล้ว สามารถลองใหม่ได้เมื่อพร้อม', blocked: 'เปิดหน้าต่าง Google ไม่ได้ อนุญาตป๊อปอัปสำหรับเว็บไซต์นี้แล้วลองอีกครั้ง',
     offline: 'ขณะนี้ออฟไลน์ เชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง', network: 'เชื่อมต่อ Google ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วลองอีกครั้ง',
     unauthorized: 'โดเมนนี้ยังใช้ระบบเข้าสู่ระบบไม่ได้ กรุณาเปิด taithai.app หรือแจ้งปัญหา',
@@ -212,6 +214,13 @@ export async function initAccountPage(options = {}) {
       form.addEventListener('submit', saveProfile);
       profile.append(form);
       root.append(profile);
+
+      const publicProfile=panel(text.publicProfile,text.publicProfileNote);
+      publicProfile.id='accountPublicProfile';
+      const socialLinks=element('div',undefined,'button-row');
+      const ownProfile=link(text.openProfile,'/profile/');ownProfile.className='button button-primary';
+      socialLinks.append(ownProfile,link(text.community,'/community/'),link(text.messages,'/messages/'));
+      publicProfile.append(socialLinks);root.append(publicProfile);
 
       const details = panel(text.details);
       const list = element('dl', undefined, 'account-grid');

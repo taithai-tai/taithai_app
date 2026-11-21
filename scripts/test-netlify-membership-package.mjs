@@ -18,18 +18,18 @@ const source = path.join(root, 'netlify', 'functions');
 const files = (await readdir(source)).filter(file => file.endsWith('.js')).sort();
 const hash = value => createHash('sha256').update(value).digest('hex');
 const before = new Map(await Promise.all(files.map(async file => [file, hash(await readFile(path.join(source, file)))])));
-assert.equal(await prepareNetlifyFunctions(), 12);
-assert.equal((await readdir(netlifyFunctionsDirectory)).length, 12);
+assert.equal(await prepareNetlifyFunctions(), 14);
+assert.equal((await readdir(netlifyFunctionsDirectory)).length, 14);
 for (const file of files) {
   assert.equal(hash(await readFile(path.join(source, file))), before.get(file), `Source was overwritten: ${file}`);
-  if (!file.startsWith('membership') && file !== 'site-admin.js') {
+  if (!file.startsWith('membership') && !['site-admin.js','social.js','social-media.js'].includes(file)) {
     assert.equal(hash(await readFile(path.join(netlifyFunctionsDirectory, file))), before.get(file), `Handler changed: ${file}`);
   }
 }
 
 const output = await mkdtemp(path.join(os.tmpdir(), 'taithai-netlify-package-'));
 try {
-  for (const name of ['membership', 'membership-webhook', 'site-admin']) {
+  for (const name of ['membership', 'membership-webhook', 'site-admin', 'social', 'social-media']) {
     const artifact = await zipFunction(path.join(netlifyFunctionsDirectory, name + '.mjs'), output, {
       archiveFormat: 'none', basePath: root, repositoryRoot: root,
       config: { '*': { nodeVersion: '22', nodeBundler: 'esbuild',
@@ -62,12 +62,16 @@ try {
         process.env.FIREBASE_SERVICE_ACCOUNT_JSON=JSON.stringify({project_id:'gen-lang-client-0141234491',client_email:'fixture@example.invalid',private_key:privateKey});
         const denied=await handler(new Request(base+'/api/membership/?action=admin-status',{headers:{authorization:'Bearer short'}}));
         assert.equal(denied.status,401);assert.equal((await denied.json()).error.code,'AUTH_REQUIRED');
-      } else if (name==='site-admin') {
-        const response=await handler(new Request(base+'/api/site-admin/?action=access'));
+      } else if (name==='social-media') {
+        const response=await handler(new Request(base+'/api/social-media/?action=health'));
+        assert.equal(response.status,401);assert.equal((await response.json()).error.code,'AUTH_REQUIRED');
+      } else if (name==='site-admin' || name==='social') {
+        const action=name==='social'?'me':'access';
+        const response=await handler(new Request(base+'/api/'+name+'/?action='+action));
         assert.equal(response.status,401);assert.equal((await response.json()).error.code,'AUTH_REQUIRED');
         const {privateKey}=generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs8',format:'pem'},publicKeyEncoding:{type:'spki',format:'pem'}});
         process.env.FIREBASE_SERVICE_ACCOUNT_JSON=JSON.stringify({project_id:'gen-lang-client-0141234491',client_email:'fixture@example.invalid',private_key:privateKey});
-        const denied=await handler(new Request(base+'/api/site-admin/?action=access',{headers:{authorization:'Bearer fixture-not-a-jwt-minimum-20'}}));
+        const denied=await handler(new Request(base+'/api/'+name+'/?action='+action,{headers:{authorization:'Bearer fixture-not-a-jwt-minimum-20'}}));
         assert.equal(denied.status,401);assert.equal((await denied.json()).error.code,'AUTH_REQUIRED');
       } else {
         const response=await handler(new Request(base+'/api/membership-webhook/',{method:'POST',body:'{}'}));

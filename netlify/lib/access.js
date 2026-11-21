@@ -3,11 +3,12 @@ import { checkAppAccess } from '../../server-lib/site-app-gate.js';
 const PRIVATE_HEADERS = { 'Cache-Control':'private, no-store, max-age=0', 'CDN-Cache-Control':'no-store',
   'Netlify-CDN-Cache-Control':'no-store', 'X-Content-Type-Options':'nosniff', 'X-Robots-Tag':'noindex, nofollow, noarchive' };
 const CSP="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://*.stripe.com; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.stripe.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.stripe.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'self'; upgrade-insecure-requests";
+export const SOCIAL_CSP="default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com; connect-src 'self' https://taithai-app.netlify.app https://www.gstatic.com https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app; frame-src https://accounts.google.com https://*.firebaseapp.com; img-src 'self' blob: data: https://taithai-app.netlify.app https://*.googleusercontent.com; media-src 'self' blob: https://taithai-app.netlify.app; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; upgrade-insecure-requests";
 // Edge must not wait on these Node responses: its response-header limit is40s,
 // while Node functions have60s. Each wrapper independently applies the gate and
 // security headers before it runs the original handler.
 export const NETLIFY_FUNCTION_PATHS=Object.freeze([
-  'app-access','membership','membership-webhook','site-admin','healthcare-learning','movie-poster','analyze-movie-ticket','shortlinks',
+  'app-access','membership','membership-webhook','site-admin','social','social-media','healthcare-learning','movie-poster','analyze-movie-ticket','shortlinks',
   'ace','chordly/metadata','chordly/charts','chordly/lyrics',
 ].flatMap(name=>[`/api/${name}`,`/api/${name}/`]).concat(['/S/:code','/S/:code/']));
 export function privateError(code,status=503) {
@@ -27,6 +28,10 @@ export function applyAccessHeaders(response,accessHeaders={},pathname='') {
   if (/^\/(?:membership|mail|admin)(?:\/|$)/i.test(pathname)) {
     headers.set('Cache-Control','private, no-store, max-age=0');headers.set('Netlify-CDN-Cache-Control','no-store');
     headers.set('Referrer-Policy','no-referrer');headers.set('X-Content-Type-Options','nosniff');headers.set('Content-Security-Policy',CSP);
+  }
+  if (/^\/(?:community|profile|messages)(?:\/|$)/i.test(pathname)) {
+    headers.set('Cache-Control','private, no-store, max-age=0');headers.set('Netlify-CDN-Cache-Control','no-store');
+    headers.set('Referrer-Policy','no-referrer');headers.set('X-Content-Type-Options','nosniff');headers.set('Content-Security-Policy',SOCIAL_CSP);
   }
   if (pathname==='/firebase-auth.js') {headers.set('Cache-Control','no-store, max-age=0');headers.set('Netlify-CDN-Cache-Control','no-store');}
   return new Response(response.body,{status:response.status,statusText:response.statusText,headers});

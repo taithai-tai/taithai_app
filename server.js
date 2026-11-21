@@ -7,6 +7,8 @@ import shortlinksHandler from './api/shortlinks.js';
 import membershipHandler from './api/membership.js';
 import membershipWebhook from './api/membership-webhook.js';
 import siteAdminHandler from './api/site-admin.js';
+import socialHandler from './api/social.js';
+import socialMediaHandler from './api/social-media.js';
 import { Readable } from 'node:stream';
 import aceHandler from './ace/api/ace.js';
 import healthcareHandler from './api/healthcare-learning.js';
@@ -220,10 +222,10 @@ export function createDevServer({ checkAccess = checkAppAccess } = {}) {
   try {
     const requestUrl = new URL(req.url || '/', 'http://localhost');
     const webRequest = nodeWebRequest(req, { local: true });
-    if (/^\/api\/(?:membership(?:-webhook)?|site-admin)\/?$/.test(requestUrl.pathname)) {
+    if (/^\/api\/(?:membership(?:-webhook)?|site-admin|social(?:-media)?)\/?$/.test(requestUrl.pathname)) {
       const headers=new Headers();for(const [key,value] of Object.entries(req.headers))if(value!==undefined)headers.set(key,Array.isArray(value)?value.join(', '):String(value));
       const request=new Request(new URL(req.url,`http://${req.headers.host || 'localhost'}`),{method:req.method,headers,...(!['GET','HEAD'].includes(req.method)?{body:Readable.toWeb(req),duplex:'half'}:{})});
-      const endpoint=requestUrl.pathname.includes('site-admin')?siteAdminHandler:requestUrl.pathname.includes('-webhook')?membershipWebhook:membershipHandler;
+      const endpoint=requestUrl.pathname.includes('/social-media')?socialMediaHandler:requestUrl.pathname.includes('/social')?socialHandler:requestUrl.pathname.includes('site-admin')?siteAdminHandler:requestUrl.pathname.includes('-webhook')?membershipWebhook:membershipHandler;
       await sendWebResponse(await endpoint.fetch(request),req,res);return;
     }
     if (/^\/api\/app-access\/?$/.test(requestUrl.pathname)) {

@@ -72,6 +72,15 @@ test('signed-out users can sign in and sign out with the existing auth interface
   app.controller.destroy();
 });
 
+test('public profile setup is a separate signed-in choice and never publishes the sign-in email',async()=>{
+  const app=await setup(person());const panel=app.document.getElementById('accountPublicProfile');
+  assert.ok(panel);const links=panel.children.flatMap(child=>child.children || []).filter(child=>child.tagName==='a');
+  assert.deepEqual(links.map(link=>link.href),['/profile/','/community/','/messages/']);
+  assert.match(panel.children[1].textContent,/sign-in email is not shown/);
+  assert.ok(!JSON.stringify(panel.children.map(child=>child.textContent)).includes('test@example.com'));
+  await app.notify(null);assert.equal(app.document.getElementById('accountPublicProfile'),null);app.controller.destroy();
+});
+
 test('invalid names stay in the form, surface errors, focus the field, and do not save', async () => {
   let writes = 0;
   const app = await setup(person(), { loadUpdater: async () => ({ updateProfile: async () => writes++ }) });
