@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata } from '../server-lib/site-mail-recipients.js';
+import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata, mailRecipientCandidates } from '../server-lib/site-mail-recipients.js';
 import { createSiteMail, createMailProtocolAdapters, encryptMailboxCredential, decryptMailboxCredential } from '../server-lib/site-mail.js';
 
 const primary = 'official@taithai.app';
@@ -62,7 +62,18 @@ test('known address set is bounded, mailbox-domain scoped and rejects inactive a
     { address: 'revoked@taithai.app', status: 'deleted' }, { address: 'pending@taithai.app', status: 'provisioning' }, { address: 'disabled@taithai.app', active: false }] },
   [{ address: 'foreign@example.org', kind: 'alias' }, { address: 'alternate@taithai.app', kind: 'primary' }, { address: 'bad\r\n@taithai.app', kind: 'alias' }]);
   assert.deepEqual(found, knownMailboxRecipientAddresses(record));
-  assert.ok(knownMailboxRecipientAddresses(record, Array.from({ length: 500 }, (_, index) => ({ address: `alias${index}@taithai.app`, kind: 'alias' }))).length <= 128);
+  assert.ok(knownMailboxRecipientAddresses(record, Array.from({ length: 2000 }, (_, index) => ({ address: `alias${index}@taithai.app`, kind: 'alias' }))).length <= 1500);
+});
+
+test('catch-all name candidates remain bounded header evidence and never scan body or Bcc', () => {
+  const candidates = mailRecipientCandidates({headers:Buffer.from('To: "fake@taithai.app" <external@example.org>\r\nCc: Fresh@taithai.app\r\nDelivered-To: fresh@taithai.app\r\nBcc: secret@taithai.app\r\n\r\nTo: body@taithai.app')});
+  assert.deepEqual(candidates,[{address:'fresh@taithai.app',sources:['cc','delivered-to']}]);
+  assert.equal(mailRecipientCandidates(parsed(Array.from({length:300},(_,i)=>`name${i}@taithai.app`))).length,128);
+});
+
+test('a name discovered after the first 128 stored names still labels its message', () => {
+  const addresses=knownMailboxRecipientAddresses(record,Array.from({length:500},(_,i)=>({address:`name${i}@taithai.app`,kind:'alias'})));
+  assert.deepEqual(mailRecipientMetadata(parsed(['name499@taithai.app']),addresses).recipientMatches,[result('name499@taithai.app','alias','to')]);
 });
 
 const env = { OWNER_MAIL_ENABLED: 'true', MAIL_READY: 'true', MAIL_DOMAIN: 'taithai.app', MAIL_PROVIDER: 'hostinger',

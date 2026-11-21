@@ -15,7 +15,7 @@ function fixture({ domainLimit = 5, mailboxLimit = 5, allowReserved } = {}) {
   const docs = new Map(), calls = [], boxes = [
     { id: 'AC_owner', address: record.address, status: 'active' }, { id: 'AC_other', address: otherRecord.address, status: 'active' }
   ];
-  const aliases = new Map(), controls = { loseCreate: false, loseDelete: false, failCompleted: false, corruptCreate: false, accessCalls: 0, revokeAt: Infinity };
+  const aliases = new Map(), catchalls = [], controls = { loseCreate: false, loseDelete: false, failCompleted: false, corruptCreate: false, accessCalls: 0, revokeAt: Infinity };
   const access = new Set([user.uid, other.uid]);
   const rawAlias = (local, mailboxId = 'AC_owner', id = `AA_${local.replace(/[._-]/g, '')}`) => ({ id, address: `${local}@taithai.app`, mailbox: clone(boxes.find(box => box.id === mailboxId)),
     is_active: true, created_at: '2026-11-22T00:00:00Z', updated_at: '2026-11-22T00:00:00Z' });
@@ -23,6 +23,7 @@ function fixture({ domainLimit = 5, mailboxLimit = 5, allowReserved } = {}) {
     calls.push({ path, method, input: clone(input) });
     if (method === 'GET' && path === 'orders/OR_configured/mailboxes') return { data: clone(boxes) };
     if (method === 'GET' && path === 'orders/OR_configured/aliases') return { data: clone([...aliases.values()]) };
+    if (method === 'GET' && path === 'orders/OR_configured/catchalls') return { data: clone(catchalls) };
     const create = /^mailboxes\/(AC_owner|AC_other)\/aliases$/.exec(path);
     if (method === 'POST' && create) {
       assert.deepEqual(Object.keys(input), ['local_part']);
@@ -74,8 +75,26 @@ function fixture({ domainLimit = 5, mailboxLimit = 5, allowReserved } = {}) {
     return { record: clone(selected), credentials: { address: selected.address, password: 'fixture-private-password' } };
   }
   const service = createMailboxAliasService({ store, provider, owned, fail, now: () => Date.parse('2026-11-22T00:00:00Z'), ...(allowReserved ? { allowReserved } : {}) });
-  return { docs, boxes, aliases, calls, controls, access, rawAlias, provider, service };
+  return { docs, boxes, aliases, catchalls, calls, controls, access, rawAlias, provider, service };
 }
+
+test('receiving inventory enables only an active confirmed catch-all for the exact owned mailbox', async () => {
+  const f=fixture();f.aliases.set('AA_other',f.rawAlias('private','AC_other','AA_other'));
+  assert.equal((await f.provider.receivingInventory(record)).catchallEnabled,false);
+  f.catchalls.push({id:'CA_fixture',domain:'taithai.app',mailbox:{id:'AC_owner',address:record.address},is_active:true,is_confirmed:false});
+  assert.equal((await f.provider.receivingInventory(record)).catchallEnabled,false);
+  f.catchalls[0].is_confirmed=true;let stock=await f.provider.receivingInventory(record);assert.equal(stock.catchallEnabled,true);
+  assert.deepEqual(stock.unavailableAddresses.sort(),[otherRecord.address,'private@taithai.app'].sort());
+  f.catchalls[0].mailbox={id:'AC_other',address:otherRecord.address};assert.equal((await f.provider.receivingInventory(record)).catchallEnabled,false);
+  f.catchalls[0].mailbox={id:'AC_owner',address:otherRecord.address};await assert.rejects(f.provider.receivingInventory(record),code('MAIL_RECEIVING_NAMES_UNAVAILABLE'));
+});
+
+test('ambiguous or malformed provider catch-all configuration fails closed',async()=>{
+  const f=fixture(),row={id:'CA_fixture',domain:'taithai.app',mailbox:{id:'AC_owner',address:record.address},is_active:true,is_confirmed:true};
+  f.catchalls.push(row,{...row,id:'CA_second'});await assert.rejects(f.provider.receivingInventory(record),code('MAIL_RECEIVING_NAMES_UNAVAILABLE'));
+  f.catchalls.pop();f.catchalls[0].domain='foreign.app';await assert.rejects(f.provider.receivingInventory(record),code('MAIL_RECEIVING_NAMES_UNAVAILABLE'));
+  assert.ok(f.calls.every(call=>call.method==='GET'));
+});
 
 test('alias adapter returns only the exact owned mailbox aliases while counting the entire order quota', async () => {
   const f = fixture({ domainLimit: 3 });

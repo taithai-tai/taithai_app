@@ -102,3 +102,11 @@
 .mail-recipient-match { display: block; font-size: .875rem; color: var(--text-mid); overflow-wrap: anywhere; }
 .mail-recipient-note { line-height: 1.7; }
 @media(max-width:760px) { .mail-alias-row { padding: 16px; } .mail-aliases .button-row { align-items: stretch; } }
+
+.mail-receiving-count { display: flex; align-items: center; gap: 8px; font-size: 1rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mail-receiving-names { display: grid; gap: 16px; }
+.mail-receiving-list { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,250px),1fr)); gap: 12px; max-height: 480px; overflow: auto; overscroll-behavior: contain; padding: 2px; }
+.mail-receiving-row { display: grid; gap: 12px; align-content: start; padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--bg); }
+.mail-receiving-row .membership-address { font-size: 1rem; }
+.mail-receiving-row > .button { justify-self: start; }
+.mail-receiving-source { justify-self: start; padding: 4px 10px; border-radius: 999px; background: var(--surface); color: var(--text-mid); font-size: .8125rem; }

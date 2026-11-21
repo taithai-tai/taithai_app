@@ -2,7 +2,8 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID }
 import { convert as convertHtmlToText } from 'html-to-text';
 import { assertMembershipOperationActive, combineMembershipOperationSignal } from './site-operation-budget.js';
 import { createHostingerAliasAdapter, createMailboxAliasService } from './site-mail-aliases.js';
-import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata } from './site-mail-recipients.js';
+import { createMailboxReceivingNameService } from './site-mail-receiving-names.js';
+import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata, mailRecipientCandidates } from './site-mail-recipients.js';
 
 // Server-only. No provider calls happen at import time. Never expose these
 // collections to a client SDK; credentials are encrypted before every write.
@@ -238,7 +239,7 @@ function safeMessage(raw, folder, uidValidity, body = false, mailboxId, recipien
  * never client flags, paid records or an expiring trial.
  * Client input never chooses a storage owner or supplies mailbox credentials. */
 export function createSiteMail({ store, getMembership, capacityStatus, withProvisioningLock, recipientAddresses, provider, imap, smtp, env = process.env, now = Date.now, provisioningTimeoutMs = 45000 } = {}) {
-  let aliasService;
+  let aliasService, receivingNameService;
   if (!store?.get || !store?.set || !(store.runTransaction || store.transaction) || typeof getMembership !== 'function') throw new TypeError('Mail requires a transactional store and trusted membership resolver');
   if (!Number.isSafeInteger(provisioningTimeoutMs) || provisioningTimeoutMs < 1 || provisioningTimeoutMs > 45000) throw new TypeError('Invalid mail provisioning deadline');
   const transaction = callback => (store.runTransaction || store.transaction).call(store, callback);
@@ -476,7 +477,15 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
       const discover = typeof recipientAddresses === 'function' ? recipientAddresses : aliasService?.recipientAddresses;
       if (discover) extra = await discover(user, record);
     } catch {}
+    try { if (receivingNameService) extra.push(...await receivingNameService.recipientAddresses(user, record)); } catch {}
     return knownMailboxRecipientAddresses(record, extra);
+  }
+  async function observeReceivingNames(user, record, messages, selectedFolder) {
+    if (!receivingNameService) return undefined;
+    if (String(selectedFolder).toUpperCase() !== 'INBOX') return undefined;
+    // Header-derived name discovery is optional. A management API outage or
+    // malformed name state must never make a readable message disappear.
+    try { return await receivingNameService.observe(user, record, messages); } catch { return undefined; }
   }
   async function list(user, input = {}) {
     const { record, credentials } = await owned(user, input); const folder = folderPath(input.folder);
@@ -489,15 +498,19 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
       catch { fail('INVALID_CURSOR'); }
     }
     const result = await external(() => imap.list(credentials, { folder, limit, cursor }));
+    const receivingNamesState = await observeReceivingNames(user, record, result.messages.slice(0, limit), folder);
     const knownRecipients = await messageRecipientAddresses(user, record);
     return { folder, messages: result.messages.slice(0, limit).map(item => safeMessage(item, folder, result.uidValidity, false, record.id, knownRecipients)),
+      ...(receivingNamesState ? { receivingNamesState } : {}),
       nextCursor: result.nextCursor ? Buffer.from(JSON.stringify({ mailbox: record.id, cursor: result.nextCursor })).toString('base64url') : null };
   }
   async function message(user, input = {}) {
     const { record, records, credentials } = await owned(user, input); const ref = reference(input, record, records);
     const raw = await external(() => imap.message(credentials, ref));
     if (!raw) fail('MESSAGE_NOT_FOUND', 404);
-    return { message: safeMessage(raw, ref.folder, ref.uidValidity, true, record.id, await messageRecipientAddresses(user, record)) };
+    const receivingNamesState = await observeReceivingNames(user, record, [raw], ref.folder);
+    return { message: safeMessage(raw, ref.folder, ref.uidValidity, true, record.id, await messageRecipientAddresses(user, record)),
+      ...(receivingNamesState ? { receivingNamesState } : {}) };
   }
   async function read(user, input = {}) {
     const { record, records, credentials } = await owned(user, input); const ref = reference(input, record, records);
@@ -577,12 +590,36 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
     aliasService = createMailboxAliasService({ store, provider, owned, fail, now,
       allowReserved: user => user?.email_verified === true && user.email === 'taithai5002@gmail.com' });
   }
+  if (provider?.id === 'hostinger' && typeof provider.receivingInventory === 'function') {
+    receivingNameService = createMailboxReceivingNameService({ store, provider, owned, fail, now, candidates: mailRecipientCandidates,
+      allowReserved: user => user?.email_verified === true && user.email === 'taithai5002@gmail.com' });
+  }
+  async function withReceivingNames(user, input, aliasResult) {
+    if (!receivingNameService) return aliasResult;
+    try { return { ...aliasResult, ...await receivingNameService.list(user, input) }; }
+    catch (error) {
+      if (['MAIL_ACCESS_REQUIRED', 'MAILBOX_NOT_FOUND', 'MAILBOX_CHANGED'].includes(error?.code)) throw error;
+      return { ...aliasResult, receivingNamesAvailable: false };
+    }
+  }
   const aliases = method => (user, input = {}) => {
     if (!aliasService) fail('MAIL_ALIAS_STATE_UNAVAILABLE', 503);
-    return aliasService[method](user, input);
+    if (method === 'list' && receivingNameService) return Promise.allSettled([aliasService.list(user, input), receivingNameService.list(user, input)]).then(results => {
+      if (results[0].status === 'rejected') throw results[0].reason;
+      if (results[1].status === 'fulfilled') return { ...results[0].value, ...results[1].value };
+      if (['MAIL_ACCESS_REQUIRED', 'MAILBOX_NOT_FOUND', 'MAILBOX_CHANGED'].includes(results[1].reason?.code)) throw results[1].reason;
+      return { ...results[0].value, receivingNamesAvailable: false };
+    });
+    return aliasService[method](user, input).then(result => withReceivingNames(user, input, result));
+  };
+  const receivingName = method => async (user, input = {}) => {
+    if (!receivingNameService || !aliasService) fail('MAIL_RECEIVING_NAMES_UNAVAILABLE', 503);
+    const result = await receivingNameService[method](user, input);
+    return { ...await aliasService.list(user, input), ...result };
   };
   return { status, create, folders, list, message, read, trash, send, syncMembership,
-    listAliases: aliases('list'), createAlias: aliases('create'), deleteAlias: aliases('remove') };
+    listAliases: aliases('list'), createAlias: aliases('create'), deleteAlias: aliases('remove'),
+    saveReceivingName: receivingName('save'), hideReceivingName: receivingName('hide') };
 }
 async function providerJson(response) {
   if (Number(response.headers?.get?.('content-length') || 0) > 65536) fail('MAIL_PROVIDER_UNAVAILABLE', 503);

@@ -62,6 +62,19 @@ export function createHostingerAliasAdapter({ operation, collection, orderPlan, 
   const publicInventory = value => { const { all, boxes, ...safe } = value; return safe; };
   return {
     aliasInventory: (record, options) => operation(async request => publicInventory(await snapshot(request, record)), options),
+    receivingInventory: (record, options) => operation(async request => {
+      const stock = await snapshot(request, record);
+      const catchalls = await collection(request, `orders/${env.HOSTINGER_MAIL_ORDER_ID}/catchalls`);
+      if (catchalls.length > 1 || catchalls.some(value => !resourceId(value?.id) || value.domain !== DOMAIN
+        || !resourceId(value.mailbox?.id) || !email(value.mailbox?.address)
+        || typeof value.is_active !== 'boolean' || typeof value.is_confirmed !== 'boolean'
+        || !stock.boxes.some(box => box.id === value.mailbox.id && box.address === value.mailbox.address))) fail('MAIL_RECEIVING_NAMES_UNAVAILABLE', 503);
+      const ownCatchall = catchalls.find(value => value.mailbox.id === stock.mailbox.id && value.mailbox.address === stock.mailbox.address);
+      return { mailbox: stock.mailbox, aliases: stock.aliases,
+        catchallEnabled: ownCatchall?.is_active === true && ownCatchall.is_confirmed === true,
+        unavailableAddresses: [...stock.boxes.filter(value => value.id !== stock.mailbox.id).map(value => value.address),
+          ...stock.all.filter(value => value.mailbox.id !== stock.mailbox.id).map(value => value.address)] };
+    }, options),
     createAlias: (record, local, options) => operation(async request => {
       local = localName(local, fail);
       const stock = await snapshot(request, record), target = `${local}@${DOMAIN}`;

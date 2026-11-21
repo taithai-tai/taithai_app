@@ -21,6 +21,10 @@ export function membershipError(error, language = 'th', online = true) {
   const text = membershipText(language), code = String(error?.code || error?.message || '').toLowerCase();
   if (!online) return text.offline;
   const aliasCopy=language==='en'?{limit:'The provider’s additional-name quota is full. Existing mail is still available.',name:'This additional name is unavailable. Choose another name.',confirmation:'Type the complete additional address to confirm deletion.',pending:'The result is not confirmed. Retry the original request with the same details.',state:'Additional names could not be loaded. Your inbox is still available.'}:{limit:'โควตาชื่อเพิ่มเติมของผู้ให้บริการเต็มแล้ว อีเมลเดิมยังใช้งานได้',name:'ชื่อเพิ่มเติมนี้ใช้ไม่ได้ กรุณาเลือกชื่ออื่น',confirmation:'พิมพ์ที่อยู่นามแฝงให้ครบเพื่อยืนยันการลบ',pending:'ยังยืนยันผลรายการไม่ได้ กรุณาตรวจสอบรายการเดิมโดยไม่เปลี่ยนข้อมูล',state:'ยังโหลดชื่อเพิ่มเติมไม่ได้ คุณยังเปิดอ่านอีเมลได้'};
+  if(code==='mail_receiving_name_limit_reached')return language==='en'?'This list is full. Hiding a name does not stop incoming mail.':'รายการชื่อเต็มแล้ว การซ่อนชื่อไม่ปิดการรับอีเมล';
+  if(code==='mail_catchall_required')return language==='en'?'Receiving unassigned names is not enabled yet. Existing aliases still work.':'ยังไม่เปิดรับทุกชื่ออัตโนมัติ นามแฝงเดิมยังใช้งานได้';
+  if(code==='mail_receiving_name_is_provider_alias')return language==='en'?'Manage this name in the alias settings.':'จัดการชื่อนี้ในส่วนนามแฝงที่ตั้งไว้';
+  if(code==='mail_receiving_names_unavailable')return language==='en'?'Receiving names could not be confirmed. Check the original request; your inbox is still available.':'ยังยืนยันรายการชื่อรับอีเมลไม่ได้ กรุณาตรวจสอบรายการเดิม อีเมลยังเปิดอ่านได้';
   if(code==='mail_alias_limit_reached')return aliasCopy.limit;
   if(['address_unavailable','reserved_local_part'].includes(code))return aliasCopy.name;
   if(code==='alias_confirmation_required')return aliasCopy.confirmation;
@@ -69,16 +73,16 @@ export function createMembershipApi({ getUser, window: win = globalThis.window, 
       if (getUser?.()?.uid !== uid) throw Object.assign(Error('ACCOUNT_CHANGED'), { code:'ACCOUNT_CHANGED' });
       if (!response.ok || result.ok === false) {
         const code = typeof result.error === 'object' ? result.error?.code : result.error || result.code;
-        throw Object.assign(Error(code || `HTTP_${response.status}`), { code:code || (response.status === 401 ? 'UNAUTHENTICATED' : response.status === 403 ? 'PERMISSION_DENIED' : `HTTP_${response.status}`), status:response.status,deliveryUnknown:method==='POST'&&action.startsWith('alias-')&&response.status>=500 });
+        throw Object.assign(Error(code || `HTTP_${response.status}`), { code:code || (response.status === 401 ? 'UNAUTHENTICATED' : response.status === 403 ? 'PERMISSION_DENIED' : `HTTP_${response.status}`), status:response.status,deliveryUnknown:method==='POST'&&(action.startsWith('alias-')||action.startsWith('receiving-name-'))&&response.status>=500 });
       }
       return result;
     } catch (error) {
-      if (error?.name === 'AbortError') throw Object.assign(Error('REQUEST_TIMEOUT'), { code:'REQUEST_TIMEOUT',deliveryUnknown:method==='POST'&&action.startsWith('alias-') });
-      if(method==='POST'&&action.startsWith('alias-')&&!error.status&&!['ACCOUNT_CHANGED','UNAUTHENTICATED'].includes(error.code))error.deliveryUnknown=true;
+      if (error?.name === 'AbortError') throw Object.assign(Error('REQUEST_TIMEOUT'), { code:'REQUEST_TIMEOUT',deliveryUnknown:method==='POST'&&(action.startsWith('alias-')||action.startsWith('receiving-name-')) });
+      if(method==='POST'&&(action.startsWith('alias-')||action.startsWith('receiving-name-'))&&!error.status&&!['ACCOUNT_CHANGED','UNAUTHENTICATED'].includes(error.code))error.deliveryUnknown=true;
       throw error;
     } finally { (win?.clearTimeout || clearTimeout)(timer); pending.delete(controller); }
   }
-  return { call, aliases:input=>call('aliases',{params:input}),createAlias:input=>call('alias-create',{method:'POST',data:input}),deleteAlias:input=>call('alias-delete',{method:'POST',data:input}),abort() { for (const controller of pending) controller.abort(); pending.clear(); } };
+  return { call, aliases:input=>call('aliases',{params:input}),createAlias:input=>call('alias-create',{method:'POST',data:input}),deleteAlias:input=>call('alias-delete',{method:'POST',data:input}),saveReceivingName:input=>call('receiving-name-save',{method:'POST',data:input}),hideReceivingName:input=>call('receiving-name-hide',{method:'POST',data:input}),abort() { for (const controller of pending) controller.abort(); pending.clear(); } };
 }
 export function createMemberUi(doc) {
   const el = (tag, text, className) => { const node = doc.createElement(tag); if (text !== undefined) node.textContent = String(text); if (className) node.className = className; return node; };

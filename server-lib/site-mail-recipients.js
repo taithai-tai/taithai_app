@@ -7,6 +7,7 @@ const HEADER_SOURCES = new Set(MAIL_RECIPIENT_HEADERS.map(value => value.toLower
 const MAX_HEADER_BYTES = 16 * 1024;
 const MAX_FIELD_BYTES = 4096;
 const MAX_ADDRESSES = 128;
+const MAX_KNOWN_ADDRESSES = 1500;
 const SOURCE_ORDER = ['to', 'cc', 'delivered-to', 'x-original-to', 'envelope-to'];
 const KIND_ORDER = { primary: 0, alias: 1, previous: 2 };
 
@@ -18,7 +19,7 @@ function ownAddress(value) {
   return result;
 }
 
-function values(items) { return Array.isArray(items) ? items.slice(0, MAX_ADDRESSES) : []; }
+function values(items, maximum = MAX_ADDRESSES) { return Array.isArray(items) ? items.slice(0, maximum) : []; }
 
 /** Only call with the authenticated mailbox record and server-resolved aliases.
  * Historical addresses annotate old mail; they do not grant routing or send-as. */
@@ -35,16 +36,16 @@ export function knownMailboxRecipientAddresses(record, extra = []) {
     if (!previous || KIND_ORDER[kind] < KIND_ORDER[previous.kind]) known.set(address, { address, kind });
   }
   add({ address: record?.address, kind: 'primary' });
-  for (const item of values(record?.aliases)) add(item, 'alias');
-  for (const item of values(record?.previousAddresses)) add(item, 'previous');
+  for (const item of values(record?.aliases, MAX_KNOWN_ADDRESSES)) add(item, 'alias');
+  for (const item of values(record?.previousAddresses, MAX_KNOWN_ADDRESSES)) add(item, 'previous');
   // Extra aliases are trusted server data. A second primary cannot replace
   // the record's canonical address or make a historical address current.
-  for (const item of values(extra)) {
+  for (const item of values(extra, MAX_KNOWN_ADDRESSES)) {
     const value = typeof item === 'string' ? { address: item, kind: 'alias' } : item;
     if (value?.kind === 'primary' && ownAddress(value.address) !== ownAddress(record?.address)) continue;
     add(value, 'alias');
   }
-  return [...known.values()].slice(0, MAX_ADDRESSES);
+  return [...known.values()].slice(0, MAX_KNOWN_ADDRESSES);
 }
 
 function selectedHeaders(raw) {
@@ -82,17 +83,16 @@ function parsedFieldAddresses(field) {
   catch { return []; }
 }
 
-/** Safe additive DTO. All matches remain untrusted message-header evidence. */
-export function mailRecipientMetadata(raw, knownAddresses) {
-  const known = new Map(values(knownAddresses).map(item => [ownAddress(item?.address), item]).filter(([address]) => address));
+/** Bounded header evidence for names seen in an authenticated inbox. These
+ * candidates never establish ownership, reserve names, or change routing. */
+export function mailRecipientCandidates(raw) {
   const matches = new Map();
   function match(items, source) {
     for (const item of values(items)) {
       const address = ownAddress(item?.address);
-      const owner = known.get(address);
-      if (!owner || !Object.hasOwn(KIND_ORDER, owner.kind)) continue;
+      if (!address || matches.size >= MAX_ADDRESSES && !matches.has(address)) continue;
       let result = matches.get(address);
-      if (!result) { result = { address, kind: owner.kind, sources: [] }; matches.set(address, result); }
+      if (!result) { result = { address, sources: [] }; matches.set(address, result); }
       if (!result.sources.includes(source)) result.sources.push(source);
     }
   }
@@ -106,6 +106,15 @@ export function mailRecipientMetadata(raw, knownAddresses) {
     }
     for (const field of fields.get(source) || []) match(parsedFieldAddresses(field), source);
   }
-  const recipientMatches = [...matches.values()];
+  return [...matches.values()];
+}
+
+/** Safe additive DTO. All matches remain untrusted message-header evidence. */
+export function mailRecipientMetadata(raw, knownAddresses) {
+  const known = new Map(values(knownAddresses, MAX_KNOWN_ADDRESSES).map(item => [ownAddress(item?.address), item]).filter(([address]) => address));
+  const recipientMatches = mailRecipientCandidates(raw).flatMap(item => {
+    const owner = known.get(item.address);
+    return owner && Object.hasOwn(KIND_ORDER, owner.kind) ? [{ ...item, kind: owner.kind }] : [];
+  });
   return { recipientMatches, recipientMatchStatus: recipientMatches.length ? 'matched' : 'unavailable' };
 }
