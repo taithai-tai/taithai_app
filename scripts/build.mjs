@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildACE } from '../ace/scripts/build.mjs';
 import { prepareNetlifyFunctions } from './prepare-netlify-functions.mjs';
+import { syncSiteNavigation } from './sync-site-navigation.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'public');
@@ -21,6 +22,8 @@ function run(command, args) {
     child.on('exit', code => code === 0 ? resolve() : reject(new Error(`${command} exited with ${code}`)));
   });
 }
+
+await syncSiteNavigation({ root });
 
 await rm(output, { recursive: true, force: true });
 await mkdir(output, { recursive: true });

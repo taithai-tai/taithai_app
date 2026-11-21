@@ -91,7 +91,7 @@ function supportFixture(options = {}) {
 test('all seven service pages have shared preferences, navigation, feedback, and no-script fallback', () => {
   for (const page of ['settings', 'account', 'help', 'support', 'privacy', 'about', 'admin']) {
     const html = fs.readFileSync(new URL(`../${page}/index.html`, import.meta.url), 'utf8');
-    assert.match(html, /site-preferences\.js/); assert.match(html, /site-pages\.js/); assert.match(html, /site-theme\.css/); assert.match(html, /id="offlineNotice"/); assert.match(html, /<noscript>/); assert.match(html, /href="\/settings\/"/); assert.match(html, /href="\/support\/"/);
+    assert.match(html, /site-preferences\.js/); assert.match(html, /site-pages\.js/); assert.match(html, /site-theme\.css/); assert.match(html, /id="offlineNotice"/); assert.match(html, /<noscript>/); assert.match(html, /href="(?:https:\/\/taithai\.app)?\/settings\/"/); assert.match(html, /href="(?:https:\/\/taithai\.app)?\/support\/"/);
   }
 });
 
