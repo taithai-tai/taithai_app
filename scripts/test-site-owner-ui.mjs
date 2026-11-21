@@ -68,10 +68,21 @@ test('all public admin links are hidden in the HTML before JavaScript runs and h
       if (!entry.name.endsWith('.html')) continue;
       const html = await readFile(file, 'utf8');
       for (const match of html.matchAll(/<a\b[^>]*href=["']\/admin(?:\/|#|\?|["'])[^>]*>/g)) {
-        count++; assert.match(match[0], /\bdata-owner-only\b/, file); assert.match(match[0], /\bhidden\b/, file);
+        count++; assert.match(match[0], /\b(?:data-owner-only|data-dashboard-access)\b/, file); assert.match(match[0], /\bhidden\b/, file);
         assert.match(html, /<script\b[^>]*type="module"[^>]*src="\/assets\/site-owner-ui\.js"/, file);
       }
     }
   }
   await scan(root); assert.ok(count >= 10);
+});
+
+
+test('canonical admin links wait for server grants and redirects preserve service subpaths', async () => {
+  const html = await readFile(new URL('../account/index.html',import.meta.url),'utf8');
+  const card = html.match(/<section class="panel admin-access-shortcut"[^>]*>.*?<\/section>/s)?.[0];
+  assert.ok(card);assert.match(card,/<section[^>]*data-admin-access[^>]*hidden/);assert.match(card,/href="\/mail\/"/);assert.match(html,/src="\/assets\/site-owner-ui\.js"/);assert.match(html,/src="\/assets\/site-access-ui\.js"/);
+  const config = JSON.parse(await readFile(new URL('../vercel.json',import.meta.url),'utf8'));
+  assert.ok(config.headers.find(item=>item.source==='/account/:path*').headers.some(item=>item.key==='Content-Security-Policy'&&item.value.includes('https://taithai-app.netlify.app')));
+  assert.deepEqual(config.redirects.filter(item => item.source.startsWith('/admin')),[{source:'/admin',destination:'https://taithai-app.netlify.app/admin/',permanent:false},{source:'/admin/:path*',destination:'https://taithai-app.netlify.app/admin/:path*',permanent:false}]);
+  assert.deepEqual(config.redirects.filter(item => item.source.startsWith('/mail')),[{source:'/mail',destination:'https://taithai-app.netlify.app/mail/',permanent:false},{source:'/mail/:path*',destination:'https://taithai-app.netlify.app/mail/:path*',permanent:false}]);
 });
