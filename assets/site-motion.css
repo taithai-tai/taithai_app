@@ -1,0 +1,219 @@
+/* Taithai motion: a soft handoff between pages, then a short response to intent.
+   Content is visible without JavaScript. Only explicitly enrolled UI receives
+   entrance / press classes; generated media and artwork are never selected.
+   Craft informed by unslop, Damir Sokolovsky / @heydamir (CC BY 4.0). */
+:root {
+  view-transition-name:none;
+  --tt-motion-ease:var(--soft-ease,cubic-bezier(.22,1,.36,1));
+  --tt-motion-enter-duration:480ms;
+  --tt-motion-reveal-duration:320ms;
+  --tt-motion-navigation-duration:320ms;
+  --tt-motion-press-duration:160ms;
+  --tt-motion-ripple-duration:560ms;
+  --tt-motion-plate-duration:240ms;
+}
+
+/* Supported browsers own the navigation. There is no delayed link handling or
+   loading overlay; unsupported browsers retain their normal page navigation. */
+@media (prefers-reduced-motion:no-preference) {
+  @view-transition { navigation:auto; }
+}
+/* Snapshot chrome must never intercept a control on the arriving page. */
+::view-transition { pointer-events:none; }
+/* Capture only one noninteractive page title per tool. Buttons, fields and full
+   page content stay live during the handoff instead of becoming a snapshot. */
+.site-home .hero h1,
+.site-page .page-intro h1,
+.tt-qr h1,
+.tt-shortlink h1,
+.tt-chat #home .home-title,
+.taithai-movie .hero h1,
+.tt-chordly main h1,
+.tt-ace main h1 { view-transition-name:tt-page-title; }
+::view-transition-group(tt-page-title) {
+  animation-duration:var(--tt-motion-navigation-duration);
+  animation-timing-function:var(--tt-motion-ease);
+}
+::view-transition-image-pair(tt-page-title) { isolation:isolate; }
+::view-transition-old(tt-page-title) {
+  animation:tt-page-out 240ms var(--tt-motion-ease) both;
+  mix-blend-mode:normal;
+}
+::view-transition-new(tt-page-title) {
+  animation:tt-page-in var(--tt-motion-navigation-duration) var(--tt-motion-ease) both;
+  mix-blend-mode:normal;
+}
+@keyframes tt-page-out {
+  from { opacity:1; transform:translateY(0); }
+  to { opacity:0; transform:translateY(-8px); }
+}
+@keyframes tt-page-in {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+/* JS applies this class after a visibility check and bounds stagger delays.
+   Individual translate leaves each app's existing hover transform intact. */
+.tt-motion-enter {
+  animation:tt-soft-enter var(--tt-motion-enter-duration) var(--tt-motion-ease) var(--tt-enter-delay,0ms) both;
+}
+.tt-motion-reveal {
+  animation:tt-soft-reveal var(--tt-motion-reveal-duration) var(--tt-motion-ease) both;
+}
+@keyframes tt-soft-enter {
+  from { opacity:0; translate:0 16px; }
+  to { opacity:1; translate:0 0; }
+}
+@keyframes tt-soft-reveal {
+  from { opacity:0; translate:0 8px; }
+  to { opacity:1; translate:0 0; }
+}
+
+/* The class is added only to a host whose original position was static.
+   Fixed app actions keep their fixed positioning. Only the ripple overlay clips. */
+.tt-motion-ripple-host { position:relative; }
+.tt-motion-press {
+  animation:tt-soft-press var(--tt-motion-press-duration) var(--tt-motion-ease) both;
+}
+/* Preserve an already-running named entrance if a card is pressed immediately.
+   The second animation affects only scale and completes before JS cleanup. */
+.tt-motion-enter.tt-motion-press {
+  animation:tt-soft-enter var(--tt-motion-enter-duration) var(--tt-motion-ease) var(--tt-enter-delay,0ms) both,
+    tt-soft-press var(--tt-motion-press-duration) var(--tt-motion-ease) both;
+}
+.tt-motion-reveal.tt-motion-press {
+  animation:tt-soft-reveal var(--tt-motion-reveal-duration) var(--tt-motion-ease) both,
+    tt-soft-press var(--tt-motion-press-duration) var(--tt-motion-ease) both;
+}
+@keyframes tt-soft-press {
+  0% { scale:1; }
+  38% { scale:.975; }
+  100% { scale:1; }
+}
+.tt-motion-ripple.tt-motion-ripple {
+  position:absolute;
+  inset:0;
+  display:block;
+  width:auto;
+  height:auto;
+  margin:0;
+  padding:0;
+  overflow:hidden;
+  border:0;
+  border-radius:inherit;
+  color:inherit;
+  pointer-events:none;
+  text-decoration:none;
+}
+.tt-motion-ripple::before {
+  content:"";
+  position:absolute;
+  left:var(--tt-ripple-x,50%);
+  top:var(--tt-ripple-y,50%);
+  width:var(--tt-ripple-size,160px);
+  height:var(--tt-ripple-size,160px);
+  border-radius:50%;
+  background:currentColor;
+  opacity:0;
+  transform:translate(-50%,-50%) scale(.08);
+  animation:tt-soft-ripple var(--tt-motion-ripple-duration) var(--tt-motion-ease) both;
+}
+@keyframes tt-soft-ripple {
+  0% { opacity:.16; transform:translate(-50%,-50%) scale(.08); }
+  60% { opacity:.08; }
+  100% { opacity:0; transform:translate(-50%,-50%) scale(1); }
+}
+
+/* Native details can animate on open while retaining their built-in keyboard
+   and close behavior. No height, display or hidden-state overrides are needed. */
+.site-home .portal-menu[open]>.portal-menu-links:not(.tt-motion-reveal),
+.site-page details.faq[open]>:not(summary):not(.tt-motion-reveal) {
+  animation:tt-soft-reveal var(--tt-motion-reveal-duration) var(--tt-motion-ease) both;
+}
+
+/* A changed selection settles into its rounded plate. Color transitions stay
+   separate from geometry, so labels remain sharp and layouts stay fixed. */
+.site-page :is(.choice,.language-controls button,.admin-tabs button),
+.site-home .lang-btn,
+.taithai-movie .view-btn,
+.tt-ace .demo-tab,
+.tt-chordly :is(.viewModeTabs button,.instrumentTabs button) {
+  transition:background-color var(--tt-motion-plate-duration) var(--tt-motion-ease),
+    border-color var(--tt-motion-plate-duration) var(--tt-motion-ease),
+    color var(--tt-motion-plate-duration) var(--tt-motion-ease),
+    box-shadow var(--tt-motion-plate-duration) var(--tt-motion-ease),
+    scale var(--tt-motion-press-duration) var(--tt-motion-ease);
+}
+.site-page :is(.choice,.language-controls button)[aria-pressed="true"],
+.site-page .admin-tabs button[aria-selected="true"],
+.site-home .lang-btn.active,
+.taithai-movie .view-btn.active,
+.tt-ace .demo-tab[aria-selected="true"],
+.tt-chordly :is(.viewModeTabs button,.instrumentTabs button).active {
+  animation:tt-plate-settle var(--tt-motion-plate-duration) var(--tt-motion-ease);
+}
+@keyframes tt-plate-settle {
+  from { opacity:.72; scale:.975; }
+  to { opacity:1; scale:1; }
+}
+
+/* A small turn belongs to the settings gear; text and content never rotate. */
+.site-home .home-rail a[href="/settings/"]>.nav-icon,
+.site-page .page-nav a[href="/settings/"]>.nav-icon,
+.site-utility a[data-utility-label="settings"]>.site-utility__icon {
+  transition:rotate var(--tt-motion-reveal-duration) var(--tt-motion-ease);
+}
+@media (hover:hover) {
+  .site-home .home-rail a[href="/settings/"]:hover>.nav-icon,
+  .site-page .page-nav a[href="/settings/"]:hover>.nav-icon,
+  .site-utility a[data-utility-label="settings"]:hover>.site-utility__icon { rotate:18deg; }
+}
+
+/* OS and both preference systems stop the new motion, including browser-owned
+   transition snapshots. JS also skips an in-flight native transition when a
+   saved site / Movie preference requests reduced motion. */
+@media (prefers-reduced-motion:reduce) {
+  @view-transition { navigation:none; }
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) { animation:none!important; }
+  .tt-motion-enter,
+  .tt-motion-reveal,
+  .tt-motion-press,
+  .site-home .portal-menu[open]>.portal-menu-links,
+  .site-page details.faq[open]>:not(summary),
+  .site-page :is(.choice,.language-controls button,.admin-tabs button),
+  .site-home .lang-btn,
+  .taithai-movie .view-btn,
+  .tt-ace .demo-tab,
+  .tt-chordly :is(.viewModeTabs button,.instrumentTabs button) {
+    animation:none!important;
+    transition:none!important;
+    translate:none!important;
+    scale:none!important;
+  }
+  .tt-motion-ripple.tt-motion-ripple { display:none; }
+  .site-home .home-rail a[href="/settings/"]>.nav-icon,
+  .site-page .page-nav a[href="/settings/"]>.nav-icon,
+  .site-utility a[data-utility-label="settings"]>.site-utility__icon { rotate:none!important; transition:none!important; }
+}
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"])::view-transition-group(*),
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"])::view-transition-old(*),
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"])::view-transition-new(*) { animation:none!important; }
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) :is(.tt-motion-enter,.tt-motion-reveal,.tt-motion-press),
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-home .portal-menu[open]>.portal-menu-links,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-page details.faq[open]>:not(summary),
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-page :is(.choice,.language-controls button,.admin-tabs button),
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-home .lang-btn,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .taithai-movie .view-btn,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .tt-ace .demo-tab,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .tt-chordly :is(.viewModeTabs button,.instrumentTabs button) {
+  animation:none!important;
+  transition:none!important;
+  translate:none!important;
+  scale:none!important;
+}
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .tt-motion-ripple { display:none; }
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-home .home-rail a[href="/settings/"]>.nav-icon,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-page .page-nav a[href="/settings/"]>.nav-icon,
+:root:is([data-motion="reduce"],[data-mm-motion="reduced"]) .site-utility a[data-utility-label="settings"]>.site-utility__icon { rotate:none!important; transition:none!important; }

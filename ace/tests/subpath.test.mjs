@@ -14,7 +14,7 @@ try {
     assert.match(html, /This website is created for educational purposes only\./);
     assert.match(html, /เว็บไซต์นี้จัดทำขึ้นเพื่อวัตถุประสงค์ทางการศึกษาเท่านั้น/);
     for (const match of html.matchAll(/(?:href|src)="(\/[^"?#]*)(?:[^\"]*)"/g)) {
-      const shared = ['/assets/site-preferences.js', '/assets/site-theme.css', '/assets/site-utility.js', '/assets/site-telemetry.js'];
+      const shared = ['/assets/site-preferences.js', '/assets/site-theme.css', '/assets/site-motion.css', '/assets/site-motion.js', '/assets/site-utility.js', '/assets/site-telemetry.js'];
       if (shared.includes(match[1])) {
         await fs.access(new URL(`../../${match[1].slice(1)}`, import.meta.url));
         continue;
