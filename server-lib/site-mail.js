@@ -1,6 +1,8 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID } from 'node:crypto';
 import { convert as convertHtmlToText } from 'html-to-text';
 import { assertMembershipOperationActive, combineMembershipOperationSignal } from './site-operation-budget.js';
+import { createHostingerAliasAdapter, createMailboxAliasService } from './site-mail-aliases.js';
+import { MAIL_RECIPIENT_HEADERS, knownMailboxRecipientAddresses, mailRecipientMetadata } from './site-mail-recipients.js';
 
 // Server-only. No provider calls happen at import time. Never expose these
 // collections to a client SDK; credentials are encrypted before every write.
@@ -41,6 +43,17 @@ function identity(user) {
 }
 function address(value) {
   if (typeof value !== 'string' || value.length > 254 || value.split('@')[0].length > 64 || /[^\x21-\x7e]/.test(value) || !addressPattern.test(value)) fail('INVALID_RECIPIENT');
+  return value;
+}
+// Stored credentials may belong to a provider-created reserved address such
+// as official. Reservation policy applies only to public provisioning.
+function storedLocalPart(value) {
+  if (typeof value !== 'string' || !/^[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/.test(value) || value.includes('..')) fail('INVALID_LOCAL_PART');
+  return value;
+}
+function storedMailboxAddress(value) {
+  if (typeof value !== 'string' || !value.endsWith(`@${DOMAIN}`)) fail('INVALID_RECIPIENT');
+  if (value !== `${storedLocalPart(value.slice(0, -DOMAIN.length - 1))}@${DOMAIN}`) fail('INVALID_RECIPIENT');
   return value;
 }
 function localPart(value) {
@@ -85,6 +98,7 @@ function recordProvider(record) {
 }
 export function encryptMailboxCredential(password, { env = process.env, userId, mailboxAddress, provider: providerName = env.MAIL_PROVIDER } = {}) {
   if (!routingFor(providerName)) fail('MAIL_NOT_CONFIGURED', 503);
+  storedMailboxAddress(mailboxAddress);
   const iv = randomBytes(12); const cipher = createCipheriv('aes-256-gcm', secretKey(env), iv);
   cipher.setAAD(Buffer.from(`${uid(userId)}\n${mailboxAddress}\n${providerName}`));
   const ciphertext = Buffer.concat([cipher.update(password, 'utf8'), cipher.final()]);
@@ -92,7 +106,7 @@ export function encryptMailboxCredential(password, { env = process.env, userId, 
 }
 export function decryptMailboxCredential(record, { env = process.env } = {}) {
   try {
-    if (![1,2].includes(record.credential?.version) || record.address !== `${localPart(record.localPart)}@${DOMAIN}`) fail('MAIL_CREDENTIAL_UNAVAILABLE', 503);
+    if (![1,2].includes(record.credential?.version) || storedMailboxAddress(record.address) !== `${storedLocalPart(record.localPart)}@${DOMAIN}`) fail('MAIL_CREDENTIAL_UNAVAILABLE', 503);
     const providerName = recordProvider(record);
     const iv = Buffer.from(record.credential.iv, 'base64'); const tag = Buffer.from(record.credential.tag, 'base64');
     if (iv.length !== 12 || tag.length !== 16) fail('MAIL_CREDENTIAL_UNAVAILABLE', 503);
@@ -191,7 +205,7 @@ function recipientList(value) {
   if (!Array.isArray(values) || values.length < 1 || values.length > MAIL_LIMITS.maxRecipients) fail('INVALID_RECIPIENTS');
   return [...new Set(values.map(address))];
 }
-function safeMessage(raw, folder, uidValidity, body = false, mailboxId) {
+function safeMessage(raw, folder, uidValidity, body = false, mailboxId, recipientAddresses = []) {
   const envelope = raw.envelope || raw;
   const asAddresses = value => (Array.isArray(value) ? value : value?.value || []).slice(0, 20).map(item => ({
     name: metadata(item.name, 160), address: metadata(item.address, 254)
@@ -201,7 +215,8 @@ function safeMessage(raw, folder, uidValidity, body = false, mailboxId) {
   const result = { id: encodeMailMessageId({ folder, uid: raw.uid, uidValidity, mailboxId }), uid: messageUid(raw.uid), uidValidity: validity(uidValidity),
     subject: metadata(envelope.subject), from: renderAddresses(envelope.from), to: renderAddresses(envelope.to), cc: renderAddresses(envelope.cc),
     date: date && Number.isFinite(new Date(date).getTime()) ? iso(date) : null,
-    unread: !(raw.flags instanceof Set ? raw.flags.has('\\Seen') : raw.read === true), size: Math.max(0, Number(raw.size) || 0), preview: '' };
+    unread: !(raw.flags instanceof Set ? raw.flags.has('\\Seen') : raw.read === true), size: Math.max(0, Number(raw.size) || 0), preview: '',
+    ...mailRecipientMetadata(raw, recipientAddresses) };
   if (body) {
     result.replyToAddress = '';
     // Never reconstruct a reply destination by parsing display names, which
@@ -222,7 +237,8 @@ function safeMessage(raw, folder, uidValidity, body = false, mailboxId) {
  * get/set. getMembership(uid,{user}) must resolve the live server-only admin grant,
  * never client flags, paid records or an expiring trial.
  * Client input never chooses a storage owner or supplies mailbox credentials. */
-export function createSiteMail({ store, getMembership, capacityStatus, withProvisioningLock, provider, imap, smtp, env = process.env, now = Date.now, provisioningTimeoutMs = 45000 } = {}) {
+export function createSiteMail({ store, getMembership, capacityStatus, withProvisioningLock, recipientAddresses, provider, imap, smtp, env = process.env, now = Date.now, provisioningTimeoutMs = 45000 } = {}) {
+  let aliasService;
   if (!store?.get || !store?.set || !(store.runTransaction || store.transaction) || typeof getMembership !== 'function') throw new TypeError('Mail requires a transactional store and trusted membership resolver');
   if (!Number.isSafeInteger(provisioningTimeoutMs) || provisioningTimeoutMs < 1 || provisioningTimeoutMs > 45000) throw new TypeError('Invalid mail provisioning deadline');
   const transaction = callback => (store.runTransaction || store.transaction).call(store, callback);
@@ -452,6 +468,16 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
       name: metadata(item.name || item.path, 128), unread: Number.isSafeInteger(item.unread) ? item.unread : null,
       total: Number.isSafeInteger(item.total) ? item.total : null, specialUse: metadata(item.specialUse, 32) })) };
   }
+  async function messageRecipientAddresses(user, record) {
+    let extra = [];
+    // Optional alias discovery must not make an otherwise healthy inbox fail.
+    // The callback receives only the already authenticated owned record.
+    try {
+      const discover = typeof recipientAddresses === 'function' ? recipientAddresses : aliasService?.recipientAddresses;
+      if (discover) extra = await discover(user, record);
+    } catch {}
+    return knownMailboxRecipientAddresses(record, extra);
+  }
   async function list(user, input = {}) {
     const { record, credentials } = await owned(user, input); const folder = folderPath(input.folder);
     const limit = input.limit === undefined ? MAIL_LIMITS.pageSize : Number(input.limit);
@@ -463,14 +489,15 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
       catch { fail('INVALID_CURSOR'); }
     }
     const result = await external(() => imap.list(credentials, { folder, limit, cursor }));
-    return { folder, messages: result.messages.slice(0, limit).map(item => safeMessage(item, folder, result.uidValidity, false, record.id)),
+    const knownRecipients = await messageRecipientAddresses(user, record);
+    return { folder, messages: result.messages.slice(0, limit).map(item => safeMessage(item, folder, result.uidValidity, false, record.id, knownRecipients)),
       nextCursor: result.nextCursor ? Buffer.from(JSON.stringify({ mailbox: record.id, cursor: result.nextCursor })).toString('base64url') : null };
   }
   async function message(user, input = {}) {
     const { record, records, credentials } = await owned(user, input); const ref = reference(input, record, records);
     const raw = await external(() => imap.message(credentials, ref));
     if (!raw) fail('MESSAGE_NOT_FOUND', 404);
-    return { message: safeMessage(raw, ref.folder, ref.uidValidity, true, record.id) };
+    return { message: safeMessage(raw, ref.folder, ref.uidValidity, true, record.id, await messageRecipientAddresses(user, record)) };
   }
   async function read(user, input = {}) {
     const { record, records, credentials } = await owned(user, input); const ref = reference(input, record, records);
@@ -546,7 +573,16 @@ export function createSiteMail({ store, getMembership, capacityStatus, withProvi
     const userId=identity(user);const member=await requireMailAccess(userId,user);configured();const {records}=await accounts(userId);
     return {preserved:true,ownerAccess:member.ownerAccess,adminAccess:member.adminAccess,mailAccess:member.mailAccess,adminOnly:true,paid:false,sendingEnabled:records.some(record=>record.status==='active' && allocated(records,record,member))};
   }
-  return { status, create, folders, list, message, read, trash, send, syncMembership };
+  if (provider?.id === 'hostinger' && ['aliasInventory', 'createAlias', 'deleteAlias'].every(key => typeof provider[key] === 'function')) {
+    aliasService = createMailboxAliasService({ store, provider, owned, fail, now,
+      allowReserved: user => user?.email_verified === true && user.email === 'taithai5002@gmail.com' });
+  }
+  const aliases = method => (user, input = {}) => {
+    if (!aliasService) fail('MAIL_ALIAS_STATE_UNAVAILABLE', 503);
+    return aliasService[method](user, input);
+  };
+  return { status, create, folders, list, message, read, trash, send, syncMembership,
+    listAliases: aliases('list'), createAlias: aliases('create'), deleteAlias: aliases('remove') };
 }
 async function providerJson(response) {
   if (Number(response.headers?.get?.('content-length') || 0) > 65536) fail('MAIL_PROVIDER_UNAVAILABLE', 503);
@@ -682,6 +718,7 @@ export function createHostingerProvider({ env = process.env, fetchImpl = globalT
       catch { fail('MAIL_PROVISIONING_PROOF_UNAVAILABLE', 503); }
     }
   };
+  Object.assign(adapter, createHostingerAliasAdapter({ operation, collection, orderPlan, env, fail }));
   return adapter;
 }
 
@@ -861,11 +898,11 @@ export function createMailProtocolAdapters({ ImapFlow, createTransport, simplePa
       }
       if (!end) return { uidValidity, messages: [], nextCursor: null };
       const start = Math.max(1, end - input.limit + 1);
-      const messages = await client.fetchAll(`${start}:${end}`, { uid: true, envelope: true, flags: true, size: true, internalDate: true });
+      const messages = await client.fetchAll(`${start}:${end}`, { uid: true, envelope: true, flags: true, size: true, internalDate: true, headers: [...MAIL_RECIPIENT_HEADERS] });
       return { uidValidity, messages: messages.reverse(), nextCursor: start > 1 ? Buffer.from(JSON.stringify({ folder: input.folder, validity: uidValidity, end: start - 1 })).toString('base64url') : null };
     })),
     message: (credentials, ref) => withClient(credentials, client => selected(client, ref, async () => {
-      const raw = await client.fetchOne(ref.uid, { uid: true, envelope: true, flags: true, size: true, internalDate: true, bodyStructure: true }, { uid: true });
+      const raw = await client.fetchOne(ref.uid, { uid: true, envelope: true, flags: true, size: true, internalDate: true, bodyStructure: true, headers: [...MAIL_RECIPIENT_HEADERS] }, { uid: true });
       if (!raw) return null;
       const parts = bodyParts(raw.bodyStructure);
       const plain = parts.texts.find(item => String(item.type).toLowerCase() === 'text/plain');

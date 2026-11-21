@@ -3,8 +3,8 @@ import { getMembershipRuntime } from './site-membership-runtime.js';
 import { verifyOwnerToken } from './site-app-gate.js';
 import { withMembershipOperationBudget, assertMembershipOperationActive, MEMBERSHIP_OPERATION_TIMEOUT_MS } from './site-operation-budget.js';
 
-const GET_ACTIONS=new Set(['status','mailboxes','folders','messages','message','admin-status']);
-const POST_ACTIONS=new Set(['mailbox-create','send','message-flags']);
+const GET_ACTIONS=new Set(['status','mailboxes','folders','messages','message','aliases','admin-status']);
+const POST_ACTIONS=new Set(['mailbox-create','send','message-flags','alias-create','alias-delete']);
 const BILLING_ACTIONS=new Set(['checkout','quantity-update','portal','admin-discounts','admin-discount-create','admin-discount-disable']);
 const json=(data,status=200)=>new Response(JSON.stringify(data),{status,headers:PRIVATE_API_HEADERS});
 function failure(error) {
@@ -103,11 +103,13 @@ export function createMembershipHandler({env=process.env,getRuntime=getMembershi
         const input=Object.fromEntries(url.searchParams);delete input.action;
         if('limit' in input)input.limit=Number(input.limit);
         await rate(runtime.store,user,'mail-read',{limit:120});assertMembershipOperationActive();
-        return json(await runtime.mail[{folders:'folders',messages:'list',message:'message'}[action]](user,input));
+        return json(await runtime.mail[{folders:'folders',messages:'list',message:'message',aliases:'listAliases'}[action]](user,input));
       }
       const input=await readMembershipRequest(request);
       await rate(runtime.store,user,action,{limit:action==='send'?30:30});assertMembershipOperationActive();
       if(action==='mailbox-create')return json(await runtime.mail.create(user,input));
+      if(action==='alias-create')return json(await runtime.mail.createAlias(user,input));
+      if(action==='alias-delete')return json(await runtime.mail.deleteAlias(user,input));
       if(action==='send')return json(await runtime.mail.send(user,input));
       if(action==='message-flags') {
         if(input.trash===true && typeof input.read!=='boolean')return json(await runtime.mail.trash(user,input));

@@ -20,7 +20,7 @@ function harness(extra={}) {
     mail:{async status(user){calls.push(['status',user.uid]);return {ready:true,ownerAccess:true,adminOnly:true,paid:false,ownerTrial:false,mailboxes:[],pendingMailboxes:[],mailboxCapacity:1,mailboxUsed:0,mailboxAvailable:1,capacityAvailable:true,canCreate:true,canSend:false,canManageMessages:false};},
       async folders(user,input){calls.push(['folders',user.uid,input]);return {folders:[]};},async list(user,input){calls.push(['list',user.uid,input]);return {messages:[]};},async message(user,input){calls.push(['message',user.uid,input]);return {text:'safe fixture'};},
       async create(user,input){calls.push(['create',user.uid,input]);return {adminOnly:true,ownerAccess:true,createdMailbox:{address:'fixture@taithai.app'}};},async send(user,input){calls.push(['send',user.uid,input]);return {status:'sent'};},
-      async read(user,input){calls.push(['read',user.uid,input]);return {updated:true};},async trash(user,input){calls.push(['trash',user.uid,input]);return {updated:true};}},
+      async listAliases(user,input){calls.push(['aliases',user.uid,input]);return {mailboxId:input.mailbox,aliases:[]};},async createAlias(user,input){calls.push(['alias-create',user.uid,input]);return {mailboxId:input.mailbox,aliases:[{id:'AA_new',address:'streaming@taithai.app'}]};},async deleteAlias(user,input){calls.push(['alias-delete',user.uid,input]);return {mailboxId:input.mailbox,aliases:[]};},async read(user,input){calls.push(['read',user.uid,input]);return {updated:true};},async trash(user,input){calls.push(['trash',user.uid,input]);return {updated:true};}},
     billing:new Proxy({},{get(){throw Error('Billing must never be accessed');}})};
   runtime.resolveAccess=createAdminAccess({store,auth:runtime.auth}).resolveAccess;
   const options={env,getRuntime:async()=>{runtimeCalls++;return runtime;},rate:async(store,user,scope)=>{calls.push(['rate',user.uid,scope]);},verifyUnconfiguredOwner:async authorization=>{calls.push(['setup-owner']);if(authorization!=='Bearer '+tokens.owner)throw new MembershipError('OWNER_REQUIRED',403);},...extra};
@@ -62,7 +62,7 @@ test('owner status and mailboxes are ready without subscription, trial, price or
   assert.equal(f.calls.some(call=>call[0]==='auth'&&call[2]===true),true);
 });
 test('ordinary and dashboard-only users cannot perform mail actions despite fake paid/client-admin flags',async()=>{
-  for(const token of [tokens.member,tokens.dashboard])for(const [action,method,body] of [['status','GET'],['mailboxes','GET'],['folders','GET'],['messages','GET'],['message','GET'],['admin-status','GET'],['mailbox-create','POST',{localPart:'sunny'}],['send','POST',{}],['message-flags','POST',{read:true}]]){
+  for(const token of [tokens.member,tokens.dashboard])for(const [action,method,body] of [['status','GET'],['mailboxes','GET'],['folders','GET'],['messages','GET'],['message','GET'],['aliases','GET'],['alias-create','POST',{mailbox:'owner_123',localPart:'streaming',requestId:'fixture_alias_1234'}],['alias-delete','POST',{mailbox:'owner_123',aliasId:'AA_fixture',confirmAddress:'streaming@taithai.app',requestId:'fixture_delete_1234'}],['admin-status','GET'],['mailbox-create','POST',{localPart:'sunny'}],['send','POST',{}],['message-flags','POST',{read:true}]]){
     const f=harness(),response=await json(await f.handler(f.request(action,{method,body,token})));
     assert.equal(response.status,action==='status'?200:403,action);
     if(action==='status'){assert.equal(response.body.mailAccess,false);assert.equal('role' in response.body,false);assert.deepEqual(response.body.mailboxes,[]);}
@@ -158,4 +158,13 @@ test('Hostinger routing preflight still rejects old or mixed MX and does not inv
   const options={config,provider:{async assertReady(){calls++;return true;}}};
   await assert.rejects(assertMembershipMailRouting({...options,resolve:async()=>[{exchange:'smtp.secureserver.net'}]}),error=>error.code==='MAIL_NOT_READY');assert.equal(calls,0);
   await assertMembershipMailRouting({...options,resolve:async()=>[{exchange:'mx1.hostinger.com'},{exchange:'mx2.hostinger.com'}]});assert.equal(calls,1);
+});
+
+
+test('alias routes preserve verified UID, selected mailbox, private responses and the exact write origin',async()=>{
+ const f=harness();const query=f.request('aliases',{token:tokens.delegate});const url=new URL(query.url);url.searchParams.set('mailbox','mbx_selected');
+ const listed=await json(await f.handler(new Request(url,{headers:query.headers})));assert.equal(listed.status,200);assert.deepEqual(listed.body,{mailboxId:'mbx_selected',aliases:[]});assert.match(listed.headers.get('cache-control'),/no-store/);assert.ok(f.calls.some(c=>c[0]==='aliases'&&c[1]===delegate.uid&&c[2].mailbox==='mbx_selected'));
+ for(const action of ['alias-create','alias-delete']){const body={mailbox:'mbx_selected',localPart:'streaming',aliasId:'AA_fixture',confirmAddress:'streaming@taithai.app',requestId:'fixture_alias_123456'};const response=await f.handler(f.request(action,{token:tokens.delegate,method:'POST',body}));assert.equal(response.status,200);assert.ok(f.calls.some(c=>c[0]===action&&c[1]===delegate.uid&&c[2].mailbox==='mbx_selected'));}
+ const blocked=harness();assert.equal((await blocked.handler(blocked.request('alias-create',{method:'POST',origin:'https://evil.example',body:{}}))).status,403);assert.equal(blocked.runtimeCalls(),0);
+ f.data.get(`siteAdminGrants/${delegate.uid}`).active=false;const before=f.calls.filter(c=>c[0].startsWith('alias')).length;assert.equal((await f.handler(f.request('aliases',{token:tokens.delegate}))).status,403);assert.equal(f.calls.filter(c=>c[0].startsWith('alias')).length,before);
 });

@@ -20,6 +20,12 @@ export function mailboxMonthlyPrice(value,language = 'th') {const amount = new I
 export function membershipError(error, language = 'th', online = true) {
   const text = membershipText(language), code = String(error?.code || error?.message || '').toLowerCase();
   if (!online) return text.offline;
+  const aliasCopy=language==='en'?{limit:'The provider’s additional-name quota is full. Existing mail is still available.',name:'This additional name is unavailable. Choose another name.',confirmation:'Type the complete additional address to confirm deletion.',pending:'The result is not confirmed. Retry the original request with the same details.',state:'Additional names could not be loaded. Your inbox is still available.'}:{limit:'โควตาชื่อเพิ่มเติมของผู้ให้บริการเต็มแล้ว อีเมลเดิมยังใช้งานได้',name:'ชื่อเพิ่มเติมนี้ใช้ไม่ได้ กรุณาเลือกชื่ออื่น',confirmation:'พิมพ์ที่อยู่นามแฝงให้ครบเพื่อยืนยันการลบ',pending:'ยังยืนยันผลรายการไม่ได้ กรุณาตรวจสอบรายการเดิมโดยไม่เปลี่ยนข้อมูล',state:'ยังโหลดชื่อเพิ่มเติมไม่ได้ คุณยังเปิดอ่านอีเมลได้'};
+  if(code==='mail_alias_limit_reached')return aliasCopy.limit;
+  if(['address_unavailable','reserved_local_part'].includes(code))return aliasCopy.name;
+  if(code==='alias_confirmation_required')return aliasCopy.confirmation;
+  if(/mail_alias_(?:provisioning|delete)_uncertain|request_id_conflict|operation_in_progress/.test(code))return aliasCopy.pending;
+  if(code==='mail_alias_state_unavailable')return aliasCopy.state;
   if (/account.changed|session.changed/.test(code)) return text.changed;
   if (/timeout|abort/.test(code)) return text.timeout;
   if (/unauth|auth.required|auth.unavailable|token|sign.in/.test(code)) return text.auth;
@@ -63,15 +69,16 @@ export function createMembershipApi({ getUser, window: win = globalThis.window, 
       if (getUser?.()?.uid !== uid) throw Object.assign(Error('ACCOUNT_CHANGED'), { code:'ACCOUNT_CHANGED' });
       if (!response.ok || result.ok === false) {
         const code = typeof result.error === 'object' ? result.error?.code : result.error || result.code;
-        throw Object.assign(Error(code || `HTTP_${response.status}`), { code:code || (response.status === 401 ? 'UNAUTHENTICATED' : response.status === 403 ? 'PERMISSION_DENIED' : `HTTP_${response.status}`), status:response.status });
+        throw Object.assign(Error(code || `HTTP_${response.status}`), { code:code || (response.status === 401 ? 'UNAUTHENTICATED' : response.status === 403 ? 'PERMISSION_DENIED' : `HTTP_${response.status}`), status:response.status,deliveryUnknown:method==='POST'&&action.startsWith('alias-')&&response.status>=500 });
       }
       return result;
     } catch (error) {
-      if (error?.name === 'AbortError') throw Object.assign(Error('REQUEST_TIMEOUT'), { code:'REQUEST_TIMEOUT' });
+      if (error?.name === 'AbortError') throw Object.assign(Error('REQUEST_TIMEOUT'), { code:'REQUEST_TIMEOUT',deliveryUnknown:method==='POST'&&action.startsWith('alias-') });
+      if(method==='POST'&&action.startsWith('alias-')&&!error.status&&!['ACCOUNT_CHANGED','UNAUTHENTICATED'].includes(error.code))error.deliveryUnknown=true;
       throw error;
     } finally { (win?.clearTimeout || clearTimeout)(timer); pending.delete(controller); }
   }
-  return { call, abort() { for (const controller of pending) controller.abort(); pending.clear(); } };
+  return { call, aliases:input=>call('aliases',{params:input}),createAlias:input=>call('alias-create',{method:'POST',data:input}),deleteAlias:input=>call('alias-delete',{method:'POST',data:input}),abort() { for (const controller of pending) controller.abort(); pending.clear(); } };
 }
 export function createMemberUi(doc) {
   const el = (tag, text, className) => { const node = doc.createElement(tag); if (text !== undefined) node.textContent = String(text); if (className) node.className = className; return node; };

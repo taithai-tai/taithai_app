@@ -85,3 +85,20 @@
 .admin-roster-row:first-of-type { margin-top: 20px; }
 .admin-roster-row h3 { font-size: 1rem; overflow-wrap: anywhere; }
 .admin-roster-row .button-row { margin: 0; }
+
+/* Additional receiving names remain part of the selected private inbox. */
+.mail-aliases { display: grid; gap: 16px; padding-top: 20px; border-top: 1px solid var(--border); }
+.mail-aliases h3 { font-size: 1rem; font-weight: 500; }
+.mail-aliases .button-row { margin: 0; }
+.mail-aliases .notice { margin: 0; }
+.mail-aliases form { display: grid; gap: 16px; max-width: 640px; }
+.mail-aliases form .field { margin: 0; }
+.mail-aliases form > .button { justify-self: start; }
+.mail-alias-quota { color: var(--text-mid); font-size: .875rem; font-variant-numeric: tabular-nums; }
+.mail-alias-list { display: grid; gap: 16px; }
+.mail-alias-row { display: grid; gap: 12px; padding: 16px; border: 1px solid var(--border); border-radius: 18px; background: var(--bg); }
+.mail-alias-row > .button { justify-self: start; }
+.mail-alias-row .membership-address { font-size: 1rem; }
+.mail-recipient-match { display: block; font-size: .875rem; color: var(--text-mid); overflow-wrap: anywhere; }
+.mail-recipient-note { line-height: 1.7; }
+@media(max-width:760px) { .mail-alias-row { padding: 16px; } .mail-aliases .button-row { align-items: stretch; } }
