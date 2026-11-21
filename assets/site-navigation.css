@@ -701,6 +701,9 @@ html[data-motion="reduce"] .site-nav-tooltip {
   html body:is(.site-home, .site-page) #adminPanel .admin-app-savebar {
     bottom: calc(var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) + 8px);
   }
+  html body.site-home .toast {
+    bottom: calc(var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) + 8px);
+  }
   html body:is(.site-home, .site-page) .site-consent {
     bottom: calc(var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) + 8px) !important;
     max-height: calc(100dvh - var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) - 24px) !important;
