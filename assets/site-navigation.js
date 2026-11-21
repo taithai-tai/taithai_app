@@ -4,6 +4,13 @@ import {SITE_NAVIGATION_COPY,SITE_NAVIGATION_STORAGE_KEY} from './site-navigatio
 
 const visible=node=>Boolean(node&&!node.hidden&&node.getAttribute?.('aria-hidden')!=='true');
 const number=value=>Number.isFinite(Number(value))?Number(value):0;
+export function navigationViewportBounds(win){
+  const width=Math.max(1,number(win.innerWidth)||1024),height=Math.max(1,number(win.innerHeight)||768),visual=win.visualViewport;
+  const left=Math.max(0,Math.min(width-1,number(visual?.offsetLeft))),top=Math.max(0,Math.min(height-1,number(visual?.offsetTop)));
+  const right=Math.max(left+1,Math.min(width,left+(number(visual?.width)>0?number(visual.width):width)));
+  const bottom=Math.max(top+1,Math.min(height,top+(number(visual?.height)>0?number(visual.height):height)));
+  return {left,top,right,bottom,width:right-left,height:bottom-top};
+}
 export function navigationScrollState(scroller,axis='vertical'){
   const horizontal=axis==='horizontal',size=number(horizontal?scroller.clientWidth:scroller.clientHeight);
   const extent=Math.max(0,number(horizontal?scroller.scrollWidth:scroller.scrollHeight)-size);
@@ -14,7 +21,7 @@ export function createNavigationController({nav,window:win=globalThis.window,doc
   const scroller=nav?.querySelector?.('[data-nav-scroller]'),previous=nav?.querySelector?.('[data-nav-previous]'),next=nav?.querySelector?.('[data-nav-next]');
   if(!win||!doc||!nav||!scroller||!previous||!next||nav.dataset.navigationInitialized)return null;
   nav.dataset.navigationInitialized='true';
-  let disposed=false,suspended=false,generation=0,frame=null,resizeObserver=null,mutationObserver=null,pendingCurrent=true,pendingFocus=null,lastHeight='',axis='vertical',linkVisibility=new WeakMap();
+  let disposed=false,suspended=false,generation=0,frame=null,resizeObserver=null,mutationObserver=null,pendingCurrent=true,pendingFocus=null,lastHeight='',lastBottomSpace='',axis='vertical',linkVisibility=new WeakMap();
   const listeners=[];
   const toggle=nav.querySelector('[data-nav-toggle]'),animations=new Set(),motionQuery=win.matchMedia?.('(prefers-reduced-motion: reduce)');
   const expanded=()=>doc.documentElement.dataset.navigationExpanded==='true';
@@ -30,15 +37,15 @@ export function createNavigationController({nav,window:win=globalThis.window,doc
   function cancelAnimations(){for(const animation of animations)animation.cancel?.();animations.clear();if(transitionFrame!==null)cancelFrame(transitionFrame);transitionFrame=null;}
   function animate(node,frames,options={}){if(reduce()||typeof node?.animate!=='function')return;try{const animation=node.animate(frames,{duration:320,easing:'cubic-bezier(.22,1,.36,1)',...options});animations.add(animation);const done=()=>animations.delete(animation);animation.onfinish=done;animation.oncancel=done;if(animations.size>40)animations.values().next().value.cancel?.();return animation;}catch{/* Motion never blocks navigation. */}}
   function hideTooltip(cancelPending=true){if(tipTimer!==null)win.clearTimeout(tipTimer);tipTimer=null;if(cancelPending&&tipFrame!==null){cancelFrame(tipFrame);tipFrame=null;}if(tooltipLink){const ids=(tooltipLink.getAttribute('aria-describedby')||'').split(/\s+/).filter(id=>id&&id!==tooltip?.id);if(ids.length)tooltipLink.setAttribute('aria-describedby',ids.join(' '));else tooltipLink.removeAttribute?.('aria-describedby');}tooltipLink=null;tooltipAnimation?.cancel?.();if(tooltipAnimation)animations.delete(tooltipAnimation);tooltipAnimation=null;if(tooltip){tooltip.hidden=true;tooltip.textContent='';}}
-  function exposedLink(link){if(!visible(link)||link.isConnected===false||link.closest?.('[hidden],[inert],[aria-hidden="true"]')||!scroller.contains(link))return false;const rect=link.getBoundingClientRect(),clip=scroller.getBoundingClientRect();return rect.bottom>clip.top&&rect.top<clip.bottom&&rect.right>clip.left&&rect.left<clip.right&&rect.bottom>0&&rect.top<(win.innerHeight||768)&&rect.right>0&&rect.left<(win.innerWidth||1024);}
+  function exposedLink(link){if(!visible(link)||nav.dataset.keyboardOpen==='true'||link.isConnected===false||link.closest?.('[hidden],[inert],[aria-hidden="true"]')||!scroller.contains(link))return false;const rect=link.getBoundingClientRect(),clip=scroller.getBoundingClientRect(),viewport=navigationViewportBounds(win);return rect.bottom>clip.top&&rect.top<clip.bottom&&rect.right>clip.left&&rect.left<clip.right&&rect.bottom>viewport.top&&rect.top<viewport.bottom&&rect.right>viewport.left&&rect.left<viewport.right;}
   function showTooltip(link){
     if(disposed||suspended||expanded()||!tooltip||dismissedLink===link||!exposedLink(link))return;hideTooltip();tooltipLink=link;
     const label=link.querySelector('.site-nav-label');tooltip.textContent=label?.dataset?.[language()]||label?.textContent||link.getAttribute('aria-label')||'';if(!tooltip.textContent)return;
-    tooltip.hidden=false;tooltip.style.left='0px';tooltip.style.top='0px';const rect=link.getBoundingClientRect(),tip=tooltip.getBoundingClientRect(),width=tip.width||160,height=tip.height||40,vw=win.innerWidth||1024,vh=win.innerHeight||768;
+    const viewport=navigationViewportBounds(win);tooltip.style.maxWidth=Math.max(24,viewport.width-16)+'px';tooltip.hidden=false;tooltip.style.left='0px';tooltip.style.top='0px';const rect=link.getBoundingClientRect(),tip=tooltip.getBoundingClientRect(),width=tip.width||160,height=tip.height||40;
     let left=rect.right+10,top=rect.top+(rect.bottom-rect.top-height)/2,placement='right';
-    if(axis==='horizontal'){left=rect.left+(rect.right-rect.left-width)/2;top=rect.bottom+10;placement='bottom';if(top+height>vh-8){top=rect.top-height-10;placement='top';}}
-    else if(left+width>vw-8){left=rect.left-width-10;placement='left';}
-    tooltip.dataset.placement=placement;tooltip.style.left=Math.max(8,Math.min(vw-width-8,left))+'px';tooltip.style.top=Math.max(8,Math.min(vh-height-8,top))+'px';
+    if(axis==='horizontal'){left=rect.left+(rect.right-rect.left-width)/2;top=rect.bottom+10;placement='bottom';if(top+height>viewport.bottom-8){top=rect.top-height-10;placement='top';}}
+    else if(left+width>viewport.right-8){left=rect.left-width-10;placement='left';}
+    tooltip.dataset.placement=placement;tooltip.style.left=Math.max(viewport.left+8,Math.min(viewport.right-width-8,left))+'px';tooltip.style.top=Math.max(viewport.top+8,Math.min(viewport.bottom-height-8,top))+'px';
     const ids=new Set((link.getAttribute('aria-describedby')||'').split(/\s+/).filter(Boolean));ids.add(tooltip.id);link.setAttribute('aria-describedby',[...ids].join(' '));
     tooltipAnimation=animate(tooltip,[{opacity:0,transform:'translateY(4px)'},{opacity:1,transform:'translateY(0)'}],{duration:160});
   }
@@ -79,11 +86,21 @@ export function createNavigationController({nav,window:win=globalThis.window,doc
   }
   function update(){
     frame=null;if(disposed||suspended)return;
-    const text=SITE_NAVIGATION_COPY[language()],rect=nav.getBoundingClientRect(),computedTop=parseFloat(style(nav).top)||0;
-    const visual=win.visualViewport,bottom=visual?Math.min(win.innerHeight,visual.height+(visual.offsetTop||0)):win.innerHeight;
+    const text=SITE_NAVIGATION_COPY[language()],rect=nav.getBoundingClientRect(),computed=style(nav),computedTop=parseFloat(computed.top)||0;
+    const viewport=navigationViewportBounds(win),bottom=viewport.bottom;
     const height=Math.max(144,Math.floor((bottom||768)-Math.max(rect.top,computedTop)-16))+'px';
     if(lastHeight!==height){nav.style.setProperty('--site-nav-available-height',height);lastHeight=height;}
     axis=String(style(scroller).flexDirection||'column').startsWith('row')?'horizontal':'vertical';
+    const fixedBottom=axis==='horizontal'&&computed.position==='fixed';
+    if(fixedBottom){
+      const clearance=Math.ceil((number(rect.height)||Math.max(0,rect.bottom-rect.top))+Math.max(0,parseFloat(computed.bottom)||0)+16)+'px';
+      if(lastBottomSpace!==clearance){doc.documentElement.style?.setProperty?.('--site-nav-bottom-space',clearance);lastBottomSpace=clearance;}
+    }else if(lastBottomSpace){doc.documentElement.style?.removeProperty?.('--site-nav-bottom-space');lastBottomSpace='';}
+    const editing=doc.activeElement,tag=editing?.tagName?.toLowerCase(),inputType=String(editing?.type||'text').toLowerCase();
+    const editor=Boolean(editing&&!nav.contains(editing)&&!editing.disabled&&!editing.readOnly&&(editing.isContentEditable===true||editing.getAttribute?.('contenteditable')==='true'||tag==='textarea'||tag==='input'&&!['button','submit','reset','checkbox','radio','file','range','color'].includes(inputType)));
+    const keyboardOpen=fixedBottom&&editor&&Boolean(win.visualViewport)&&number(win.innerHeight)-viewport.bottom>140;
+    if(nav.dataset.keyboardOpen!==String(keyboardOpen))nav.dataset.keyboardOpen=String(keyboardOpen);
+    if(keyboardOpen)hideTooltip();
     if(nav.dataset.navAxis!==axis)nav.dataset.navAxis=axis;
     scroller.setAttribute('aria-label',text.menu);
     if(toggle){const key=expanded()?'collapse':'expand';toggle.setAttribute('aria-expanded',String(expanded()));toggle.setAttribute('aria-label',text[key]);const label=toggle.querySelector('.site-nav-toggle-label');if(label){label.textContent=text[key];label.dataset.th=SITE_NAVIGATION_COPY.th[key];label.dataset.en=SITE_NAVIGATION_COPY.en[key];}}
@@ -133,6 +150,7 @@ export function createNavigationController({nav,window:win=globalThis.window,doc
     listen(scroller,'scroll',onScroll,{passive:true});listen(scroller,'focusin',onFocus);listen(scroller,'focusout',event=>{if(!scroller.contains(event.relatedTarget))hideTooltip();});listen(scroller,'keydown',onKey);listen(previous,'click',onPrevious);listen(next,'click',onNext);listen(toggle,'click',()=>setExpanded(!expanded()));
     for(const link of scroller.querySelectorAll('a[data-navigation-item]')){listen(link,'pointerenter',event=>{if(event.pointerType!=='touch'){dismissedLink=null;showTooltip(link);}});listen(link,'pointerleave',delayTooltipHide);listen(link,'click',()=>hideTooltip());}
     listen(tooltip,'pointerenter',()=>{if(tipTimer!==null)win.clearTimeout(tipTimer);tipTimer=null;});listen(tooltip,'pointerleave',delayTooltipHide);listen(doc,'keydown',event=>{if(event.key==='Escape')dismissTooltip();});
+    listen(doc,'focusin',schedule);listen(doc,'focusout',schedule);
     listen(win,'resize',onResize,{passive:true});listen(win,'scroll',onScroll,{passive:true});listen(win,'orientationchange',onResize,{passive:true});listen(win,'taithai:preferences',onPreferences);listen(win,'storage',onStorage);
     listen(win.visualViewport,'resize',onResize,{passive:true});listen(win.visualViewport,'scroll',onScroll,{passive:true});listen(motionQuery,'change',onPreferences);
     if(typeof win.MutationObserver==='function'){rootObserver=new win.MutationObserver(()=>{if(currentGeneration!==generation)return;if(reduce())cancelAnimations();if(expanded())hideTooltip();schedule();});rootObserver.observe(doc.documentElement,{attributes:true,attributeFilter:['data-motion','data-navigation-expanded']});}
@@ -141,7 +159,7 @@ export function createNavigationController({nav,window:win=globalThis.window,doc
   function disconnect(){suspended=true;generation++;if(frame!==null)cancelFrame(frame);frame=null;hideTooltip();cancelAnimations();resizeObserver?.disconnect();mutationObserver?.disconnect();rootObserver?.disconnect();resizeObserver=mutationObserver=rootObserver=null;for(const remove of listeners.splice(0))remove();pendingFocus=null;}
   const onHide=()=>disconnect(),onShow=event=>{if(event.persisted&&!disposed&&suspended)connect();};
   win.addEventListener('pagehide',onHide);win.addEventListener('pageshow',onShow);connect();
-  return {refresh:schedule,setExpanded,destroy(){disposed=true;disconnect();tooltip?.remove?.();win.removeEventListener('pagehide',onHide);win.removeEventListener('pageshow',onShow);delete nav.dataset.navigationInitialized;}};
+  return {refresh:schedule,setExpanded,destroy(){disposed=true;disconnect();doc.documentElement.style?.removeProperty?.('--site-nav-bottom-space');tooltip?.remove?.();win.removeEventListener('pagehide',onHide);win.removeEventListener('pageshow',onShow);delete nav.dataset.navigationInitialized;}};
 }
 export function initSiteNavigation({window:win=globalThis.window,document:doc=win?.document}={}){
   if(!win||!doc)return null;const controls=[...doc.querySelectorAll('[data-site-navigation]')].map(nav=>createNavigationController({nav,window:win,document:doc})).filter(Boolean);

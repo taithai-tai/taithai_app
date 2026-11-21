@@ -6,7 +6,7 @@ import path from 'node:path';
 import {runInNewContext} from 'node:vm';
 import {SITE_NAVIGATION_ITEMS,SITE_NAVIGATION_ORIGIN} from '../assets/site-navigation-catalog.js';
 import {SITE_NAVIGATION_PAGES,renderNavigationDocument,syncSiteNavigation} from './sync-site-navigation.mjs';
-import {navigationScrollState,createNavigationController} from '../assets/site-navigation.js';
+import {navigationScrollState,navigationViewportBounds,createNavigationController} from '../assets/site-navigation.js';
 
 class Events{
   events=new Map();addEventListener(name,fn){if(!this.events.has(name))this.events.set(name,new Set());this.events.get(name).add(fn);}removeEventListener(name,fn){this.events.get(name)?.delete(fn);}fire(name,event={}){for(const fn of this.events.get(name)||[])fn({target:this,preventDefault(){this.prevented=true;},...event});}
@@ -29,19 +29,20 @@ class Element extends Events{
 }
 function fixture({axis='vertical',current='home',viewport=768,scrollerSize=216}={}){
   const doc=Object.assign(new Events(),{documentElement:{lang:'en',dataset:{}},activeElement:null,focusCalls:[],animations:[]}),win=new Events(),frames=new Map();let nextFrame=0;
+  doc.documentElement.style={values:{},setProperty(key,value){this.values[key]=value;},removeProperty(key){delete this.values[key];}};
   doc.createElement=tag=>new Element(tag,doc);doc.body=doc.createElement('body');doc.querySelector=selector=>doc.body.querySelector(selector);
   win.innerHeight=viewport;win.innerWidth=1024;win.setTimeout=setTimeout;win.clearTimeout=clearTimeout;win.localStorage={values:new Map(),getItem(key){return this.values.get(key)||null;},setItem(key,value){this.values.set(key,value);}};win.visualViewport=new Events();win.visualViewport.height=viewport;win.visualViewport.offsetTop=0;win.TaithaiPreferences={get:()=>({language:doc.documentElement.lang,reduceMotion:doc.documentElement.dataset.motion})};const motionQuery=Object.assign(new Events(),{matches:false});win.matchMedia=()=>motionQuery;
   win.requestAnimationFrame=fn=>{frames.set(++nextFrame,fn);return nextFrame;};win.cancelAnimationFrame=id=>frames.delete(id);
   const nav=new Element('nav',doc),scroll=new Element('div',doc),previous=new Element('button',doc),next=new Element('button',doc),toggle=new Element('button',doc);toggle.dataset.navToggle='';const toggleLabel=new Element('span',doc);toggleLabel.className='site-nav-toggle-label';toggle.append(toggleLabel);
   nav.dataset.siteNavigation='';scroll.dataset.navScroller='';previous.dataset.navPrevious='';next.dataset.navNext='';previous.hidden=next.hidden=true;
   for(const button of [previous,next]){const label=new Element('span',doc);label.className='site-nav-control-label';button.append(label);}
-  nav.append(toggle,previous,scroll,next);doc.body.append(nav);nav.top=40;nav.getBoundingClientRect=()=>({top:nav.top,bottom:nav.top+500,left:24,right:120});
+  nav.append(toggle,previous,scroll,next);doc.body.append(nav);nav.top=40;nav.height=500;nav.getBoundingClientRect=()=>({top:nav.top,bottom:nav.top+nav.height,height:nav.height,left:24,right:120});
   scroll.axis=axis;scroll.size=scrollerSize;scroll.scrollTop=scroll.scrollLeft=0;
   Object.defineProperties(scroll,{clientWidth:{get:()=>scroll.axis==='horizontal'?scroll.size:96},clientHeight:{get:()=>scroll.axis==='vertical'?scroll.size:96},scrollWidth:{get:()=>scroll.axis==='horizontal'?scroll.children.filter(link=>!link.hidden).length*80:96},scrollHeight:{get:()=>scroll.axis==='vertical'?scroll.children.filter(link=>!link.hidden).length*80:96}});
   scroll.getBoundingClientRect=()=>({top:100,left:24,right:24+scroll.clientWidth,bottom:100+scroll.clientHeight});
   scroll.moves=[];scroll.scrollBy=options=>{scroll.moves.push(options);const horizontal=scroll.axis==='horizontal',extent=(horizontal?scroll.scrollWidth-scroll.clientWidth:scroll.scrollHeight-scroll.clientHeight);const key=horizontal?'scrollLeft':'scrollTop',delta=horizontal?options.left:options.top;scroll[key]=Math.max(0,Math.min(extent,scroll[key]+delta));scroll.fire('scroll');};
   const links=Object.fromEntries(SITE_NAVIGATION_ITEMS.map(item=>{const link=new Element('a',doc);link.dataset.navigationItem=item.id;link.hidden=Boolean(item.access);if(current===item.id)link.setAttribute('aria-current','page');if(item.access)link.setAttribute('data-'+item.access+'-access','');scroll.append(link);link.getBoundingClientRect=()=>{const index=scroll.children.filter(node=>!node.hidden).indexOf(link),box=scroll.getBoundingClientRect();return scroll.axis==='horizontal'?{left:box.left+index*80-scroll.scrollLeft,right:box.left+(index+1)*80-scroll.scrollLeft,top:box.top,bottom:box.bottom}:{top:box.top+index*80-scroll.scrollTop,bottom:box.top+(index+1)*80-scroll.scrollTop,left:box.left,right:box.right};};const icon=new Element('svg',doc);icon.className='nav-icon';icon.getBoundingClientRect=()=>{const rect=link.getBoundingClientRect();return {...rect,left:rect.left+(doc.documentElement.dataset.navigationExpanded==='true'?8:28)};};const label=new Element('span',doc);label.className='site-nav-label';label.dataset.en=item.en;label.dataset.th=item.th;label.textContent=item.en;link.append(icon,label);return [item.id,link];}));
-  win.getComputedStyle=node=>node===scroll?{flexDirection:scroll.axis==='horizontal'?'row':'column'}:{top:'24px'};
+  win.getComputedStyle=node=>node===scroll?{flexDirection:scroll.axis==='horizontal'?'row':'column'}:{top:'24px',position:nav.fixed?'fixed':'sticky',bottom:String(nav.bottom||0)+'px'};
   const observers={resize:[],mutation:[]};
   win.ResizeObserver=class{constructor(callback){this.callback=callback;observers.resize.push(this);}observe(){}disconnect(){this.closed=true;}};
   win.MutationObserver=class{constructor(callback){this.callback=callback;observers.mutation.push(this);}observe(_,options){this.options=options;}disconnect(){this.closed=true;}};
@@ -159,4 +160,28 @@ test('rapid toggles and live reduced motion cancel existing animation and BFCach
 test('focus leaving the menu before its queued frame cannot reveal an old tooltip or scroll an inactive link',()=>{
   const site=fixture(),link=site.links.about,tip=site.doc.querySelector('[data-nav-tooltip]');link.focus();site.scroll.fire('focusin',{target:link});site.scroll.moves=[];
   site.toggle.focus();site.scroll.fire('focusout',{relatedTarget:site.toggle});site.flush();assert.equal(tip.hidden,true);assert.equal(tip.textContent,'');assert.equal(link.getAttribute('aria-describedby'),null);assert.equal(site.doc.activeElement,site.toggle);assert.equal(site.scroll.moves.length,0);site.controller.destroy();
+});
+
+test('fixed bottom clearance tracks the actual expanded height and resets on desktop or destroy',()=>{
+  const site=fixture({axis:'horizontal'});site.nav.fixed=true;site.nav.height=72;site.nav.bottom=20;site.controller.refresh();site.flush();assert.equal(site.doc.documentElement.style.values['--site-nav-bottom-space'],'108px');
+  site.nav.height=124;site.observers.resize[0].callback();site.flush();assert.equal(site.doc.documentElement.style.values['--site-nav-bottom-space'],'160px');
+  site.scroll.axis='vertical';site.win.fire('resize');site.flush();assert.equal(site.doc.documentElement.style.values['--site-nav-bottom-space'],undefined);
+  site.scroll.axis='horizontal';site.controller.refresh();site.flush();assert.equal(site.doc.documentElement.style.values['--site-nav-bottom-space'],'160px');site.controller.destroy();assert.equal(site.doc.documentElement.style.values['--site-nav-bottom-space'],undefined);
+});
+
+test('bottom dock tooltips flip above the reduced visual viewport instead of behind a keyboard',()=>{
+  const site=fixture({axis:'horizontal',viewport:800});site.win.innerWidth=375;site.win.visualViewport.height=500;site.win.visualViewport.width=375;
+  site.scroll.getBoundingClientRect=()=>({top:420,bottom:468,left:0,right:375});site.links.home.getBoundingClientRect=()=>({top:420,bottom:468,left:20,right:68});site.links.home.fire('pointerenter',{pointerType:'mouse'});
+  const tip=site.doc.querySelector('[data-nav-tooltip]');assert.equal(tip.hidden,false);assert.equal(tip.dataset.placement,'top');assert.ok(parseFloat(tip.style.top)+40<=492);assert.ok(parseFloat(tip.style.left)>=8);site.controller.destroy();
+});
+
+test('keyboard hiding requires a real reduced visual viewport and an outside text editor',()=>{
+  const site=fixture({axis:'horizontal',viewport:800});site.nav.fixed=true;site.nav.height=72;const input=site.doc.createElement('input');input.type='text';site.doc.body.append(input);input.focus();site.doc.fire('focusin',{target:input});site.flush();assert.equal(site.nav.dataset.keyboardOpen,'false','ordinary focus without keyboard reduction keeps the dock');
+  site.win.visualViewport.height=480;site.win.visualViewport.fire('resize');site.flush();assert.equal(site.nav.dataset.keyboardOpen,'true');assert.ok(site.doc.documentElement.style.values['--site-nav-bottom-space']);
+  site.toggle.focus();site.doc.fire('focusin',{target:site.toggle});site.flush();assert.equal(site.nav.dataset.keyboardOpen,'false','navigation controls never count as an editor');
+  input.type='checkbox';input.focus();site.doc.fire('focusin',{target:input});site.flush();assert.equal(site.nav.dataset.keyboardOpen,'false');site.controller.destroy();
+});
+
+test('visual viewport bounds include panning offsets and clamp to the layout viewport',()=>{
+  assert.deepEqual(navigationViewportBounds({innerWidth:375,innerHeight:800,visualViewport:{offsetLeft:10,offsetTop:25,width:300,height:450}}),{left:10,top:25,right:310,bottom:475,width:300,height:450});
 });

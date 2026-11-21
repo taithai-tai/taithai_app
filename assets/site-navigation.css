@@ -672,3 +672,37 @@ html[data-motion="reduce"] .site-navigation a::before,
 html[data-motion="reduce"] .site-nav-tooltip {
   animation: none !important;
 }
+
+/* Keep phone navigation within thumb reach and clear of the home indicator. */
+@media (max-width: 900px) {
+  html:has(body:is(.site-home, .site-page)) {
+    scroll-padding-bottom: var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px)));
+  }
+  html body:is(.site-home, .site-page) {
+    padding-bottom: var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px)));
+  }
+  html body:is(.site-home, .site-page) nav.site-navigation.site-navigation {
+    position: fixed;
+    top: auto;
+    bottom: max(10px, env(safe-area-inset-bottom, 0px));
+    left: max(12px, env(safe-area-inset-left, 0px));
+    right: max(12px, env(safe-area-inset-right, 0px));
+    width: auto;
+    max-width: none;
+    margin: 0;
+    z-index: 60;
+    box-shadow: 0 -2px 16px #00000012;
+  }
+  html body:is(.site-home, .site-page) nav.site-navigation[data-keyboard-open="true"] {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+  html body:is(.site-home, .site-page) #adminPanel .admin-app-savebar {
+    bottom: calc(var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) + 8px);
+  }
+  html body:is(.site-home, .site-page) .site-consent {
+    bottom: calc(var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) + 8px) !important;
+    max-height: calc(100dvh - var(--site-nav-bottom-space, calc(104px + env(safe-area-inset-bottom, 0px))) - 24px) !important;
+  }
+}
