@@ -7,8 +7,8 @@ import { buildACE } from '../ace/scripts/build.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'public');
 const excluded = new Set([
-  '.git', '.github', '.agents', '.codex', '.firebase', 'api', '.gitignore', 'node_modules',
-  'public', 'scripts', 'chordly', 'package.json', 'package-lock.json', 'server.js',
+  '.git', '.github', '.agents', '.codex', '.firebase', '.netlify', '.vercel', 'api', '.gitignore', 'node_modules',
+  'public', 'scripts', 'chordly', 'package.json', 'package-lock.json', 'server.js', 'netlify', 'netlify.toml',
   'vercel.json', 'README.md', 'docs', 'ace', 'firebase-blueprint.json', 'firebase.json', 'firestore.indexes.json', 'firebase-debug.log',
   '.firebaserc', 'firestore.rules', 'storage.rules', 'ticket-analyzer.js', 'server-lib', 'proxy.js'
 ]);

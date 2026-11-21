@@ -73,8 +73,8 @@ assert.match(pages.find((page) => page.route === "/services/").html, /data-rende
 assert.match(pages.find((page) => page.route === "/pricing/").html, /data-render="pricing-table"/);
 
 const contactHtml = pages.find((page) => page.route === "/contact/").html;
-assert.match(contactHtml, /ข้อมูลที่กรอกยังไม่ถูกส่ง/);
-assert.match(contactHtml, /สร้างสรุปคำขอ/);
+assert.match(contactHtml, /id="contact-consent"/);
+assert.match(contactHtml, /id="send-request"[^>]+disabled/);
 assert.doesNotMatch(contactHtml, /ส่งสำเร็จ/);
 assert.doesNotMatch(contactHtml, /<(?:input|select|textarea)[^>]+name="/, "contact fields cannot leak through a no-JS GET submit");
 assert.match(contactHtml, /id="contact-submit"[^>]+disabled/, "contact submit starts disabled until handlers are ready");
@@ -87,7 +87,8 @@ assert.match(pages.find((page) => page.route === "/pricing/").html, /contact\/\?
 
 for (const file of ["site-data.js", "site.js", "demo-engine.js", "ai-client.js", "demo.js", "contact.js"]) {
   const code = fs.readFileSync(path.join(dist, "assets", file), "utf8");
-  new vm.Script(code, { filename: file });
+  if (file === "contact.js") await import(new URL("../site/assets/contact.js", import.meta.url));
+  else new vm.Script(code, { filename: file });
 }
 
 const workerSource = fs.readFileSync(path.resolve(here, "../worker/index.template.js"), "utf8");

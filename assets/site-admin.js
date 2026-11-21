@@ -7,11 +7,11 @@ const EVENT_NAMES = ['page_view', 'app_open', 'click', 'heartbeat', 'preference_
 const REPORT_STATUSES = ['open', 'in_progress', 'resolved', 'closed'];
 const MAX_REPLY_LENGTH = 4000;
 const DAY = 86400000;
-const TAB_NAMES = ['overview', 'activity', 'reports', 'apps'];
+const TAB_NAMES = ['overview', 'activity', 'reports', 'apps', 'membership'];
 const translations = {
   en: {
     loading: 'Checking administrator access…', deniedTitle: 'Administrator access only', denied: 'This area is available only to the verified site owner. Your account does not have access.', signedOut: 'Sign in with the site owner’s Google account to continue.', signIn: 'Sign in with Google', signOut: 'Sign out', retry: 'Try again', authFailed: 'We could not check administrator access. Check your connection and try again.', dataFailed: 'We could not load this data. Check your connection and try again.', authError: 'Sign-in could not be completed. Please try again.', popupClosed: 'The sign-in window was closed. You can try again.', popupBlocked: 'Allow pop-ups for this site, then try again.', network: 'You are offline or the connection failed. Reconnect and try again.', permission: 'Administrator access was denied. Check that you are signed in with the verified owner account.',
-    overview: 'Overview', activity: 'Activity', reports: 'Reports', apps: 'Manage apps', scope: 'These statistics include only visitors who opted in to usage measurement. Collection starts after consent; past visits are not recovered. Private form content, movie notes, files, and chat messages are not recorded.',
+    overview: 'Overview', activity: 'Activity', reports: 'Reports', apps: 'Manage apps', membership: 'Membership and discounts', scope: 'These statistics include only visitors who opted in to usage measurement. Collection starts after consent; past visits are not recovered. Private form content, movie notes, files, and chat messages are not recorded.',
     range: 'Date range', days7: 'Last 7 days', days30: 'Last 30 days', days90: 'Last 90 days', app: 'App', allApps: 'All apps', event: 'Event', allEvents: 'All events', actor: 'Person or account', actorHint: 'Search name, email, account or session ID', clearFilters: 'Clear filters',
     actorActivity: 'Accounts and anonymous sessions', actorSummaryNote: 'This view summarizes loaded records matching the filters. Anonymous sessions and signed-in accounts are separate groups; signing in can place one visit in both groups.', firstSeen: 'First seen', lastSeen: 'Last seen', appsUsed: 'Apps used', viewActivity: 'View activity', groups: 'groups', pageViews: 'Page views', appOpens: 'App opens', clicks: 'Clicks', sessions: 'Sessions', accounts: 'Signed-in accounts', activeTime: 'Active time', seconds: 'seconds', minutes: 'min', hours: 'hr', daily: 'Daily activity', dailyHint: 'Number of recorded events by Bangkok date', topApps: 'Apps used', topActions: 'Actions recorded', count: 'Count', noEvents: 'No matching activity', noEventsHelp: 'There may be no consenting visitors in this period, or no events matching your filters. No sample activity is shown.',
     loadingEvents: 'Loading activity…', moreEvents: 'Load more activity', loaded: 'events loaded', matching: 'matching the current filters', bounded: 'Statistics describe the loaded events only. Load more to include older records in this period.', allLoaded: 'All available events in this period are loaded', exportCsv: 'Export displayed activity as CSV', csvHint: 'The export includes only the loaded rows matching the current filters. It may contain account names and emails.',
@@ -21,7 +21,7 @@ const translations = {
   },
   th: {
     loading: 'กำลังตรวจสอบสิทธิ์ผู้ดูแล…', deniedTitle: 'สำหรับผู้ดูแลเว็บไซต์', denied: 'ส่วนนี้เปิดให้เจ้าของเว็บไซต์ที่ยืนยันบัญชีแล้วเท่านั้น บัญชีนี้ไม่มีสิทธิ์เข้าถึง', signedOut: 'เข้าสู่ระบบด้วยบัญชี Google ของเจ้าของเว็บไซต์เพื่อดำเนินการต่อ', signIn: 'เข้าสู่ระบบด้วย Google', signOut: 'ออกจากระบบ', retry: 'ลองอีกครั้ง', authFailed: 'ตรวจสอบสิทธิ์ผู้ดูแลไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง', dataFailed: 'โหลดข้อมูลไม่สำเร็จ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง', authError: 'เข้าสู่ระบบไม่สำเร็จ กรุณาลองอีกครั้ง', popupClosed: 'ปิดหน้าต่างเข้าสู่ระบบแล้ว สามารถลองใหม่ได้', popupBlocked: 'อนุญาตป๊อปอัปสำหรับเว็บไซต์นี้แล้วลองอีกครั้ง', network: 'ขณะนี้ออฟไลน์หรือการเชื่อมต่อขัดข้อง เชื่อมต่ออินเทอร์เน็ตแล้วลองอีกครั้ง', permission: 'ไม่มีสิทธิ์ผู้ดูแล ตรวจสอบว่าเข้าสู่ระบบด้วยบัญชีเจ้าของเว็บไซต์ที่ยืนยันแล้ว',
-    overview: 'ภาพรวม', activity: 'การใช้งาน', reports: 'เรื่องร้องเรียน', apps: 'จัดการแอป', scope: 'สถิตินับเฉพาะผู้ที่ยินยอมให้เก็บข้อมูลการใช้งาน เริ่มบันทึกหลังยินยอมและไม่สามารถเรียกคืนการเข้าชมในอดีต ไม่บันทึกเนื้อหาแบบฟอร์มส่วนตัว บันทึกหนัง ไฟล์ หรือข้อความแชต',
+    overview: 'ภาพรวม', activity: 'การใช้งาน', reports: 'เรื่องร้องเรียน', apps: 'จัดการแอป', membership: 'สมาชิกและส่วนลด', scope: 'สถิตินับเฉพาะผู้ที่ยินยอมให้เก็บข้อมูลการใช้งาน เริ่มบันทึกหลังยินยอมและไม่สามารถเรียกคืนการเข้าชมในอดีต ไม่บันทึกเนื้อหาแบบฟอร์มส่วนตัว บันทึกหนัง ไฟล์ หรือข้อความแชต',
     range: 'ช่วงเวลา', days7: '7 วันที่ผ่านมา', days30: '30 วันที่ผ่านมา', days90: '90 วันที่ผ่านมา', app: 'แอป', allApps: 'ทุกแอป', event: 'เหตุการณ์', allEvents: 'ทุกเหตุการณ์', actor: 'บุคคลหรือบัญชี', actorHint: 'ค้นหาชื่อ อีเมล รหัสบัญชีหรือเซสชัน', clearFilters: 'ล้างตัวกรอง',
     actorActivity: 'บัญชีและเซสชันไม่ระบุตัวตน', actorSummaryNote: 'สรุปจากข้อมูลที่โหลดแล้วและตรงกับตัวกรอง แยกเซสชันไม่ระบุตัวตนจากบัญชีที่เข้าสู่ระบบ การเข้าสู่ระบบระหว่างใช้งานอาจทำให้การเยี่ยมชมเดียวอยู่ในทั้งสองกลุ่ม', firstSeen: 'พบครั้งแรก', lastSeen: 'พบล่าสุด', appsUsed: 'แอปที่ใช้', viewActivity: 'ดูการใช้งาน', groups: 'กลุ่ม', pageViews: 'การเปิดหน้า', appOpens: 'การเปิดแอป', clicks: 'การคลิก', sessions: 'เซสชัน', accounts: 'บัญชีที่เข้าสู่ระบบ', activeTime: 'เวลาที่ใช้งาน', seconds: 'วินาที', minutes: 'นาที', hours: 'ชม.', daily: 'การใช้งานรายวัน', dailyHint: 'จำนวนเหตุการณ์ที่บันทึก แยกตามวันที่เวลาไทย', topApps: 'แอปที่ใช้', topActions: 'การกระทำที่บันทึก', count: 'จำนวน', noEvents: 'ไม่มีการใช้งานที่ตรงกับตัวกรอง', noEventsHelp: 'อาจยังไม่มีผู้ใช้ที่ยินยอมเก็บสถิติในช่วงนี้ หรือไม่มีข้อมูลตรงกับตัวกรอง หน้านี้ไม่แสดงข้อมูลตัวอย่าง',
     loadingEvents: 'กำลังโหลดการใช้งาน…', moreEvents: 'โหลดการใช้งานเพิ่มเติม', loaded: 'เหตุการณ์ที่โหลดแล้ว', matching: 'ตรงกับตัวกรองปัจจุบัน', bounded: 'สถิติคำนวณจากเหตุการณ์ที่โหลดแล้วเท่านั้น กดโหลดเพิ่มเติมเพื่อนับข้อมูลเก่ากว่าในช่วงเวลานี้', allLoaded: 'โหลดเหตุการณ์ทั้งหมดที่มีในช่วงเวลานี้แล้ว', exportCsv: 'ส่งออกการใช้งานที่แสดงเป็น CSV', csvHint: 'ส่งออกเฉพาะข้อมูลที่โหลดแล้วและตรงกับตัวกรองปัจจุบัน ไฟล์อาจมีชื่อบัญชีและอีเมล',
@@ -132,17 +132,36 @@ export async function initAdminPage(options = {}) {
   root.dataset.adminInitialized = 'true';
   const loadAuth = options.loadAuth || (() => import(AUTH_MODULE));
   const loadData = options.loadData || (() => import(DATA_MODULE));
+  const loadMembership = options.loadMembership || (() => import('./site-admin-membership.js'));
   const now = options.now || (() => new Date());
   const locale = () => win.TaithaiPreferences?.get?.().language === 'th' || (!win.TaithaiPreferences && doc.documentElement.lang === 'th') ? 'th' : 'en';
   const t = () => translations[locale()];
   let auth; let data; let user = null; let authChecked = false; let authFailed = false; let authBusy = false; let authMessage = '';
   let disposed = false; let unsubscribe = () => {}; let authTimer; let authRequest = 0; let ownerEpoch = 0;
-  let currentTab = win.location?.hash === '#apps' ? 'apps' : 'overview'; let days = 7; let filters = { app: '', event: '', actor: '' };
+  let currentTab = ['apps','membership'].includes(win.location?.hash?.slice(1)) ? win.location.hash.slice(1) : 'overview'; let days = 7; let filters = { app: '', event: '', actor: '' };
   let from; let to; let events = []; let eventCursor = null; let eventLoading = false; let eventError = ''; let eventLoaded = false; let eventRequest = 0; let activityPage = 0;
   let reports = []; let reportCursor = null; let reportLoading = false; let reportError = ''; let reportLoaded = false; let reportRequest = 0; let statusFilter = 'open';
   let activeReport = null; let reportDraft = null; let dialogMessage = ''; let reportSaving = false; let dialogUncertain = false;
   let lastLocale = locale();
+  let membershipController = null, membershipView = null, membershipLoading = false, membershipRequest = 0;
   const appsPanel = createAppVisibilityPanel({ document: doc, window: win, locale, isOwner: hasOwner, loadData: dataSource, redraw: renderPanels });
+
+  function clearMembership() {
+    membershipRequest++; membershipLoading=false;
+    membershipController?.destroy(); membershipController=null; membershipView=null;
+  }
+  async function ensureMembership(container) {
+    if(membershipController || membershipLoading || !hasOwner() || currentTab!=='membership')return;
+    const epoch=ownerEpoch,request=++membershipRequest;membershipLoading=true;
+    container.replaceChildren(panel('',t().loading));
+    try {
+      const source=await loadMembership();
+      if(disposed || !hasOwner(epoch) || request!==membershipRequest || currentTab!=='membership')return;
+      membershipController=source.initMembershipAdmin(container,{getUser:()=>hasOwner()?user:null,window:win,document:doc,request:options.membershipRequest});
+    } catch {
+      if(!disposed && hasOwner(epoch) && request===membershipRequest)container.replaceChildren(notice(t().dataFailed,true),button(t().retry,()=>{membershipLoading=false;void ensureMembership(container);}));
+    } finally {if(request===membershipRequest)membershipLoading=false;}
+  }
 
   function el(tag, text, className) { const item = doc.createElement(tag); if (text !== undefined) item.textContent = text; if (className) item.className = className; return item; }
   function button(text, handler, primary = false) { const item = el('button', text, 'button ' + (primary ? 'button-primary' : 'button-secondary')); item.type = 'button'; item.addEventListener('click', handler); return item; }
@@ -179,6 +198,7 @@ export async function initAdminPage(options = {}) {
   }
   function renderShell() {
     if (disposed) return;
+    if(!hasOwner())clearMembership();
     root.replaceChildren(); applyStyles();
     root.setAttribute('aria-busy', String(!authChecked && !authFailed));
     if (!authChecked) {
@@ -219,7 +239,7 @@ export async function initAdminPage(options = {}) {
     const actor = el('input'); actor.id = 'adminActorFilter'; actor.type = 'search'; actor.placeholder = t().actorHint; actor.value = filters.actor; actor.maxLength = 160; actor.addEventListener('input', () => { filters.actor = actor.value; activityPage = 0; renderPanels(); });
     controls.append(field(t().actor, actor));
     controls.append(button(t().clearFilters, () => { filters = { app: '', event: '', actor: '' }; activityPage = 0; renderShell(); })); root.append(controls);
-    for (const name of TAB_NAMES) { const view = el('div'); view.id = `adminView-${name}`; view.setAttribute('role', 'tabpanel'); view.setAttribute('aria-labelledby', `adminTab-${name}`); root.append(view); }
+    for (const name of TAB_NAMES) { const view = name==='membership' && membershipView ? membershipView : el('div'); view.id = `adminView-${name}`; view.setAttribute('role', 'tabpanel'); view.setAttribute('aria-labelledby', `adminTab-${name}`); if(name==='membership')membershipView=view;root.append(view); }
     renderPanels();
     if (activeReport) renderReportDialog();
   }
@@ -229,6 +249,7 @@ export async function initAdminPage(options = {}) {
     renderPanels();
     if (name === 'reports' && !reportLoaded && !reportLoading) void fetchReports(true);
     if (name === 'apps') void appsPanel.ensureLoaded();
+    if(['overview','activity'].includes(name) && !eventLoaded && !eventLoading)void fetchEvents(true);
   }
   function activityFooter(container) {
     const selected = currentEvents();
@@ -317,8 +338,8 @@ export async function initAdminPage(options = {}) {
   function renderPanels() {
     if (!hasOwner()) return;
     const controls = doc.getElementById('adminUsageControls'); if (controls) controls.hidden = !['overview', 'activity'].includes(currentTab);
-    const scopeNote = doc.getElementById('adminAnalyticsScope'); if (scopeNote) scopeNote.hidden = currentTab === 'apps';
-    for (const name of TAB_NAMES) { const target = doc.getElementById(`adminView-${name}`); if (!target) continue; target.hidden = currentTab !== name; target.replaceChildren(); if (name === currentTab) ({ overview: renderOverview, activity: renderActivity, reports: renderReports, apps: container => appsPanel.render(container) })[name](target); }
+    const scopeNote = doc.getElementById('adminAnalyticsScope'); if (scopeNote) scopeNote.hidden = ['apps','membership'].includes(currentTab);
+    for (const name of TAB_NAMES) { const target = doc.getElementById(`adminView-${name}`); if (!target) continue; target.hidden = currentTab !== name; if(name==='membership'){if(name===currentTab)void ensureMembership(target);continue;}target.replaceChildren(); if (name === currentTab) ({ overview: renderOverview, activity: renderActivity, reports: renderReports, apps: container => appsPanel.render(container) })[name](target); }
   }
   function refreshAppFilter() {
     const select = doc.getElementById('adminAppFilter'); if (!select) return;
@@ -429,7 +450,7 @@ export async function initAdminPage(options = {}) {
   }
   async function signOut() {
     if (authBusy || !auth) return;
-    if ((dirtyReport() || appsPanel.dirty()) && typeof win.confirm === 'function' && !win.confirm(appsPanel.dirty() ? appsPanel.leaveMessage() : t().discard)) return;
+    if ((dirtyReport() || appsPanel.dirty() || membershipController?.dirty?.()) && typeof win.confirm === 'function' && !win.confirm(appsPanel.dirty() ? appsPanel.leaveMessage() : membershipController?.dirty?.() ? membershipController.leaveMessage() : t().discard)) return;
     closeReport(true); authBusy = true; authMessage = ''; renderShell();
     try { await auth.logout(); acceptUser(null); }
     catch (error) { authMessage = authError(error); }
@@ -440,9 +461,9 @@ export async function initAdminPage(options = {}) {
     win.clearTimeout(authTimer); authChecked = true; authFailed = false;
     const sameOwner = isSiteOwner(user) && isSiteOwner(next) && user.uid === next.uid;
     user = next;
-    if (!sameOwner) { ownerEpoch++; eventRequest++; reportRequest++; appsPanel.reset(); events = []; reports = []; eventCursor = reportCursor = null; eventLoading = reportLoading = false; eventLoaded = reportLoaded = false; eventError = reportError = ''; reportSaving = false; closeReport(true); }
+    if (!sameOwner) { ownerEpoch++; eventRequest++; reportRequest++; appsPanel.reset(); clearMembership(); events = []; reports = []; eventCursor = reportCursor = null; eventLoading = reportLoading = false; eventLoaded = reportLoaded = false; eventError = reportError = ''; reportSaving = false; closeReport(true); }
     renderShell();
-    if (isSiteOwner(user) && !eventLoaded && !eventLoading) void fetchEvents(true);
+    if (isSiteOwner(user) && ['overview','activity'].includes(currentTab) && !eventLoaded && !eventLoading) void fetchEvents(true);
     if (isSiteOwner(user) && currentTab === 'apps') void appsPanel.ensureLoaded();
   }
   async function start() {
@@ -452,9 +473,18 @@ export async function initAdminPage(options = {}) {
     catch { if (!disposed && request === authRequest) { win.clearTimeout(authTimer); authFailed = true; renderShell(); } }
   }
   const onPreferences = () => { const next = locale(); if (next !== lastLocale) { lastLocale = next; renderShell(); } };
-  const beforeUnload = event => { if (dirtyReport() || appsPanel.dirty() || appsPanel.isSaving()) { event.preventDefault(); event.returnValue = ''; } };
+  const beforeUnload = event => { if (dirtyReport() || appsPanel.dirty() || appsPanel.isSaving() || membershipController?.dirty?.() || membershipController?.isSaving?.()) { event.preventDefault(); event.returnValue = ''; } };
+  const suspendPage = () => {
+    ownerEpoch++;authRequest++;eventRequest++;reportRequest++;unsubscribe();unsubscribe=()=>{};
+    user=null;authChecked=false;authFailed=false;authBusy=false;win.clearTimeout(authTimer);
+    clearMembership();appsPanel.reset();events=[];reports=[];eventCursor=reportCursor=null;
+    eventLoading=reportLoading=eventLoaded=reportLoaded=false;eventError=reportError='';reportSaving=false;
+    closeReport(true);renderShell();
+  };
+  const restorePage = event => {if(event.persisted && !disposed)void start();};
   win.addEventListener('taithai:preferences', onPreferences); win.addEventListener('beforeunload', beforeUnload);
+  win.addEventListener('pagehide',suspendPage);win.addEventListener('pageshow',restorePage);
   await start();
-  return { destroy() { disposed = true; ownerEpoch++; authRequest++; appsPanel.destroy(); unsubscribe(); win.clearTimeout(authTimer); win.removeEventListener('taithai:preferences', onPreferences); win.removeEventListener('beforeunload', beforeUnload); closeReport(true); delete root.dataset.adminInitialized; }, render: renderShell };
+  return { destroy() { disposed = true; ownerEpoch++; authRequest++; appsPanel.destroy(); clearMembership(); unsubscribe(); win.clearTimeout(authTimer); win.removeEventListener('taithai:preferences', onPreferences); win.removeEventListener('beforeunload', beforeUnload);win.removeEventListener('pagehide',suspendPage);win.removeEventListener('pageshow',restorePage); closeReport(true); delete root.dataset.adminInitialized; }, render: renderShell };
 }
 if (typeof window !== 'undefined' && window.document?.getElementById('adminPanel')) void initAdminPage();

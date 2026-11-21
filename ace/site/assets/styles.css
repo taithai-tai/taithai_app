@@ -304,6 +304,9 @@ body[data-page="contact"] .section-surface { background:transparent; padding-top
 body[data-page="contact"] .page-hero { padding-bottom:44px; }
 .request-preview { margin-top:28px; padding:24px; border:1px solid #d6e3f2; border-radius:22px; background:#f4f8fd; }
 .request-preview pre,.summary-pre { margin:0; font:inherit; white-space:pre-wrap; overflow-wrap:anywhere; }
+.contact-consent { margin-block:24px; }
+.contact-consent label { display:flex; align-items:flex-start; gap:12px; line-height:1.7; }
+.contact-consent input[type="checkbox"] { width:20px; height:20px; flex:0 0 20px; margin-top:3px; }
 .privacy-grid { display:grid; grid-template-columns:240px minmax(0,1fr); gap:64px; }
 .privacy-nav { display:grid; gap:6px; position:sticky; top:112px; align-self:start; }
 .privacy-nav a { min-height:44px; padding:10px 14px; border-radius:14px; color:var(--muted); text-decoration:none; }

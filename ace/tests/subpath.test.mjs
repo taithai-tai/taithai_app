@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import vm from 'node:vm';
+import { pathToFileURL } from 'node:url';
 import { buildACE } from '../scripts/build.mjs';
 
 const output = await fs.mkdtemp(path.join(os.tmpdir(), 'ace-subpath-'));
@@ -25,8 +26,11 @@ try {
     }
   }
   for (const name of await fs.readdir(path.join(output, 'assets'))) {
-    if (name.endsWith('.js')) new vm.Script(await fs.readFile(path.join(output, 'assets', name), 'utf8'), { filename: name });
+    if (name === 'contact.js') await import(pathToFileURL(path.join(output, 'assets', name)).href);
+    else if (name.endsWith('.js')) new vm.Script(await fs.readFile(path.join(output, 'assets', name), 'utf8'), { filename: name });
   }
+  const contact = await fs.readFile(path.join(output, 'assets/contact.js'), 'utf8');
+  assert.match(contact, /new URL\('assets\/site-data\.js',win\.location\.origin\)/, 'consultation must use the parent reports client, not ACE metadata');
   const nav = await fs.readFile(path.join(output, 'assets/site.js'), 'utf8');
   assert.match(nav, /href="\/ACE\/contact\/\?package=/);
   assert.match(nav, /href="\/ACE\/contact\/\?service=/);

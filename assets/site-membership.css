@@ -1,0 +1,72 @@
+/* Membership and plain-text mail belong to Taithai's soft dashboard system. */
+.membership-plan { max-width: 880px; }
+.membership-plan > p + p { margin-top: 16px; }
+.membership-plan form { margin-top: 24px; max-width: 560px; }
+.membership-new-total { margin-block: 16px; font-size: 1.25rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+.mail-account-control { display: grid; gap: 8px; min-width: 0; flex: 1 1 260px; max-width: 560px; }
+.mail-account-control select { width: 100%; }
+.mailbox-management { display: grid; gap: 16px; }
+.mailbox-management .button-row { margin: 0; }
+.mailbox-pending-list { display: grid; gap: 16px; }
+.mailbox-capacity { font-variant-numeric: tabular-nums; color: var(--text-mid); }
+.membership-price { font-size: clamp(2rem, 4vw, 3rem); font-weight: 500; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.membership-identity { color: var(--text-mid); overflow-wrap: anywhere; }
+.membership-address { font-size: 1.125rem; font-weight: 500; overflow-wrap: anywhere; }
+.membership-details { display: grid; grid-template-columns: minmax(120px,.6fr) minmax(0,1fr); gap: 12px 24px; margin-block: 24px; }
+.membership-details dt { color: var(--text-mid); }
+.membership-details dd { margin: 0; overflow-wrap: anywhere; }
+.membership-notice { background: var(--raised); }
+.membership-admin-fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0 24px; }
+.membership-admin-fields .field { min-width: 0; }
+.membership-admin-fields input { width: 100%; }
+.membership-admin-fields + .button-row { margin-top: 24px; }
+.mailbox-name-control { display: flex; align-items: center; gap: 12px; max-width: 640px; }
+.mailbox-name-control input { min-width: 0; width: 100%; }
+.mailbox-name-control span { flex: 0 0 auto; color: var(--text-mid); }
+.mail-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.mail-toolbar .button-row { margin: 0; }
+.mail-workspace { display: grid; grid-template-columns: minmax(144px,.5fr) minmax(220px,1fr) minmax(0,1.5fr); gap: 20px; align-items: start; }
+.site-page .mail-workspace .panel { padding: 20px; min-width: 0; }
+.mail-folders { display: flex; flex-direction: column; gap: 8px; }
+.mail-folders h2,.mail-message-list h2 { margin-bottom: 16px; }
+.site-page .mail-folders .mail-folder { justify-content: space-between; width: 100%; text-align: start; padding-inline: 12px; border-color: transparent; background: transparent; }
+.site-page .mail-folders .mail-folder[aria-current="page"] { background: var(--accent-soft); color: var(--accent); border-color: color-mix(in srgb,var(--accent) 20%,transparent); }
+.mail-unread-count { font-size: .75rem; font-variant-numeric: tabular-nums; }
+.mail-message-list { display: grid; gap: 8px; }
+.mail-message { display: grid; grid-template-columns: minmax(0,1fr); gap: 4px; width: 100%; padding: 16px; border: 1px solid transparent; border-radius: 20px; background: transparent; color: var(--text); text-align: start; cursor: pointer; transition: background-color 160ms var(--soft-ease,var(--ease)),border-color 160ms var(--soft-ease,var(--ease)); }
+.mail-message:hover { background: var(--raised); }
+.mail-message[aria-current="true"] { background: var(--raised); border-color: var(--border); }
+.mail-message.is-unread { border-inline-start-color: var(--accent); }
+.mail-message :is(span,strong,time) { overflow-wrap: anywhere; min-width: 0; }
+.mail-message strong { font-weight: 500; }
+.mail-message-from,.mail-message-date,.mail-message-preview { font-size: .8125rem; color: var(--text-mid); }
+.mail-message-subject { font-size: .9375rem; }
+.mail-message-preview { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.mail-reader h2 { overflow-wrap: anywhere; }
+.mail-message-meta { display: grid; grid-template-columns: auto minmax(0,1fr); gap: 8px 16px; margin-block: 24px; font-size: .8125rem; }
+.mail-message-meta dt { color: var(--text-mid); }
+.mail-message-meta dd { margin: 0; overflow-wrap: anywhere; }
+.mail-message-body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.8; padding-block: 24px; min-height: 120px; border-top: 1px solid var(--border); margin-top: 24px; }
+.mail-message-body a { color: var(--accent); text-underline-offset: 3px; }
+.mail-attachments { border-top: 1px solid var(--border); padding-top: 20px; margin-top: 20px; }
+.mail-attachments li { overflow-wrap: anywhere; }
+.mail-compose { max-width: 960px; }
+.mail-compose textarea { min-height: 240px; }
+.mail-compose .notice { margin-block: 16px; }
+.mail-compose :disabled { opacity: .75; }
+@media(max-width:1200px) {
+  .mail-workspace { grid-template-columns: minmax(132px,.5fr) minmax(0,1.5fr); }
+  .mail-reader { grid-column: 1 / -1; }
+}
+@media(max-width:760px) {
+  .mail-workspace { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  .mail-folders { flex-direction: row; overflow-x: auto; overscroll-behavior-inline: contain; align-items: center; }
+  .mail-folders h2 { position: absolute; width: 1px; height: 1px; clip-path: inset(50%); overflow: hidden; }
+  .site-page .mail-folders .mail-folder { width: auto; flex: 0 0 auto; gap: 8px; white-space: nowrap; }
+  .mail-reader { grid-column: auto; }
+  .membership-admin-fields { grid-template-columns: minmax(0,1fr); }
+  .membership-details { grid-template-columns: minmax(0,1fr); gap: 4px; }
+  .membership-details dd { margin-bottom: 12px; }
+  .mailbox-name-control { gap: 8px; flex-wrap: wrap; }
+  .mailbox-name-control span { margin-inline-start: 16px; }
+}

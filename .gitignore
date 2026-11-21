@@ -8,4 +8,6 @@ public/
 chordly/.next/
 chordly/out/
 .firebase/
+.netlify/
+.vercel/
 firebase-debug.log

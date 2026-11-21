@@ -640,3 +640,5 @@ html[data-theme="dark"] .site-page {
 html[data-motion="reduce"] .site-page :is(.button, .choice, .language-controls button, .page-nav a):is(:hover, :active) {
   transform: none;
 }
+
+.site-page .membership-shortcut {margin-top:24px;}

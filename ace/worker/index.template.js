@@ -102,7 +102,8 @@ function buildPrompt(mode, input) {
   throw new Error("ไม่รู้จักโหมดที่เลือก");
 }
 
-export async function handleAI(request, env) {
+export async function handleAI(request, env, { timeoutMs = AI_TIMEOUT_MS } = {}) {
+  if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > AI_TIMEOUT_MS) return json({ ok: false, error: "ระบบ AI ยังไม่พร้อมใช้งาน" }, 503);
   const requestUrl = new URL(request.url);
   const origin = request.headers.get("origin");
   if (origin && origin !== requestUrl.origin) return json({ ok: false, error: "ไม่อนุญาตคำขอจากเว็บไซต์อื่น" }, 403);
@@ -142,7 +143,7 @@ export async function handleAI(request, env) {
   async function generate(onText) {
     let timedOut = false;
     const startedAt = Date.now();
-    const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, AI_TIMEOUT_MS);
+    const timeout = setTimeout(() => { timedOut = true; controller.abort(); }, timeoutMs);
     try {
       const upstream = await fetch(`${baseUrl}/chat/completions`, {
       method: "POST",

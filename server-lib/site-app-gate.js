@@ -1,5 +1,6 @@
 // Server-side visibility checks. Browser settings alone never authorize a private app.
 import { createHash } from 'node:crypto';
+import { Buffer } from 'node:buffer';
 import { normalizeAppSettings, normalizeCatalogPath, resolveApp } from '../assets/site-app-catalog.js';
 
 const PROJECT = 'gen-lang-client-0141234491';

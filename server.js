@@ -4,12 +4,20 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { analyzeTicketImage, MAX_TICKET_IMAGE_BYTES } from './ticket-analyzer.js';
 import shortlinksHandler from './api/shortlinks.js';
+import membershipHandler from './api/membership.js';
+import membershipWebhook from './api/membership-webhook.js';
+import { Readable } from 'node:stream';
 import aceHandler from './ace/api/ace.js';
+import healthcareHandler from './api/healthcare-learning.js';
+import chordlyChartsHandler from './api/chordly/charts.js';
+import chordlyMetadataHandler from './api/chordly/metadata.js';
+import chordlyLyricsHandler from './api/chordly/lyrics.js';
 import { buildACE } from './ace/scripts/build.mjs';
 import { checkAppAccess, handleAccessSession, nodeWebRequest, sendWebResponse } from './server-lib/site-app-gate.js';
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-try {
+const runDirect = Boolean(process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url));
+if (runDirect) try {
   if (typeof process.loadEnvFile === 'function') {
     process.loadEnvFile(path.join(root, '.env.local'));
   }
@@ -19,8 +27,8 @@ try {
   }
 }
 const port = Number(process.env.PORT) || 3000;
-await buildACE({ output: path.join(root, 'public', 'ACE'), basePath: '/ACE' });
 const mimeTypes = {
+  '.mjs': 'text/javascript; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.json': 'application/json; charset=utf-8',
@@ -162,8 +170,7 @@ function ticketErrorStatus(code) {
   return 502;
 }
 
-async function readJsonBody(req) {
-  const maximumBytes = MAX_TICKET_IMAGE_BYTES * 2;
+async function readJsonBody(req, maximumBytes = MAX_TICKET_IMAGE_BYTES * 2) {
   const declaredLength = Number(req.headers['content-length']) || 0;
   if (declaredLength > maximumBytes) throw new Error('REQUEST_TOO_LARGE');
 
@@ -207,15 +214,22 @@ async function serveTicketAnalysis(req, res) {
   }
 }
 
-const server = http.createServer(async (req, res) => {
+export function createDevServer({ checkAccess = checkAppAccess } = {}) {
+  return http.createServer(async (req, res) => {
   try {
     const requestUrl = new URL(req.url || '/', 'http://localhost');
     const webRequest = nodeWebRequest(req, { local: true });
+    if (/^\/api\/membership(?:-webhook)?\/?$/.test(requestUrl.pathname)) {
+      const headers=new Headers();for(const [key,value] of Object.entries(req.headers))if(value!==undefined)headers.set(key,Array.isArray(value)?value.join(', '):String(value));
+      const request=new Request(new URL(req.url,`http://${req.headers.host || 'localhost'}`),{method:req.method,headers,...(!['GET','HEAD'].includes(req.method)?{body:Readable.toWeb(req),duplex:'half'}:{})});
+      const endpoint=requestUrl.pathname.includes('-webhook')?membershipWebhook:membershipHandler;
+      await sendWebResponse(await endpoint.fetch(request),req,res);return;
+    }
     if (/^\/api\/app-access\/?$/.test(requestUrl.pathname)) {
       await sendWebResponse(await handleAccessSession(webRequest), req, res);
       return;
     }
-    const appAccess = await checkAppAccess(webRequest);
+    const appAccess = await checkAccess(webRequest);
     if (appAccess.response) {
       await sendWebResponse(appAccess.response, req, res);
       return;
@@ -239,6 +253,25 @@ const server = http.createServer(async (req, res) => {
       await aceHandler(req, res);
       return;
     }
+    const chordlyRoute = requestUrl.pathname.match(/^\/api\/chordly\/(charts|metadata|lyrics)\/?$/);
+    if (chordlyRoute || /^\/api\/healthcare-learning\/?$/.test(requestUrl.pathname)) {
+      // These production handlers use Vercel's small response convenience API.
+      // Preserve the native response and the visibility gate's writeHead policy.
+      res.status = code => { res.statusCode = code; return res; };
+      res.json = value => { res.setHeader('Content-Type', 'application/json; charset=utf-8'); res.end(JSON.stringify(value)); return res; };
+      req.query = Object.fromEntries(requestUrl.searchParams);
+      if (chordlyRoute) {
+        const handlers = {charts:chordlyChartsHandler, metadata:chordlyMetadataHandler, lyrics:chordlyLyricsHandler};
+        await handlers[chordlyRoute[1]](req, res);
+      } else {
+        if (req.method === 'POST') {
+          try { req.body = await readJsonBody(req, 3 * 1024 * 1024); }
+          catch (error) { res.status(error.message === 'REQUEST_TOO_LARGE' ? 413 : 400).json({error:error.message === 'REQUEST_TOO_LARGE' ? 'REQUEST_TOO_LARGE' : 'INVALID_REQUEST'}); return; }
+        }
+        await healthcareHandler(req, res);
+      }
+      return;
+    }
     if ((req.url || '').startsWith('/api/movie-poster?')) {
       await serveMoviePoster(req.url, res);
       return;
@@ -259,8 +292,12 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Internal server error');
   }
-});
+  });
+}
 
-server.listen(port, '127.0.0.1', () => {
-  console.log(`Taithai Apps is running at http://localhost:${port}`);
-});
+if (runDirect) {
+  await buildACE({ output: path.join(root, 'public', 'ACE'), basePath: '/ACE' });
+  createDevServer().listen(port, '127.0.0.1', () => {
+    console.log(`Taithai Apps is running at http://localhost:${port}`);
+  });
+}

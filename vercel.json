@@ -9,6 +9,12 @@
   "functions": {
     "api/ace.js": {
       "maxDuration": 150
+    },
+    "api/membership.js": {
+      "maxDuration": 60
+    },
+    "api/membership-webhook.js": {
+      "maxDuration": 60
     }
   },
   "headers": [
@@ -70,6 +76,69 @@
         {
           "key": "X-Content-Type-Options",
           "value": "nosniff"
+        }
+      ]
+    },
+    {
+      "source": "/membership/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://*.stripe.com; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.stripe.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.stripe.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'self'; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/mail/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://*.stripe.com; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.stripe.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.stripe.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'self'; upgrade-insecure-requests"
+        }
+      ]
+    },
+    {
+      "source": "/admin/:path*",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "private, no-store, max-age=0"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "no-referrer"
+        },
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Content-Security-Policy",
+          "value": "default-src 'self'; script-src 'self' https://www.gstatic.com https://apis.google.com https://*.stripe.com; connect-src 'self' https://*.googleapis.com https://accounts.google.com https://*.firebaseio.com https://*.firebasedatabase.app https://*.stripe.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.stripe.com; img-src 'self' data: https://*.googleusercontent.com; style-src 'self' 'unsafe-inline'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://checkout.stripe.com https://billing.stripe.com; frame-ancestors 'self'; upgrade-insecure-requests"
         }
       ]
     }

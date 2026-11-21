@@ -11,15 +11,21 @@
     "test:chordly": "node --experimental-strip-types --test chordly/tests/*.test.ts",
     "test:ticket": "node scripts/test-ticket-scanner.mjs",
     "start": "node server.js",
-    "test:site": "node --test scripts/test-site-preferences.mjs scripts/test-site-data.mjs scripts/test-site-account.mjs scripts/test-site-admin.mjs scripts/test-site-pages.mjs scripts/test-site-app-catalog.mjs scripts/test-site-app-gate.mjs scripts/test-site-app-cache.mjs scripts/test-site-app-visibility.mjs scripts/test-site-app-discovery.mjs scripts/test-site-owner-ui.mjs scripts/test-site-motion.mjs && node scripts/test-site-private-drive.mjs && node scripts/test-qr-reader.mjs && node --test ace/tests/subpath.test.mjs",
+    "test:site": "node --test ace/tests/contact.test.mjs scripts/test-dev-api-routes.mjs scripts/test-degree-pdf.mjs scripts/test-site-preferences.mjs scripts/test-site-data.mjs scripts/test-site-account.mjs scripts/test-site-admin.mjs scripts/test-site-pages.mjs scripts/test-site-app-catalog.mjs scripts/test-site-app-gate.mjs scripts/test-site-app-cache.mjs scripts/test-site-app-visibility.mjs scripts/test-site-app-discovery.mjs scripts/test-site-owner-ui.mjs scripts/test-site-motion.mjs scripts/test-site-operation-budget.mjs scripts/test-site-billing.mjs scripts/test-site-mail.mjs scripts/test-site-mail-capacity.mjs scripts/test-site-membership-api.mjs scripts/test-site-membership-ui.mjs scripts/test-site-netlify.mjs && node scripts/test-site-private-drive.mjs && node scripts/test-qr-reader.mjs && node --test ace/tests/subpath.test.mjs",
     "test:site:rules": "node --test scripts/test-site-rules.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.4",
     "@vercel/functions": "^3.11.3",
-    "next": "16.3.3",
+    "firebase-admin": "14.5.1",
+    "html-to-text": "10.0.1",
+    "imapflow": "2.12.2",
+    "mailparser": "3.15.0",
+    "next": "16.4.6",
+    "nodemailer": "10.6.1",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "stripe": "23.2.0"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "4.3.3",

@@ -206,3 +206,9 @@ html[lang="th"] .site-home .hero h1 { font-size: clamp(2rem, 3.7vw, 3rem); line-
   .site-home :is(.app-card, .toolkit-item, .toolkit-item .icon, .home-rail a, button, .browse-button) { transform: none !important; transition: none !important; }
 }
 html[data-motion="reduce"] .site-home :is(.app-card, .toolkit-item, .toolkit-item .icon, .home-rail a, button, .browse-button) { transform: none !important; transition: none !important; }
+
+/* Account services stay easy to find without lengthening the icon rail. */
+.site-home .membership-entry {display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:8px 16px;border:1px solid var(--border);border-radius:999px;background:var(--surface);font-size:.875rem;text-decoration:none;transition:background 160ms var(--soft-ease),transform 160ms var(--soft-ease);}
+.site-home .membership-entry .icon {width:18px;height:18px;}
+.site-home .membership-entry:hover {background:var(--raised);}
+@media(max-width:680px){.site-home .membership-entry{grid-column:1/-1;justify-content:center;}}
