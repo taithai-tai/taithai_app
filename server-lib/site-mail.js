@@ -614,9 +614,15 @@ export function createHostingerProvider({ env = process.env, fetchImpl = globalT
     if (!order || order.status !== 'active' || order.domain?.name !== DOMAIN || !Number.isInteger(order.seats) || order.seats < 1 || order.seats > 1000 || typeof order.is_trial !== 'boolean' ||
       (order.expires_at !== null && (!Number.isFinite(Date.parse(order.expires_at)) || Date.parse(order.expires_at) <= now()))) fail('MAIL_PROVIDER_NOT_READY', 503);
     const plan = await request(`orders/${env.HOSTINGER_MAIL_ORDER_ID}/plan`);
+    const outboundSize = plan.mailbox?.max_outbound_message_size;
+    // OpenAPI describes bytes, but the live Starter plan returns the exact
+    // value 35 for Hostinger's documented 35 MB outbound limit. Normalize only
+    // that observed representation; do not guess units for other small values.
+    // https://www.hostinger.com/support/4625828-parameters-and-limits-of-hostinger-email/
+    const outboundBytes = outboundSize === 35 ? 35000000 : outboundSize;
     if (plan.domain?.is_imap_enabled !== true || !Number.isInteger(plan.domain.mailbox_quota) || plan.domain.mailbox_quota < 1 ||
       !Number.isInteger(plan.mailbox?.max_outbound_recipient_limit) || plan.mailbox.max_outbound_recipient_limit < MAIL_LIMITS.maxRecipients ||
-      !Number.isInteger(plan.mailbox.max_outbound_message_size) || plan.mailbox.max_outbound_message_size < MAIL_LIMITS.maxBodyBytes) fail('MAIL_PROVIDER_NOT_READY', 503);
+      !Number.isSafeInteger(outboundBytes) || outboundBytes < MAIL_LIMITS.maxBodyBytes) fail('MAIL_PROVIDER_NOT_READY', 503);
     return { order, plan };
   }
   function mailboxResource(value) {

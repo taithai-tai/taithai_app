@@ -162,7 +162,7 @@ test('every deployed API has canonical custom paths; internal helpers are outsid
   for(const file of files){const module=await import(`../netlify/functions/${file}`);assert.equal(typeof module.default,'function');assert.ok(module.config.path.every(path=>path.startsWith('/api/')||path.startsWith('/S/')));paths.push(...module.config.path);}
   assert.deepEqual(paths.sort(),[...NETLIFY_FUNCTION_PATHS].sort());
   const toml=await readFile(new URL('../netlify.toml',import.meta.url),'utf8');
-  assert.match(toml,/publish = "public"/);assert.match(toml,/functions = "netlify\/functions"/);
+  assert.match(toml,/publish = "public"/);assert.match(toml,/functions = "netlify\/generated-functions"/);
   assert.match(toml,/\[\[edge_functions\]\][\s\S]*?function = "app-access"\s+path = "\/\*"/);
   assert.doesNotMatch(toml,/cache\s*=\s*"manual"/);
   assert.match(toml,/NETLIFY_NEXT_PLUGIN_SKIP = "true"/);

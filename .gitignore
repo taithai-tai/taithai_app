@@ -10,4 +10,5 @@ chordly/out/
 .firebase/
 .netlify/
 .vercel/
+netlify/generated-functions/
 firebase-debug.log

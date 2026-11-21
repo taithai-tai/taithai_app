@@ -2,7 +2,7 @@
 [build]
   command = "npm run build"
   publish = "public"
-  functions = "netlify/functions"
+  functions = "netlify/generated-functions"
 
 [build.environment]
   NODE_VERSION = "22"

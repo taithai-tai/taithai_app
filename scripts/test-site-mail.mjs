@@ -76,7 +76,7 @@ function hostingerFixture() {
   const boxes = new Map(); const requests = []; const probes = [];
   const order = { id: hostingerEnv.HOSTINGER_MAIL_ORDER_ID, status: 'active', is_trial: false, seats: 5,
     domain: { id: 'DO_test_domain', name: 'taithai.app' }, expires_at: '2099-01-01T00:00:00Z' };
-  const plan = { domain: { mailbox_quota: 5, is_imap_enabled: true }, mailbox: { max_outbound_recipient_limit: 50, max_outbound_message_size: 25000000 } };
+  const plan = { domain: { mailbox_quota: 5, is_imap_enabled: true }, mailbox: { max_outbound_recipient_limit: 50, max_outbound_message_size: 35 } };
   const resource = (local, i = boxes.size) => ({ id: `AC_test_${i}`, address: `${local}@taithai.app`, status: 'active', is_catchall: false,
     protocols: { is_imap_enabled: true, is_pop3_enabled: false, is_smtp_in_enabled: true, is_smtp_out_enabled: true } });
   let loseCreateResponse = false; let mutateResponse = value => value; let beforeRequest = () => {};
@@ -640,6 +640,17 @@ test('Hostinger readiness validates the exact active purchased order, expiry and
     const q = hostingerFixture(); Object.assign(q.plan, invalid); await assert.rejects(q.provider.assertReady(), code('MAIL_PROVIDER_NOT_READY'));
   }
   assert.equal(p.requests.every(item => item.options.method === 'GET'), true);
+});
+
+test('Hostinger accepts the observed 35 MB representation and documented byte limits without guessing other units', async () => {
+  for (const size of [35, 25000000, MAIL_LIMITS.maxBodyBytes]) {
+    const p = hostingerFixture(); p.plan.mailbox.max_outbound_message_size = size;
+    assert.equal(await p.provider.assertReady(), true);
+  }
+  for (const size of [undefined, null, '35', '25000000', 0, -1, 1, 34, 100, MAIL_LIMITS.maxBodyBytes - 1, 35.5, NaN, Infinity, Number.MAX_SAFE_INTEGER + 1]) {
+    const p = hostingerFixture(); p.plan.mailbox.max_outbound_message_size = size;
+    await assert.rejects(p.provider.assertReady(), code('MAIL_PROVIDER_NOT_READY'));
+  }
 });
 
 test('Hostinger inventory counts purchased seats and all mailboxes, refuses capacity without a purchase operation', async () => {

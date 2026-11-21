@@ -8,6 +8,7 @@
     "dev:chordly": "next dev chordly",
     "build": "node scripts/build.mjs",
     "build:chordly": "next build chordly",
+    "test:netlify:package": "node scripts/test-netlify-membership-package.mjs",
     "test:chordly": "node --experimental-strip-types --test chordly/tests/*.test.ts",
     "test:ticket": "node scripts/test-ticket-scanner.mjs",
     "start": "node server.js",
@@ -15,6 +16,7 @@
     "test:site:rules": "node --test scripts/test-site-rules.mjs"
   },
   "dependencies": {
+    "@google-cloud/firestore": "9.1.0",
     "@supabase/supabase-js": "2.112.4",
     "@vercel/functions": "^3.11.3",
     "firebase-admin": "14.5.1",
@@ -32,6 +34,7 @@
     "@types/node": "^24.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "esbuild": "0.28.2",
     "tailwindcss": "4.3.3",
     "tsx": "^4.20.0",
     "typescript": "^6.0.0"

@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildACE } from '../ace/scripts/build.mjs';
+import { prepareNetlifyFunctions } from './prepare-netlify-functions.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'public');
@@ -61,5 +62,6 @@ await buildACE({ output: path.join(output, 'ACE'), basePath: '/ACE', siteUrl: 'h
 
 await run(process.execPath, [path.join(root, 'node_modules', 'next', 'dist', 'bin', 'next'), 'build', 'chordly', ...(process.env.TAITHAI_BUILD_BUNDLER === 'webpack' ? ['--webpack'] : [])]);
 await cp(path.join(root, 'chordly', 'out'), path.join(output, 'Chordly'), { recursive: true });
+await prepareNetlifyFunctions();
 
 console.log('Static site, Chordly and ACE prepared in public/');
